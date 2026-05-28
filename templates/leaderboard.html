@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Leaderboard | ESPN Odds Predictor{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Live Elo standings</p>
+    <h1>Leaderboard</h1>
+    <p class="lede">
+      Current team ratings from the latest processed dataset.
+      {% if latest_season %}Latest season included: {{ latest_season }}.{% endif %}
+    </p>
+  </div>
+</section>
+
+<section class="card">
+  {% if standings %}
+    <div class="table-wrap">
+      <table class="leaderboard">
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Team</th>
+            <th>Rating</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in standings %}
+            <tr>
+              <td>{{ row.rank }}</td>
+              <td>{{ row.team }}</td>
+              <td>{{ "%.1f"|format(row.rating) }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <p class="muted">No leaderboard data yet. Use the Scrape page to import games first.</p>
+  {% endif %}
+</section>
+{% endblock %}

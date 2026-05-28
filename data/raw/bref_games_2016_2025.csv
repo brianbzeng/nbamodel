@@ -1,0 +1,753 @@
+date,season,home_team,away_team,home_pts,away_pts
+2026-05-26 20:00:00,2016,Chicago Bulls,Cleveland Cavaliers,97,95
+2026-05-26 20:00:00,2016,Atlanta Hawks,Detroit Pistons,94,106
+2026-05-26 22:30:00,2016,Golden State Warriors,New Orleans Pelicans,111,95
+2026-05-26 19:00:00,2016,Orlando Magic,Washington Wizards,87,88
+2026-05-26 19:30:00,2016,Boston Celtics,Philadelphia 76ers,112,95
+2026-05-26 19:30:00,2016,Brooklyn Nets,Chicago Bulls,100,115
+2026-05-26 19:30:00,2016,Detroit Pistons,Utah Jazz,92,87
+2026-05-26 19:30:00,2016,Toronto Raptors,Indiana Pacers,106,99
+2026-05-26 19:30:00,2016,Miami Heat,Charlotte Hornets,104,94
+2026-05-26 20:00:00,2016,Milwaukee Bucks,New York Knicks,97,122
+2026-05-26 20:00:00,2016,Oklahoma City Thunder,San Antonio Spurs,112,106
+2026-05-26 20:00:00,2016,Memphis Grizzlies,Cleveland Cavaliers,76,106
+2026-05-26 20:00:00,2016,Houston Rockets,Denver Nuggets,85,105
+2026-05-26 22:00:00,2016,Phoenix Suns,Dallas Mavericks,95,111
+2026-05-26 22:00:00,2016,Portland Trail Blazers,New Orleans Pelicans,112,94
+2026-05-26 22:00:00,2016,Sacramento Kings,Los Angeles Clippers,104,111
+2026-05-26 22:30:00,2016,Los Angeles Lakers,Minnesota Timberwolves,111,112
+2026-05-26 19:00:00,2016,Indiana Pacers,Memphis Grizzlies,103,112
+2026-05-26 20:00:00,2016,New York Knicks,Atlanta Hawks,101,112
+2026-05-26 22:30:00,2016,Los Angeles Clippers,Dallas Mavericks,104,88
+2026-05-26 19:00:00,2016,Cleveland Cavaliers,Miami Heat,102,92
+2026-05-26 19:00:00,2016,Philadelphia 76ers,Utah Jazz,71,99
+2026-05-26 19:00:00,2016,Orlando Magic,Oklahoma City Thunder,136,139
+2026-05-26 19:30:00,2016,Boston Celtics,Toronto Raptors,103,113
+2026-05-26 19:30:00,2016,Detroit Pistons,Chicago Bulls,98,94
+2026-05-26 20:00:00,2016,Atlanta Hawks,Charlotte Hornets,97,94
+2026-05-26 20:00:00,2016,Milwaukee Bucks,Washington Wizards,113,118
+2026-05-26 20:30:00,2016,San Antonio Spurs,Brooklyn Nets,102,75
+2026-05-26 21:00:00,2016,Denver Nuggets,Minnesota Timberwolves,78,95
+2026-05-26 21:30:00,2016,Houston Rockets,Golden State Warriors,92,112
+2026-05-26 22:00:00,2016,Sacramento Kings,Los Angeles Lakers,132,114
+2026-05-26 22:30:00,2016,Phoenix Suns,Portland Trail Blazers,110,92
+2026-05-26 19:00:00,2016,Indiana Pacers,Utah Jazz,76,97
+2026-05-26 19:00:00,2016,Washington Wizards,New York Knicks,110,117
+2026-05-26 19:30:00,2016,New Orleans Pelicans,Golden State Warriors,120,134
+2026-05-26 20:00:00,2016,Memphis Grizzlies,Brooklyn Nets,101,91
+2026-05-26 22:00:00,2016,Portland Trail Blazers,Phoenix Suns,90,101
+2026-05-26 22:30:00,2016,Los Angeles Clippers,Sacramento Kings,114,109
+2026-05-26 19:30:00,2017,Cleveland Cavaliers,New York Knicks,117,88
+2026-05-26 22:00:00,2017,Portland Trail Blazers,Utah Jazz,113,104
+2026-05-26 22:30:00,2017,Golden State Warriors,San Antonio Spurs,100,129
+2026-05-26 19:00:00,2017,Indiana Pacers,Dallas Mavericks,130,121
+2026-05-26 19:00:00,2017,Orlando Magic,Miami Heat,96,108
+2026-05-26 19:30:00,2017,Toronto Raptors,Detroit Pistons,109,91
+2026-05-26 19:30:00,2017,Boston Celtics,Brooklyn Nets,122,117
+2026-05-26 20:00:00,2017,Milwaukee Bucks,Charlotte Hornets,96,107
+2026-05-26 20:00:00,2017,New Orleans Pelicans,Denver Nuggets,102,107
+2026-05-26 20:00:00,2017,Memphis Grizzlies,Minnesota Timberwolves,102,98
+2026-05-26 20:00:00,2017,Philadelphia 76ers,Oklahoma City Thunder,97,103
+2026-05-26 22:00:00,2017,Phoenix Suns,Sacramento Kings,94,113
+2026-05-26 22:30:00,2017,Los Angeles Lakers,Houston Rockets,120,114
+2026-05-26 19:30:00,2017,Atlanta Hawks,Washington Wizards,114,99
+2026-05-26 20:00:00,2017,Chicago Bulls,Boston Celtics,105,99
+2026-05-26 22:30:00,2017,Portland Trail Blazers,Los Angeles Clippers,106,114
+2026-05-26 22:30:00,2017,Sacramento Kings,San Antonio Spurs,94,102
+2026-05-26 19:00:00,2017,Toronto Raptors,Cleveland Cavaliers,91,94
+2026-05-26 19:30:00,2017,Brooklyn Nets,Indiana Pacers,103,94
+2026-05-26 19:30:00,2017,Detroit Pistons,Orlando Magic,108,82
+2026-05-26 20:00:00,2017,Oklahoma City Thunder,Phoenix Suns,113,110
+2026-05-26 20:00:00,2017,Miami Heat,Charlotte Hornets,91,97
+2026-05-26 20:30:00,2017,Dallas Mavericks,Houston Rockets,98,106
+2026-05-26 21:00:00,2017,Utah Jazz,Los Angeles Lakers,96,89
+2026-05-26 21:30:00,2017,New Orleans Pelicans,Golden State Warriors,114,122
+2026-05-26 12:30:00,2017,Philadelphia 76ers,Atlanta Hawks,72,104
+2026-05-26 19:00:00,2017,Charlotte Hornets,Boston Celtics,98,104
+2026-05-26 19:30:00,2017,Cleveland Cavaliers,Orlando Magic,105,99
+2026-05-26 19:30:00,2017,New York Knicks,Memphis Grizzlies,111,104
+2026-05-26 20:00:00,2017,San Antonio Spurs,New Orleans Pelicans,98,79
+2026-05-26 20:00:00,2017,Milwaukee Bucks,Brooklyn Nets,110,108
+2026-05-26 20:00:00,2017,Chicago Bulls,Indiana Pacers,118,101
+2026-05-26 21:00:00,2017,Denver Nuggets,Portland Trail Blazers,113,115
+2026-05-26 22:30:00,2017,Sacramento Kings,Minnesota Timberwolves,106,103
+2026-05-26 16:30:00,2017,Los Angeles Clippers,Utah Jazz,88,75
+2026-05-26 18:00:00,2017,Detroit Pistons,Milwaukee Bucks,98,83
+2026-05-26 18:00:00,2017,Miami Heat,San Antonio Spurs,99,106
+2026-05-26 18:00:00,2017,Phoenix Suns,Golden State Warriors,100,106
+2026-05-26 19:00:00,2017,Oklahoma City Thunder,Los Angeles Lakers,113,96
+2026-05-26 20:00:00,2017,Houston Rockets,Dallas Mavericks,93,92
+2026-05-26 20:00:00,2017,Memphis Grizzlies,Washington Wizards,112,103
+2026-05-26 19:30:00,2017,Atlanta Hawks,Sacramento Kings,106,95
+2026-05-26 19:30:00,2017,Brooklyn Nets,Chicago Bulls,88,118
+2026-05-26 19:30:00,2017,Toronto Raptors,Denver Nuggets,105,102
+2026-05-26 22:30:00,2017,Los Angeles Clippers,Phoenix Suns,116,98
+2026-05-26 20:01:00,2018,Cleveland Cavaliers,Boston Celtics,102,99
+2026-05-26 22:30:00,2018,Golden State Warriors,Houston Rockets,121,122
+2026-05-26 19:00:00,2018,Detroit Pistons,Charlotte Hornets,102,90
+2026-05-26 19:00:00,2018,Indiana Pacers,Brooklyn Nets,140,131
+2026-05-26 19:00:00,2018,Orlando Magic,Miami Heat,116,109
+2026-05-26 19:00:00,2018,Washington Wizards,Philadelphia 76ers,120,115
+2026-05-26 19:30:00,2018,Boston Celtics,Milwaukee Bucks,100,108
+2026-05-26 20:00:00,2018,Memphis Grizzlies,New Orleans Pelicans,103,91
+2026-05-26 20:30:00,2018,Dallas Mavericks,Atlanta Hawks,111,117
+2026-05-26 21:00:00,2018,Utah Jazz,Denver Nuggets,106,96
+2026-05-26 21:30:00,2018,San Antonio Spurs,Minnesota Timberwolves,107,99
+2026-05-26 22:00:00,2018,Phoenix Suns,Portland Trail Blazers,76,124
+2026-05-26 22:00:00,2018,Sacramento Kings,Houston Rockets,100,105
+2026-05-26 19:30:00,2018,Toronto Raptors,Chicago Bulls,117,100
+2026-05-26 20:00:00,2018,Oklahoma City Thunder,New York Knicks,105,84
+2026-05-26 22:30:00,2018,Los Angeles Lakers,Los Angeles Clippers,92,108
+2026-05-26 19:00:00,2018,Charlotte Hornets,Atlanta Hawks,109,91
+2026-05-26 19:00:00,2018,Indiana Pacers,Portland Trail Blazers,96,114
+2026-05-26 19:00:00,2018,Milwaukee Bucks,Cleveland Cavaliers,97,116
+2026-05-26 19:00:00,2018,Philadelphia 76ers,Boston Celtics,92,102
+2026-05-26 19:00:00,2018,Washington Wizards,Detroit Pistons,115,111
+2026-05-26 19:30:00,2018,Brooklyn Nets,Orlando Magic,126,121
+2026-05-26 20:00:00,2018,Minnesota Timberwolves,Utah Jazz,100,97
+2026-05-26 20:30:00,2018,Dallas Mavericks,Sacramento Kings,88,93
+2026-05-26 21:30:00,2018,New Orleans Pelicans,Golden State Warriors,120,128
+2026-05-26 22:00:00,2018,Phoenix Suns,Los Angeles Lakers,130,132
+2026-05-26 19:30:00,2018,Toronto Raptors,Philadelphia 76ers,128,94
+2026-05-26 20:00:00,2018,Chicago Bulls,San Antonio Spurs,77,87
+2026-05-26 20:00:00,2018,Cleveland Cavaliers,Orlando Magic,93,114
+2026-05-26 20:00:00,2018,Houston Rockets,Dallas Mavericks,107,91
+2026-05-26 20:00:00,2018,Memphis Grizzlies,Golden State Warriors,111,101
+2026-05-26 20:00:00,2018,Miami Heat,Indiana Pacers,112,108
+2026-05-26 20:00:00,2018,New York Knicks,Detroit Pistons,107,111
+2026-05-26 20:30:00,2018,Milwaukee Bucks,Portland Trail Blazers,113,110
+2026-05-26 21:00:00,2018,Denver Nuggets,Sacramento Kings,96,79
+2026-05-26 21:00:00,2018,Utah Jazz,Oklahoma City Thunder,96,87
+2026-05-26 22:30:00,2018,Los Angeles Clippers,Phoenix Suns,130,88
+2026-05-26 15:30:00,2018,Brooklyn Nets,Atlanta Hawks,116,104
+2026-05-26 19:00:00,2018,Oklahoma City Thunder,Minnesota Timberwolves,113,115
+2026-05-26 21:30:00,2018,Los Angeles Lakers,New Orleans Pelicans,112,119
+2026-05-26 19:00:00,2018,Detroit Pistons,Philadelphia 76ers,86,97
+2026-05-26 19:30:00,2018,Miami Heat,Atlanta Hawks,104,93
+2026-05-26 20:00:00,2018,Houston Rockets,Memphis Grizzlies,90,98
+2026-05-26 20:00:00,2018,Milwaukee Bucks,Charlotte Hornets,103,94
+2026-05-26 20:30:00,2018,Dallas Mavericks,Golden State Warriors,103,133
+2026-05-26 20:30:00,2018,San Antonio Spurs,Toronto Raptors,101,97
+2026-05-26 21:00:00,2018,Denver Nuggets,Washington Wizards,104,109
+2026-05-26 22:00:00,2018,Phoenix Suns,Sacramento Kings,117,115
+2026-05-26 19:00:00,2018,Cleveland Cavaliers,Chicago Bulls,119,112
+2026-05-26 19:00:00,2018,Orlando Magic,Brooklyn Nets,125,121
+2026-05-26 19:30:00,2018,Boston Celtics,New York Knicks,110,89
+2026-05-26 20:00:00,2018,Minnesota Timberwolves,Indiana Pacers,107,130
+2026-05-26 22:00:00,2018,Portland Trail Blazers,New Orleans Pelicans,103,93
+2026-05-26 22:30:00,2018,Los Angeles Clippers,Utah Jazz,102,84
+2026-05-26 19:00:00,2018,Charlotte Hornets,Denver Nuggets,110,93
+2026-05-26 19:00:00,2018,Detroit Pistons,Minnesota Timberwolves,122,101
+2026-05-26 19:00:00,2018,Philadelphia 76ers,Houston Rockets,104,105
+2026-05-26 19:30:00,2018,Brooklyn Nets,Cleveland Cavaliers,112,107
+2026-05-26 20:00:00,2018,Miami Heat,San Antonio Spurs,100,117
+2026-05-26 20:00:00,2018,Oklahoma City Thunder,Indiana Pacers,114,96
+2026-05-26 20:30:00,2018,Dallas Mavericks,Memphis Grizzlies,103,94
+2026-05-26 22:00:00,2018,Phoenix Suns,Utah Jazz,97,88
+2026-05-26 22:30:00,2018,Golden State Warriors,Toronto Raptors,117,112
+2026-05-26 22:30:00,2018,Los Angeles Lakers,Washington Wizards,102,99
+2026-05-26 20:00:00,2018,Chicago Bulls,Atlanta Hawks,91,86
+2026-05-26 20:00:00,2018,Memphis Grizzlies,Dallas Mavericks,96,91
+2026-05-26 20:00:00,2018,Milwaukee Bucks,Boston Celtics,89,96
+2026-05-26 22:00:00,2018,Portland Trail Blazers,Los Angeles Clippers,103,104
+2026-05-26 22:30:00,2018,Sacramento Kings,New Orleans Pelicans,106,114
+2026-05-26 19:00:00,2018,Charlotte Hornets,Houston Rockets,93,109
+2026-05-26 19:00:00,2018,Orlando Magic,San Antonio Spurs,114,87
+2026-05-26 19:30:00,2018,Atlanta Hawks,Denver Nuggets,100,105
+2026-05-26 19:30:00,2018,New York Knicks,Brooklyn Nets,107,86
+2026-05-26 20:00:00,2018,Minnesota Timberwolves,Oklahoma City Thunder,119,116
+2026-05-26 22:30:00,2018,Golden State Warriors,Washington Wizards,120,117
+2026-05-26 22:30:00,2018,Los Angeles Lakers,Toronto Raptors,92,101
+2026-05-26 19:00:00,2018,New Orleans Pelicans,Cleveland Cavaliers,123,101
+2026-05-26 20:00:00,2018,Chicago Bulls,Oklahoma City Thunder,69,101
+2026-05-26 20:00:00,2018,Memphis Grizzlies,Houston Rockets,103,89
+2026-05-26 20:00:00,2018,Miami Heat,Boston Celtics,90,96
+2026-05-26 20:30:00,2018,Dallas Mavericks,Philadelphia 76ers,110,112
+2026-05-26 21:00:00,2018,Utah Jazz,Los Angeles Lakers,96,81
+2026-05-26 22:00:00,2018,Portland Trail Blazers,Phoenix Suns,114,107
+2026-05-26 22:30:00,2018,Los Angeles Clippers,Detroit Pistons,87,95
+2026-05-26 15:30:00,2018,Atlanta Hawks,Milwaukee Bucks,106,117
+2026-05-26 16:30:00,2018,Indiana Pacers,San Antonio Spurs,97,94
+2026-05-26 18:00:00,2018,Brooklyn Nets,Denver Nuggets,111,124
+2026-05-26 18:00:00,2018,Charlotte Hornets,Orlando Magic,120,113
+2026-05-26 18:00:00,2018,Sacramento Kings,Washington Wizards,83,110
+2026-05-26 19:00:00,2018,Cleveland Cavaliers,New York Knicks,95,114
+2026-05-26 20:30:00,2018,Golden State Warriors,Detroit Pistons,107,115
+2026-05-26 19:30:00,2018,Boston Celtics,San Antonio Spurs,108,94
+2026-05-26 19:30:00,2018,Miami Heat,Minnesota Timberwolves,122,125
+2026-05-26 19:30:00,2018,New York Knicks,Denver Nuggets,116,110
+2026-05-26 20:00:00,2018,Houston Rockets,Philadelphia 76ers,107,115
+2026-05-26 20:00:00,2018,Memphis Grizzlies,Charlotte Hornets,99,104
+2026-05-26 20:00:00,2018,New Orleans Pelicans,Orlando Magic,99,115
+2026-05-26 21:00:00,2018,Utah Jazz,Dallas Mavericks,104,89
+2026-05-26 22:00:00,2018,Portland Trail Blazers,Toronto Raptors,85,99
+2026-05-26 22:30:00,2018,Los Angeles Clippers,Golden State Warriors,113,141
+2026-05-26 19:00:00,2018,Indiana Pacers,Sacramento Kings,101,83
+2026-05-26 19:30:00,2018,Brooklyn Nets,Phoenix Suns,114,122
+2026-05-26 20:00:00,2018,Milwaukee Bucks,Oklahoma City Thunder,91,110
+2026-05-26 22:30:00,2018,Los Angeles Lakers,Detroit Pistons,113,93
+2026-05-26 20:00:00,2019,Boston Celtics,Philadelphia 76ers,105,87
+2026-05-26 22:30:00,2019,Golden State Warriors,Oklahoma City Thunder,108,100
+2026-05-26 19:00:00,2019,Charlotte Hornets,Milwaukee Bucks,112,113
+2026-05-26 19:00:00,2019,Detroit Pistons,Brooklyn Nets,103,100
+2026-05-26 19:00:00,2019,Indiana Pacers,Memphis Grizzlies,111,83
+2026-05-26 19:00:00,2019,Orlando Magic,Miami Heat,104,101
+2026-05-26 19:30:00,2019,New York Knicks,Atlanta Hawks,126,107
+2026-05-26 19:30:00,2019,Toronto Raptors,Cleveland Cavaliers,116,104
+2026-05-26 20:00:00,2019,Houston Rockets,New Orleans Pelicans,112,131
+2026-05-26 20:30:00,2019,San Antonio Spurs,Minnesota Timberwolves,112,108
+2026-05-26 22:00:00,2019,Sacramento Kings,Utah Jazz,117,123
+2026-05-26 22:30:00,2019,Los Angeles Clippers,Denver Nuggets,98,107
+2026-05-26 22:30:00,2019,Phoenix Suns,Dallas Mavericks,121,100
+2026-05-26 20:00:00,2019,Philadelphia 76ers,Chicago Bulls,127,108
+2026-05-26 20:00:00,2019,Washington Wizards,Miami Heat,112,113
+2026-05-26 22:30:00,2019,Portland Trail Blazers,Los Angeles Lakers,128,119
+2026-05-26 19:00:00,2019,Orlando Magic,Charlotte Hornets,88,120
+2026-05-26 19:30:00,2019,Brooklyn Nets,New York Knicks,107,105
+2026-05-26 20:00:00,2019,Memphis Grizzlies,Atlanta Hawks,131,117
+2026-05-26 20:00:00,2019,Minnesota Timberwolves,Cleveland Cavaliers,131,123
+2026-05-26 20:00:00,2019,New Orleans Pelicans,Sacramento Kings,149,129
+2026-05-26 20:00:00,2019,Toronto Raptors,Boston Celtics,113,101
+2026-05-26 20:30:00,2019,Milwaukee Bucks,Indiana Pacers,118,101
+2026-05-26 22:30:00,2019,Los Angeles Clippers,Oklahoma City Thunder,108,92
+2026-05-26 22:30:00,2019,Utah Jazz,Golden State Warriors,123,124
+2026-05-26 19:00:00,2019,Indiana Pacers,Brooklyn Nets,132,112
+2026-05-26 19:00:00,2019,Washington Wizards,Toronto Raptors,113,117
+2026-05-26 19:30:00,2019,New York Knicks,Boston Celtics,101,103
+2026-05-26 19:30:00,2019,Philadelphia 76ers,Orlando Magic,116,115
+2026-05-26 20:00:00,2019,Chicago Bulls,Detroit Pistons,116,118
+2026-05-26 20:00:00,2019,Miami Heat,Charlotte Hornets,112,113
+2026-05-26 20:30:00,2019,Dallas Mavericks,Minnesota Timberwolves,140,136
+2026-05-26 21:00:00,2019,Denver Nuggets,Phoenix Suns,119,91
+2026-05-26 22:00:00,2019,Portland Trail Blazers,San Antonio Spurs,121,108
+2026-05-26 22:30:00,2019,Los Angeles Lakers,Houston Rockets,115,124
+2026-05-26 18:00:00,2019,Cleveland Cavaliers,Atlanta Hawks,111,133
+2026-05-26 19:00:00,2019,Oklahoma City Thunder,Sacramento Kings,120,131
+2026-05-26 20:00:00,2019,Denver Nuggets,Golden State Warriors,100,98
+2026-05-26 21:00:00,2019,Los Angeles Clippers,Houston Rockets,115,112
+2026-05-26 19:30:00,2019,Boston Celtics,Orlando Magic,90,93
+2026-05-26 19:30:00,2019,Toronto Raptors,Charlotte Hornets,127,106
+2026-05-26 20:00:00,2019,Milwaukee Bucks,New York Knicks,124,113
+2026-05-26 20:00:00,2019,Minnesota Timberwolves,Indiana Pacers,101,91
+2026-05-26 20:30:00,2019,Dallas Mavericks,Chicago Bulls,115,109
+2026-05-26 21:00:00,2019,Utah Jazz,Memphis Grizzlies,84,92
+2026-05-26 22:00:00,2019,Portland Trail Blazers,Washington Wizards,124,125
+2026-05-26 22:30:00,2019,Golden State Warriors,Phoenix Suns,123,103
+2026-05-26 22:30:00,2019,Los Angeles Lakers,San Antonio Spurs,142,143
+2026-05-26 19:00:00,2019,Detroit Pistons,Philadelphia 76ers,133,132
+2026-05-26 20:00:00,2019,New Orleans Pelicans,Los Angeles Clippers,116,109
+2026-05-26 21:00:00,2019,Denver Nuggets,Sacramento Kings,126,112
+2026-05-26 19:00:00,2019,Atlanta Hawks,Dallas Mavericks,111,104
+2026-05-26 19:00:00,2019,Cleveland Cavaliers,Brooklyn Nets,86,102
+2026-05-26 19:30:00,2019,Miami Heat,New York Knicks,110,87
+2026-05-26 19:30:00,2019,Toronto Raptors,Minnesota Timberwolves,112,105
+2026-05-26 20:00:00,2019,Chicago Bulls,Charlotte Hornets,112,110
+2026-05-26 20:00:00,2019,Houston Rockets,Utah Jazz,89,100
+2026-05-26 20:30:00,2019,San Antonio Spurs,Indiana Pacers,96,116
+2026-05-26 21:30:00,2019,Milwaukee Bucks,Philadelphia 76ers,123,108
+2026-05-26 22:00:00,2019,Phoenix Suns,Los Angeles Lakers,113,131
+2026-05-26 22:00:00,2019,Sacramento Kings,Memphis Grizzlies,97,92
+2026-05-26 22:30:00,2019,Golden State Warriors,Washington Wizards,144,122
+2026-05-26 19:00:00,2019,Detroit Pistons,Cleveland Cavaliers,110,103
+2026-05-26 19:00:00,2019,Orlando Magic,Portland Trail Blazers,114,128
+2026-05-26 20:00:00,2019,Oklahoma City Thunder,Boston Celtics,95,101
+2026-05-26 22:30:00,2019,Los Angeles Lakers,Denver Nuggets,121,114
+2026-05-26 19:00:00,2019,Charlotte Hornets,Chicago Bulls,135,106
+2026-05-26 19:30:00,2019,New York Knicks,Golden State Warriors,100,128
+2026-05-26 19:30:00,2019,Toronto Raptors,Dallas Mavericks,116,107
+2026-05-26 20:00:00,2019,Houston Rockets,Los Angeles Clippers,113,133
+2026-05-26 20:00:00,2019,Minnesota Timberwolves,Milwaukee Bucks,95,125
+2026-05-26 20:00:00,2019,New Orleans Pelicans,Brooklyn Nets,117,115
+2026-05-26 22:00:00,2019,Sacramento Kings,Washington Wizards,116,112
+2026-05-26 19:00:00,2019,Detroit Pistons,Boston Celtics,89,109
+2026-05-26 19:00:00,2019,New Orleans Pelicans,Utah Jazz,111,132
+2026-05-26 19:30:00,2019,Atlanta Hawks,Chicago Bulls,85,97
+2026-05-26 19:30:00,2019,Cleveland Cavaliers,Indiana Pacers,107,119
+2026-05-26 19:30:00,2019,Philadelphia 76ers,Charlotte Hornets,105,103
+2026-05-26 20:00:00,2019,Memphis Grizzlies,Phoenix Suns,117,96
+2026-05-26 20:00:00,2019,Miami Heat,Portland Trail Blazers,120,111
+2026-05-26 20:30:00,2019,Milwaukee Bucks,Orlando Magic,113,91
+2026-05-26 20:30:00,2019,San Antonio Spurs,Los Angeles Lakers,110,106
+2026-05-26 17:00:00,2019,Brooklyn Nets,Golden State Warriors,114,120
+2026-05-26 19:00:00,2019,Dallas Mavericks,Utah Jazz,104,113
+2026-05-26 19:00:00,2019,Oklahoma City Thunder,Phoenix Suns,117,110
+2026-05-26 21:30:00,2019,Los Angeles Clippers,Washington Wizards,136,104
+2026-05-26 19:00:00,2019,Indiana Pacers,Portland Trail Blazers,93,103
+2026-05-26 19:00:00,2019,Philadelphia 76ers,Atlanta Hawks,113,92
+2026-05-26 19:30:00,2019,Miami Heat,Sacramento Kings,113,123
+2026-05-26 19:30:00,2019,New York Knicks,Brooklyn Nets,115,96
+2026-05-26 20:00:00,2019,Chicago Bulls,Golden State Warriors,124,149
+2026-05-26 20:00:00,2019,Milwaukee Bucks,Toronto Raptors,124,109
+2026-05-26 20:00:00,2019,Minnesota Timberwolves,Los Angeles Lakers,124,120
+2026-05-26 20:30:00,2019,San Antonio Spurs,Dallas Mavericks,113,108
+2026-05-26 21:00:00,2019,Denver Nuggets,New Orleans Pelicans,116,111
+2026-05-26 19:00:00,2019,Charlotte Hornets,Miami Heat,125,113
+2026-05-26 19:00:00,2019,Cleveland Cavaliers,Atlanta Hawks,136,114
+2026-05-26 19:00:00,2019,Orlando Magic,Sacramento Kings,99,107
+2026-05-26 19:30:00,2019,Boston Celtics,Detroit Pistons,108,105
+2026-05-26 19:30:00,2019,Toronto Raptors,Philadelphia 76ers,129,112
+2026-05-26 20:00:00,2019,Houston Rockets,Portland Trail Blazers,85,104
+2026-05-26 20:00:00,2019,Memphis Grizzlies,Washington Wizards,107,95
+2026-05-26 20:00:00,2019,Oklahoma City Thunder,Los Angeles Clippers,128,110
+2026-05-26 19:30:00,2019,Brooklyn Nets,Detroit Pistons,120,119
+2026-05-26 20:00:00,2019,Chicago Bulls,Denver Nuggets,107,108
+2026-05-26 20:00:00,2019,Minnesota Timberwolves,Utah Jazz,128,125
+2026-05-26 20:00:00,2019,New York Knicks,Indiana Pacers,101,107
+2026-05-26 22:30:00,2019,Golden State Warriors,New Orleans Pelicans,131,121
+2026-05-26 22:30:00,2019,Los Angeles Lakers,Dallas Mavericks,114,113
+2026-05-26 22:30:00,2019,Phoenix Suns,San Antonio Spurs,90,120
+2026-05-26 20:00:00,2020,Toronto Raptors,New Orleans Pelicans,130,122
+2026-05-26 22:30:00,2020,Los Angeles Clippers,Los Angeles Lakers,112,102
+2026-05-26 19:00:00,2020,Charlotte Hornets,Chicago Bulls,126,125
+2026-05-26 19:00:00,2020,Indiana Pacers,Detroit Pistons,110,119
+2026-05-26 19:00:00,2020,Orlando Magic,Cleveland Cavaliers,94,85
+2026-05-26 19:30:00,2020,Brooklyn Nets,Minnesota Timberwolves,126,127
+2026-05-26 19:30:00,2020,Miami Heat,Memphis Grizzlies,120,101
+2026-05-26 19:30:00,2020,Philadelphia 76ers,Boston Celtics,107,93
+2026-05-26 20:30:00,2020,Dallas Mavericks,Washington Wizards,108,100
+2026-05-26 20:30:00,2020,San Antonio Spurs,New York Knicks,120,111
+2026-05-26 21:00:00,2020,Utah Jazz,Oklahoma City Thunder,100,95
+2026-05-26 22:00:00,2020,Phoenix Suns,Sacramento Kings,124,95
+2026-05-26 22:00:00,2020,Portland Trail Blazers,Denver Nuggets,100,108
+2026-05-26 19:00:00,2020,Detroit Pistons,Atlanta Hawks,100,117
+2026-05-26 20:00:00,2020,Houston Rockets,Milwaukee Bucks,111,117
+2026-05-26 22:30:00,2020,Golden State Warriors,Los Angeles Clippers,122,141
+2026-05-26 19:00:00,2020,Boston Celtics,Toronto Raptors,112,106
+2026-05-26 19:00:00,2020,Charlotte Hornets,Minnesota Timberwolves,99,121
+2026-05-26 19:30:00,2020,Brooklyn Nets,New York Knicks,113,109
+2026-05-26 20:00:00,2020,Memphis Grizzlies,Chicago Bulls,102,110
+2026-05-26 20:00:00,2020,New Orleans Pelicans,Dallas Mavericks,116,123
+2026-05-26 20:00:00,2020,Oklahoma City Thunder,Washington Wizards,85,97
+2026-05-26 21:00:00,2020,Denver Nuggets,Phoenix Suns,108,107
+2026-05-26 22:00:00,2020,Sacramento Kings,Portland Trail Blazers,112,122
+2026-05-26 22:30:00,2020,Los Angeles Lakers,Utah Jazz,95,86
+2026-05-26 17:00:00,2020,Milwaukee Bucks,Miami Heat,126,131
+2026-05-26 19:00:00,2020,Detroit Pistons,Philadelphia 76ers,111,117
+2026-05-26 19:30:00,2020,Atlanta Hawks,Orlando Magic,103,99
+2026-05-26 19:30:00,2020,New York Knicks,Boston Celtics,95,118
+2026-05-26 20:00:00,2020,Chicago Bulls,Toronto Raptors,84,108
+2026-05-26 20:00:00,2020,Cleveland Cavaliers,Indiana Pacers,110,99
+2026-05-26 20:00:00,2020,Houston Rockets,New Orleans Pelicans,126,123
+2026-05-26 20:30:00,2020,San Antonio Spurs,Washington Wizards,124,122
+2026-05-26 21:00:00,2020,Utah Jazz,Sacramento Kings,113,81
+2026-05-26 22:00:00,2020,Phoenix Suns,Los Angeles Clippers,130,122
+2026-05-26 15:30:00,2020,Oklahoma City Thunder,Golden State Warriors,120,92
+2026-05-26 18:00:00,2020,Memphis Grizzlies,Brooklyn Nets,134,133
+2026-05-26 19:00:00,2020,Dallas Mavericks,Portland Trail Blazers,119,121
+2026-05-26 19:00:00,2020,Minnesota Timberwolves,Miami Heat,116,109
+2026-05-26 21:30:00,2020,Los Angeles Lakers,Charlotte Hornets,120,101
+2026-05-26 19:00:00,2020,New York Knicks,Chicago Bulls,105,98
+2026-05-26 19:00:00,2020,Detroit Pistons,Indiana Pacers,96,94
+2026-05-26 19:30:00,2020,Toronto Raptors,Orlando Magic,104,95
+2026-05-26 19:30:00,2020,Atlanta Hawks,Philadelphia 76ers,103,105
+2026-05-26 20:00:00,2020,Houston Rockets,Oklahoma City Thunder,116,112
+2026-05-26 20:00:00,2020,Milwaukee Bucks,Cleveland Cavaliers,129,112
+2026-05-26 20:00:00,2020,New Orleans Pelicans,Golden State Warriors,123,134
+2026-05-26 20:30:00,2020,San Antonio Spurs,Portland Trail Blazers,113,110
+2026-05-26 22:00:00,2020,Phoenix Suns,Utah Jazz,95,96
+2026-05-26 22:00:00,2020,Sacramento Kings,Denver Nuggets,94,101
+2026-05-26 22:30:00,2020,Los Angeles Clippers,Charlotte Hornets,111,96
+2026-05-26 19:30:00,2020,Miami Heat,Atlanta Hawks,112,97
+2026-05-26 21:00:00,2020,Denver Nuggets,Dallas Mavericks,106,109
+2026-05-26 22:30:00,2020,Los Angeles Lakers,Memphis Grizzlies,120,91
+2026-05-26 19:00:00,2020,Cleveland Cavaliers,Chicago Bulls,117,111
+2026-05-26 19:00:00,2020,Orlando Magic,New York Knicks,95,83
+2026-05-26 19:00:00,2020,Philadelphia 76ers,Minnesota Timberwolves,117,95
+2026-05-26 19:30:00,2020,Boston Celtics,Milwaukee Bucks,116,105
+2026-05-26 19:30:00,2020,Brooklyn Nets,Indiana Pacers,108,118
+2026-05-26 19:30:00,2020,Toronto Raptors,Detroit Pistons,125,113
+2026-05-26 20:00:00,2020,Oklahoma City Thunder,Portland Trail Blazers,99,102
+2026-05-26 20:00:00,2020,Washington Wizards,Houston Rockets,158,159
+2026-05-26 22:00:00,2020,Sacramento Kings,Charlotte Hornets,111,118
+2026-05-26 22:00:00,2020,Utah Jazz,Los Angeles Clippers,110,96
+2026-05-26 22:30:00,2020,Golden State Warriors,Phoenix Suns,110,121
+2026-05-26 19:00:00,2020,Atlanta Hawks,Miami Heat,97,106
+2026-05-26 21:30:00,2020,New Orleans Pelicans,Denver Nuggets,122,107
+2026-05-26 22:30:00,2020,Los Angeles Clippers,San Antonio Spurs,103,97
+2026-05-26 19:00:00,2021,Brooklyn Nets,Golden State Warriors,125,99
+2026-05-26 22:00:00,2021,Los Angeles Lakers,Los Angeles Clippers,109,116
+2026-05-26 19:00:00,2021,Cleveland Cavaliers,Charlotte Hornets,121,114
+2026-05-26 19:00:00,2021,Indiana Pacers,New York Knicks,121,107
+2026-05-26 19:00:00,2021,Orlando Magic,Miami Heat,113,107
+2026-05-26 19:00:00,2021,Philadelphia 76ers,Washington Wizards,113,107
+2026-05-26 19:30:00,2021,Toronto Raptors,New Orleans Pelicans,99,113
+2026-05-26 19:30:00,2021,Boston Celtics,Milwaukee Bucks,122,121
+2026-05-26 20:00:00,2021,Chicago Bulls,Atlanta Hawks,104,124
+2026-05-26 20:00:00,2021,Memphis Grizzlies,San Antonio Spurs,119,131
+2026-05-26 20:00:00,2021,Minnesota Timberwolves,Detroit Pistons,111,101
+2026-05-26 21:00:00,2021,Denver Nuggets,Sacramento Kings,122,124
+2026-05-26 22:00:00,2021,Portland Trail Blazers,Utah Jazz,100,120
+2026-05-26 22:30:00,2021,Phoenix Suns,Dallas Mavericks,106,102
+2026-05-26 12:00:00,2021,Miami Heat,New Orleans Pelicans,111,98
+2026-05-26 14:30:00,2021,Milwaukee Bucks,Golden State Warriors,138,99
+2026-05-26 17:00:00,2021,Boston Celtics,Brooklyn Nets,95,123
+2026-05-26 20:00:00,2021,Los Angeles Lakers,Dallas Mavericks,138,115
+2026-05-26 22:30:00,2021,Denver Nuggets,Los Angeles Clippers,108,121
+2026-05-26 17:00:00,2021,Memphis Grizzlies,Atlanta Hawks,112,122
+2026-05-26 19:00:00,2021,Charlotte Hornets,Oklahoma City Thunder,107,109
+2026-05-26 19:00:00,2021,Detroit Pistons,Cleveland Cavaliers,119,128
+2026-05-26 19:00:00,2021,Washington Wizards,Orlando Magic,120,130
+2026-05-26 19:30:00,2021,New York Knicks,Philadelphia 76ers,89,109
+2026-05-26 20:00:00,2021,Chicago Bulls,Indiana Pacers,106,125
+2026-05-26 20:30:00,2021,San Antonio Spurs,Toronto Raptors,119,114
+2026-05-26 21:00:00,2021,Utah Jazz,Minnesota Timberwolves,111,116
+2026-05-26 22:00:00,2021,Portland Trail Blazers,Houston Rockets,128,126
+2026-05-26 22:00:00,2021,Sacramento Kings,Phoenix Suns,106,103
+2026-05-26 15:30:00,2021,Los Angeles Clippers,Dallas Mavericks,73,124
+2026-05-26 19:00:00,2021,New Orleans Pelicans,San Antonio Spurs,98,95
+2026-05-26 19:00:00,2021,Washington Wizards,Orlando Magic,113,120
+2026-05-26 19:00:00,2021,Charlotte Hornets,Brooklyn Nets,106,104
+2026-05-26 19:30:00,2021,Cleveland Cavaliers,Philadelphia 76ers,118,94
+2026-05-26 19:30:00,2021,New York Knicks,Milwaukee Bucks,130,110
+2026-05-26 20:00:00,2021,Indiana Pacers,Boston Celtics,108,107
+2026-05-26 20:00:00,2021,Chicago Bulls,Golden State Warriors,128,129
+2026-05-26 21:00:00,2021,Sacramento Kings,Phoenix Suns,100,116
+2026-05-26 22:00:00,2021,Los Angeles Lakers,Minnesota Timberwolves,127,91
+2026-05-26 19:30:00,2021,Brooklyn Nets,Memphis Grizzlies,111,116
+2026-05-26 19:30:00,2021,Atlanta Hawks,Detroit Pistons,128,120
+2026-05-26 20:00:00,2021,Oklahoma City Thunder,Utah Jazz,109,110
+2026-05-26 21:00:00,2021,Denver Nuggets,Houston Rockets,124,111
+2026-05-26 22:00:00,2021,Los Angeles Lakers,Portland Trail Blazers,107,115
+2026-05-26 19:00:00,2021,Cleveland Cavaliers,New York Knicks,86,95
+2026-05-26 19:00:00,2021,Detroit Pistons,Golden State Warriors,106,116
+2026-05-26 19:00:00,2021,Indiana Pacers,Boston Celtics,111,116
+2026-05-26 19:00:00,2021,Washington Wizards,Chicago Bulls,107,115
+2026-05-26 19:00:00,2021,Philadelphia 76ers,Toronto Raptors,100,93
+2026-05-26 19:30:00,2021,Miami Heat,Milwaukee Bucks,97,144
+2026-05-26 20:00:00,2021,Oklahoma City Thunder,Orlando Magic,107,118
+2026-05-26 22:00:00,2021,Phoenix Suns,New Orleans Pelicans,111,86
+2026-05-26 22:00:00,2021,Sacramento Kings,Denver Nuggets,125,115
+2026-05-26 22:00:00,2021,Los Angeles Clippers,Minnesota Timberwolves,124,101
+2026-05-26 19:30:00,2021,Miami Heat,Milwaukee Bucks,119,108
+2026-05-26 19:30:00,2021,Brooklyn Nets,Atlanta Hawks,145,141
+2026-05-26 19:30:00,2021,Boston Celtics,Memphis Grizzlies,126,107
+2026-05-26 20:30:00,2021,Dallas Mavericks,Charlotte Hornets,99,118
+2026-05-26 20:30:00,2021,San Antonio Spurs,Los Angeles Lakers,107,121
+2026-05-26 22:00:00,2021,Los Angeles Clippers,Portland Trail Blazers,128,105
+2026-05-26 15:00:00,2021,Indiana Pacers,Cleveland Cavaliers,119,99
+2026-05-26 17:00:00,2021,Washington Wizards,Chicago Bulls,130,133
+2026-05-26 18:30:00,2021,Orlando Magic,Philadelphia 76ers,92,116
+2026-05-26 19:00:00,2021,Houston Rockets,Sacramento Kings,122,119
+2026-05-26 19:30:00,2021,Toronto Raptors,New York Knicks,100,83
+2026-05-26 20:00:00,2021,Oklahoma City Thunder,New Orleans Pelicans,80,113
+2026-05-26 21:00:00,2021,Utah Jazz,Phoenix Suns,95,106
+2026-05-26 19:30:00,2022,Milwaukee Bucks,Brooklyn Nets,127,104
+2026-05-26 22:00:00,2022,Los Angeles Lakers,Golden State Warriors,114,121
+2026-05-26 19:00:00,2022,Charlotte Hornets,Indiana Pacers,123,122
+2026-05-26 19:00:00,2022,Detroit Pistons,Chicago Bulls,88,94
+2026-05-26 19:30:00,2022,New York Knicks,Boston Celtics,138,134
+2026-05-26 19:30:00,2022,Toronto Raptors,Washington Wizards,83,98
+2026-05-26 20:00:00,2022,Memphis Grizzlies,Cleveland Cavaliers,132,121
+2026-05-26 20:00:00,2022,Minnesota Timberwolves,Houston Rockets,124,106
+2026-05-26 20:00:00,2022,New Orleans Pelicans,Philadelphia 76ers,97,117
+2026-05-26 20:30:00,2022,San Antonio Spurs,Orlando Magic,123,97
+2026-05-26 21:00:00,2022,Utah Jazz,Oklahoma City Thunder,107,86
+2026-05-26 22:00:00,2022,Portland Trail Blazers,Sacramento Kings,121,124
+2026-05-26 22:00:00,2022,Phoenix Suns,Denver Nuggets,98,110
+2026-05-26 19:30:00,2022,Atlanta Hawks,Dallas Mavericks,113,87
+2026-05-26 20:00:00,2022,Miami Heat,Milwaukee Bucks,137,95
+2026-05-26 22:00:00,2022,Golden State Warriors,Los Angeles Clippers,115,113
+2026-05-26 19:00:00,2022,Orlando Magic,New York Knicks,96,121
+2026-05-26 19:00:00,2022,Washington Wizards,Indiana Pacers,135,134
+2026-05-26 19:00:00,2022,Cleveland Cavaliers,Charlotte Hornets,112,123
+2026-05-26 19:30:00,2022,Boston Celtics,Toronto Raptors,83,115
+2026-05-26 19:30:00,2022,Philadelphia 76ers,Brooklyn Nets,109,114
+2026-05-26 20:00:00,2022,Houston Rockets,Oklahoma City Thunder,124,91
+2026-05-26 20:00:00,2022,Chicago Bulls,New Orleans Pelicans,128,112
+2026-05-26 21:00:00,2022,Denver Nuggets,San Antonio Spurs,102,96
+2026-05-26 22:00:00,2022,Los Angeles Lakers,Phoenix Suns,105,115
+2026-05-26 22:00:00,2022,Sacramento Kings,Utah Jazz,101,110
+2026-05-26 18:00:00,2022,Cleveland Cavaliers,Atlanta Hawks,101,95
+2026-05-26 19:00:00,2022,Indiana Pacers,Miami Heat,102,91
+2026-05-26 19:30:00,2022,Toronto Raptors,Dallas Mavericks,95,103
+2026-05-26 20:00:00,2022,Chicago Bulls,Detroit Pistons,97,82
+2026-05-26 20:00:00,2022,Minnesota Timberwolves,New Orleans Pelicans,96,89
+2026-05-26 20:30:00,2022,San Antonio Spurs,Milwaukee Bucks,111,121
+2026-05-26 22:00:00,2022,Portland Trail Blazers,Phoenix Suns,134,105
+2026-05-26 22:30:00,2022,Los Angeles Clippers,Memphis Grizzlies,114,120
+2026-05-26 16:00:00,2022,Brooklyn Nets,Charlotte Hornets,95,111
+2026-05-26 19:00:00,2022,Houston Rockets,Boston Celtics,97,107
+2026-05-26 19:00:00,2022,New York Knicks,Orlando Magic,104,110
+2026-05-26 19:00:00,2022,Oklahoma City Thunder,Philadelphia 76ers,103,115
+2026-05-26 21:00:00,2022,Sacramento Kings,Golden State Warriors,107,119
+2026-05-26 21:30:00,2022,Los Angeles Lakers,Memphis Grizzlies,121,118
+2026-05-26 19:00:00,2022,Charlotte Hornets,Boston Celtics,129,140
+2026-05-26 19:00:00,2022,Indiana Pacers,Milwaukee Bucks,109,119
+2026-05-26 19:30:00,2022,Toronto Raptors,Chicago Bulls,108,111
+2026-05-26 19:30:00,2022,Miami Heat,Orlando Magic,107,90
+2026-05-26 19:30:00,2022,Brooklyn Nets,Washington Wizards,104,90
+2026-05-26 19:30:00,2022,Atlanta Hawks,Detroit Pistons,122,104
+2026-05-26 20:00:00,2022,Minnesota Timberwolves,New Orleans Pelicans,98,107
+2026-05-26 21:00:00,2022,Denver Nuggets,Cleveland Cavaliers,87,99
+2026-05-26 22:30:00,2022,Los Angeles Clippers,Portland Trail Blazers,116,86
+2026-05-26 19:30:00,2022,New York Knicks,Philadelphia 76ers,112,99
+2026-05-26 20:00:00,2022,Oklahoma City Thunder,Golden State Warriors,98,106
+2026-05-26 20:30:00,2022,San Antonio Spurs,Los Angeles Lakers,121,125
+2026-05-26 20:30:00,2022,Dallas Mavericks,Houston Rockets,116,106
+2026-05-26 22:00:00,2022,Utah Jazz,Denver Nuggets,122,110
+2026-05-26 19:00:00,2022,Orlando Magic,Charlotte Hornets,111,120
+2026-05-26 19:30:00,2022,Boston Celtics,Washington Wizards,107,116
+2026-05-26 19:30:00,2022,Brooklyn Nets,Miami Heat,93,106
+2026-05-26 19:30:00,2022,Toronto Raptors,Indiana Pacers,118,100
+2026-05-26 19:30:00,2022,New Orleans Pelicans,Atlanta Hawks,99,102
+2026-05-26 20:00:00,2022,Milwaukee Bucks,Minnesota Timberwolves,108,113
+2026-05-26 20:00:00,2022,Oklahoma City Thunder,Los Angeles Lakers,123,115
+2026-05-26 22:00:00,2022,Phoenix Suns,Sacramento Kings,107,110
+2026-05-26 22:00:00,2022,Portland Trail Blazers,Memphis Grizzlies,116,96
+2026-05-26 22:30:00,2022,Los Angeles Clippers,Cleveland Cavaliers,79,92
+2026-05-26 19:00:00,2022,Washington Wizards,Atlanta Hawks,122,111
+2026-05-26 19:00:00,2022,Philadelphia 76ers,Detroit Pistons,110,102
+2026-05-26 20:00:00,2022,Houston Rockets,Utah Jazz,91,122
+2026-05-26 20:00:00,2022,Chicago Bulls,New York Knicks,103,104
+2026-05-26 20:30:00,2022,Dallas Mavericks,San Antonio Spurs,104,99
+2026-05-26 22:00:00,2022,Golden State Warriors,Memphis Grizzlies,101,104
+2026-05-26 19:00:00,2022,Toronto Raptors,Orlando Magic,110,109
+2026-05-26 19:30:00,2022,Miami Heat,Charlotte Hornets,114,99
+2026-05-26 19:30:00,2022,Brooklyn Nets,Indiana Pacers,105,98
+2026-05-26 20:00:00,2022,New Orleans Pelicans,Sacramento Kings,109,113
+2026-05-26 22:00:00,2022,Denver Nuggets,Dallas Mavericks,106,75
+2026-05-26 22:00:00,2022,Portland Trail Blazers,Los Angeles Clippers,111,92
+2026-05-26 22:30:00,2022,Los Angeles Lakers,Cleveland Cavaliers,113,101
+2026-05-26 17:00:00,2022,Washington Wizards,Boston Celtics,115,112
+2026-05-26 19:00:00,2022,Detroit Pistons,Orlando Magic,110,103
+2026-05-26 19:00:00,2022,New Orleans Pelicans,New York Knicks,117,123
+2026-05-26 19:30:00,2022,Indiana Pacers,Toronto Raptors,94,97
+2026-05-26 19:30:00,2022,Philadelphia 76ers,Atlanta Hawks,122,94
+2026-05-26 20:00:00,2022,Chicago Bulls,Utah Jazz,107,99
+2026-05-26 20:00:00,2022,Memphis Grizzlies,Miami Heat,103,129
+2026-05-26 20:00:00,2022,Milwaukee Bucks,San Antonio Spurs,93,102
+2026-05-26 20:30:00,2022,Golden State Warriors,Oklahoma City Thunder,103,82
+2026-05-26 21:00:00,2022,Minnesota Timberwolves,Denver Nuggets,91,93
+2026-05-26 22:00:00,2022,Phoenix Suns,Cleveland Cavaliers,101,92
+2026-05-26 15:30:00,2022,Dallas Mavericks,Sacramento Kings,105,99
+2026-05-26 19:00:00,2022,Charlotte Hornets,Portland Trail Blazers,125,113
+2026-05-26 19:00:00,2022,Milwaukee Bucks,Utah Jazz,95,107
+2026-05-26 19:30:00,2022,Brooklyn Nets,Detroit Pistons,117,91
+2026-05-26 22:30:00,2022,Los Angeles Lakers,Houston Rockets,95,85
+2026-05-26 19:30:00,2023,Boston Celtics,Philadelphia 76ers,126,117
+2026-05-26 22:00:00,2023,Golden State Warriors,Los Angeles Lakers,123,109
+2026-05-26 19:00:00,2023,Detroit Pistons,Orlando Magic,113,109
+2026-05-26 19:00:00,2023,Indiana Pacers,Washington Wizards,107,114
+2026-05-26 19:30:00,2023,Atlanta Hawks,Houston Rockets,117,107
+2026-05-26 19:30:00,2023,Brooklyn Nets,New Orleans Pelicans,108,130
+2026-05-26 19:30:00,2023,Memphis Grizzlies,New York Knicks,115,112
+2026-05-26 19:30:00,2023,Miami Heat,Chicago Bulls,108,116
+2026-05-26 19:30:00,2023,Toronto Raptors,Cleveland Cavaliers,108,105
+2026-05-26 20:00:00,2023,Minnesota Timberwolves,Oklahoma City Thunder,115,108
+2026-05-26 20:00:00,2023,San Antonio Spurs,Charlotte Hornets,102,129
+2026-05-26 21:00:00,2023,Utah Jazz,Denver Nuggets,123,102
+2026-05-26 22:00:00,2023,Phoenix Suns,Dallas Mavericks,107,105
+2026-05-26 22:00:00,2023,Sacramento Kings,Portland Trail Blazers,108,115
+2026-05-26 19:30:00,2023,Philadelphia 76ers,Milwaukee Bucks,88,90
+2026-05-26 22:00:00,2023,Los Angeles Lakers,Los Angeles Clippers,97,103
+2026-05-26 19:00:00,2023,Charlotte Hornets,New Orleans Pelicans,112,124
+2026-05-26 19:00:00,2023,Indiana Pacers,San Antonio Spurs,134,137
+2026-05-26 19:00:00,2023,Washington Wizards,Chicago Bulls,102,100
+2026-05-26 19:30:00,2023,Atlanta Hawks,Orlando Magic,108,98
+2026-05-26 19:30:00,2023,Brooklyn Nets,Toronto Raptors,109,105
+2026-05-26 19:30:00,2023,Miami Heat,Boston Celtics,104,111
+2026-05-26 19:30:00,2023,New York Knicks,Detroit Pistons,130,106
+2026-05-26 20:00:00,2023,Houston Rockets,Memphis Grizzlies,122,129
+2026-05-26 20:00:00,2023,Minnesota Timberwolves,Utah Jazz,126,132
+2026-05-26 22:00:00,2023,Golden State Warriors,Denver Nuggets,123,128
+2026-05-26 22:00:00,2023,Portland Trail Blazers,Phoenix Suns,113,111
+2026-05-26 18:00:00,2023,Philadelphia 76ers,San Antonio Spurs,105,114
+2026-05-26 19:00:00,2023,Indiana Pacers,Detroit Pistons,124,115
+2026-05-26 19:00:00,2023,Orlando Magic,Boston Celtics,120,126
+2026-05-26 20:00:00,2023,Chicago Bulls,Cleveland Cavaliers,96,128
+2026-05-26 20:00:00,2023,Miami Heat,Toronto Raptors,112,109
+2026-05-26 20:00:00,2023,Milwaukee Bucks,Houston Rockets,125,105
+2026-05-26 20:30:00,2023,Dallas Mavericks,Memphis Grizzlies,137,96
+2026-05-26 21:00:00,2023,Denver Nuggets,Oklahoma City Thunder,122,117
+2026-05-26 22:00:00,2023,Sacramento Kings,Los Angeles Clippers,109,111
+2026-05-26 15:30:00,2023,Los Angeles Lakers,Portland Trail Blazers,104,106
+2026-05-26 17:00:00,2023,Atlanta Hawks,Charlotte Hornets,109,126
+2026-05-26 19:00:00,2023,Cleveland Cavaliers,Washington Wizards,117,107
+2026-05-26 19:00:00,2023,New Orleans Pelicans,Utah Jazz,121,122
+2026-05-26 20:00:00,2023,Oklahoma City Thunder,Minnesota Timberwolves,106,116
+2026-05-26 20:30:00,2023,Golden State Warriors,Sacramento Kings,130,125
+2026-05-26 22:00:00,2023,Los Angeles Clippers,Phoenix Suns,95,112
+2026-05-26 19:00:00,2023,Philadelphia 76ers,Indiana Pacers,120,106
+2026-05-26 19:30:00,2023,Miami Heat,Toronto Raptors,90,98
+2026-05-26 19:30:00,2023,New York Knicks,Orlando Magic,115,102
+2026-05-26 20:00:00,2023,Chicago Bulls,Boston Celtics,120,102
+2026-05-26 20:00:00,2023,Houston Rockets,Utah Jazz,114,108
+2026-05-26 20:00:00,2023,Memphis Grizzlies,Brooklyn Nets,134,124
+2026-05-26 20:00:00,2023,Minnesota Timberwolves,San Antonio Spurs,106,115
+2026-05-26 22:00:00,2023,Portland Trail Blazers,Denver Nuggets,135,110
+2026-05-26 19:00:00,2023,Washington Wizards,Detroit Pistons,120,99
+2026-05-26 19:30:00,2023,New Orleans Pelicans,Dallas Mavericks,113,111
+2026-05-26 20:00:00,2023,Oklahoma City Thunder,Los Angeles Clippers,108,94
+2026-05-26 22:00:00,2023,Phoenix Suns,Golden State Warriors,134,105
+2026-05-26 19:00:00,2023,Cleveland Cavaliers,Orlando Magic,103,92
+2026-05-26 19:00:00,2023,Detroit Pistons,Atlanta Hawks,113,118
+2026-05-26 19:30:00,2023,Milwaukee Bucks,Brooklyn Nets,110,99
+2026-05-26 19:30:00,2023,New York Knicks,Charlotte Hornets,134,131
+2026-05-26 19:30:00,2023,Toronto Raptors,Philadelphia 76ers,119,109
+2026-05-26 20:00:00,2023,Chicago Bulls,Indiana Pacers,124,109
+2026-05-26 20:00:00,2023,Minnesota Timberwolves,San Antonio Spurs,134,122
+2026-05-26 21:00:00,2023,Utah Jazz,Houston Rockets,109,101
+2026-05-26 22:00:00,2023,Denver Nuggets,Los Angeles Lakers,110,99
+2026-05-26 22:00:00,2023,Portland Trail Blazers,Miami Heat,98,119
+2026-05-26 19:30:00,2023,Brooklyn Nets,Dallas Mavericks,125,129
+2026-05-26 20:00:00,2023,Oklahoma City Thunder,Los Angeles Clippers,118,110
+2026-05-26 22:00:00,2023,Golden State Warriors,Miami Heat,123,110
+2026-05-26 22:00:00,2023,Sacramento Kings,Memphis Grizzlies,110,125
+2026-05-26 19:00:00,2023,Detroit Pistons,Atlanta Hawks,112,136
+2026-05-26 19:00:00,2023,Orlando Magic,Charlotte Hornets,113,93
+2026-05-26 19:30:00,2023,Boston Celtics,Cleveland Cavaliers,123,132
+2026-05-26 19:30:00,2023,Toronto Raptors,Philadelphia 76ers,90,112
+2026-05-26 19:30:00,2023,Washington Wizards,Indiana Pacers,117,127
+2026-05-26 20:00:00,2023,Milwaukee Bucks,New York Knicks,119,108
+2026-05-26 20:00:00,2023,Minnesota Timberwolves,Los Angeles Lakers,111,102
+2026-05-26 20:30:00,2023,San Antonio Spurs,Chicago Bulls,129,124
+2026-05-26 21:00:00,2023,Denver Nuggets,Utah Jazz,117,101
+2026-05-26 22:00:00,2023,Phoenix Suns,New Orleans Pelicans,124,111
+2026-05-26 22:00:00,2023,Portland Trail Blazers,Houston Rockets,125,111
+2026-05-26 18:00:00,2023,Sacramento Kings,Miami Heat,119,113
+2026-05-26 19:00:00,2023,Charlotte Hornets,Golden State Warriors,120,113
+2026-05-26 19:30:00,2023,Brooklyn Nets,Indiana Pacers,116,125
+2026-05-26 20:00:00,2023,Chicago Bulls,Philadelphia 76ers,109,114
+2026-05-26 20:00:00,2023,Milwaukee Bucks,Atlanta Hawks,123,115
+2026-05-26 21:00:00,2023,Dallas Mavericks,Oklahoma City Thunder,111,117
+2026-05-26 21:00:00,2023,Utah Jazz,Memphis Grizzlies,124,123
+2026-05-26 15:00:00,2023,Los Angeles Clippers,New Orleans Pelicans,91,112
+2026-05-26 18:00:00,2023,Boston Celtics,Washington Wizards,112,94
+2026-05-26 18:00:00,2023,Cleveland Cavaliers,New York Knicks,121,108
+2026-05-26 18:00:00,2023,Detroit Pistons,Golden State Warriors,128,114
+2026-05-26 19:00:00,2023,San Antonio Spurs,Minnesota Timberwolves,107,98
+2026-05-26 19:30:00,2023,Dallas Mavericks,Orlando Magic,114,105
+2026-05-26 21:00:00,2023,Phoenix Suns,Houston Rockets,124,109
+2026-05-26 21:30:00,2023,Los Angeles Lakers,Denver Nuggets,121,110
+2026-05-26 19:00:00,2023,Charlotte Hornets,Sacramento Kings,108,115
+2026-05-26 19:00:00,2023,Washington Wizards,Philadelphia 76ers,111,118
+2026-05-26 19:30:00,2023,Brooklyn Nets,Indiana Pacers,116,109
+2026-05-26 19:30:00,2023,Toronto Raptors,Atlanta Hawks,139,109
+2026-05-26 20:00:00,2023,Milwaukee Bucks,Detroit Pistons,110,108
+2026-05-26 21:00:00,2023,Utah Jazz,Memphis Grizzlies,121,105
+2026-05-26 22:30:00,2023,Los Angeles Clippers,Houston Rockets,95,93
+2026-05-26 19:30:00,2024,Denver Nuggets,Los Angeles Lakers,119,107
+2026-05-26 22:00:00,2024,Golden State Warriors,Phoenix Suns,104,108
+2026-05-26 19:00:00,2024,Orlando Magic,Houston Rockets,116,86
+2026-05-26 19:00:00,2024,New York Knicks,Boston Celtics,104,108
+2026-05-26 19:00:00,2024,Indiana Pacers,Washington Wizards,143,120
+2026-05-26 19:00:00,2024,Charlotte Hornets,Atlanta Hawks,116,110
+2026-05-26 19:30:00,2024,Miami Heat,Detroit Pistons,103,102
+2026-05-26 19:30:00,2024,Toronto Raptors,Minnesota Timberwolves,97,94
+2026-05-26 19:30:00,2024,Brooklyn Nets,Cleveland Cavaliers,113,114
+2026-05-26 20:00:00,2024,Memphis Grizzlies,New Orleans Pelicans,104,111
+2026-05-26 20:00:00,2024,Chicago Bulls,Oklahoma City Thunder,104,124
+2026-05-26 21:00:00,2024,Utah Jazz,Sacramento Kings,114,130
+2026-05-26 21:30:00,2024,San Antonio Spurs,Dallas Mavericks,119,126
+2026-05-26 22:30:00,2024,Los Angeles Clippers,Portland Trail Blazers,123,111
+2026-05-26 19:30:00,2024,Milwaukee Bucks,Philadelphia 76ers,118,117
+2026-05-26 22:00:00,2024,Los Angeles Lakers,Phoenix Suns,100,95
+2026-05-26 19:00:00,2024,Memphis Grizzlies,Denver Nuggets,104,108
+2026-05-26 19:00:00,2024,Charlotte Hornets,Detroit Pistons,99,111
+2026-05-26 19:30:00,2024,Atlanta Hawks,New York Knicks,120,126
+2026-05-26 19:30:00,2024,Cleveland Cavaliers,Oklahoma City Thunder,105,108
+2026-05-26 19:30:00,2024,Boston Celtics,Miami Heat,119,111
+2026-05-26 20:00:00,2024,Chicago Bulls,Toronto Raptors,104,103
+2026-05-26 20:00:00,2024,San Antonio Spurs,Houston Rockets,126,122
+2026-05-26 20:30:00,2024,Dallas Mavericks,Brooklyn Nets,125,120
+2026-05-26 21:30:00,2024,Utah Jazz,Los Angeles Clippers,120,118
+2026-05-26 22:00:00,2024,Portland Trail Blazers,Orlando Magic,97,102
+2026-05-26 22:00:00,2024,Sacramento Kings,Golden State Warriors,114,122
+2026-05-26 19:00:00,2024,Detroit Pistons,Chicago Bulls,118,102
+2026-05-26 19:00:00,2024,Washington Wizards,Memphis Grizzlies,113,106
+2026-05-26 19:00:00,2024,New Orleans Pelicans,New York Knicks,96,87
+2026-05-26 19:30:00,2024,Cleveland Cavaliers,Indiana Pacers,113,125
+2026-05-26 19:30:00,2024,Toronto Raptors,Philadelphia 76ers,107,114
+2026-05-26 20:00:00,2024,Minnesota Timberwolves,Miami Heat,106,90
+2026-05-26 22:00:00,2024,Phoenix Suns,Utah Jazz,126,104
+2026-05-26 15:30:00,2024,Oklahoma City Thunder,Denver Nuggets,95,128
+2026-05-26 19:00:00,2024,Houston Rockets,Golden State Warriors,95,106
+2026-05-26 19:00:00,2024,Milwaukee Bucks,Atlanta Hawks,110,127
+2026-05-26 19:30:00,2024,Philadelphia 76ers,Portland Trail Blazers,126,98
+2026-05-26 21:00:00,2024,Los Angeles Clippers,San Antonio Spurs,123,83
+2026-05-26 21:00:00,2024,Sacramento Kings,Los Angeles Lakers,132,127
+2026-05-26 19:00:00,2024,Indiana Pacers,Chicago Bulls,105,112
+2026-05-26 19:00:00,2024,Washington Wizards,Boston Celtics,107,126
+2026-05-26 19:00:00,2024,Charlotte Hornets,Brooklyn Nets,121,133
+2026-05-26 19:30:00,2024,Toronto Raptors,Portland Trail Blazers,91,99
+2026-05-26 19:30:00,2024,Atlanta Hawks,Minnesota Timberwolves,127,113
+2026-05-26 20:00:00,2024,Memphis Grizzlies,Dallas Mavericks,110,125
+2026-05-26 20:00:00,2024,Milwaukee Bucks,Miami Heat,122,114
+2026-05-26 20:00:00,2024,New Orleans Pelicans,Golden State Warriors,102,130
+2026-05-26 20:00:00,2024,Oklahoma City Thunder,Detroit Pistons,124,112
+2026-05-26 21:00:00,2024,Denver Nuggets,Utah Jazz,110,102
+2026-05-26 22:30:00,2024,Los Angeles Lakers,Orlando Magic,106,103
+2026-05-26 19:30:00,2024,Cleveland Cavaliers,New York Knicks,91,109
+2026-05-26 22:00:00,2024,Phoenix Suns,San Antonio Spurs,114,115
+2026-05-26 22:30:00,2024,Los Angeles Clippers,Orlando Magic,118,102
+2026-05-26 19:30:00,2025,Boston Celtics,New York Knicks,132,109
+2026-05-26 22:00:00,2025,Los Angeles Lakers,Minnesota Timberwolves,110,103
+2026-05-26 19:00:00,2025,Detroit Pistons,Indiana Pacers,109,115
+2026-05-26 19:30:00,2025,Atlanta Hawks,Brooklyn Nets,120,116
+2026-05-26 19:30:00,2025,Miami Heat,Orlando Magic,97,116
+2026-05-26 19:30:00,2025,Philadelphia 76ers,Milwaukee Bucks,109,124
+2026-05-26 19:30:00,2025,Toronto Raptors,Cleveland Cavaliers,106,136
+2026-05-26 20:00:00,2025,Houston Rockets,Charlotte Hornets,105,110
+2026-05-26 20:00:00,2025,New Orleans Pelicans,Chicago Bulls,123,111
+2026-05-26 21:00:00,2025,Utah Jazz,Memphis Grizzlies,124,126
+2026-05-26 22:00:00,2025,Los Angeles Clippers,Phoenix Suns,113,116
+2026-05-26 22:00:00,2025,Portland Trail Blazers,Golden State Warriors,104,140
+2026-05-26 19:00:00,2025,Washington Wizards,Boston Celtics,102,122
+2026-05-26 19:30:00,2025,Dallas Mavericks,San Antonio Spurs,120,109
+2026-05-26 22:00:00,2025,Sacramento Kings,Minnesota Timberwolves,115,117
+2026-05-26 22:00:00,2025,Denver Nuggets,Oklahoma City Thunder,87,102
+2026-05-26 19:00:00,2025,Orlando Magic,Brooklyn Nets,116,101
+2026-05-26 19:00:00,2025,Toronto Raptors,Philadelphia 76ers,115,107
+2026-05-26 19:30:00,2025,Atlanta Hawks,Charlotte Hornets,125,120
+2026-05-26 19:30:00,2025,Cleveland Cavaliers,Detroit Pistons,113,101
+2026-05-26 19:30:00,2025,New York Knicks,Indiana Pacers,123,98
+2026-05-26 20:00:00,2025,Houston Rockets,Memphis Grizzlies,128,108
+2026-05-26 20:00:00,2025,Milwaukee Bucks,Chicago Bulls,122,133
+2026-05-26 21:30:00,2025,Utah Jazz,Golden State Warriors,86,127
+2026-05-26 22:00:00,2025,Los Angeles Lakers,Phoenix Suns,123,116
+2026-05-26 22:00:00,2025,Portland Trail Blazers,New Orleans Pelicans,103,105
+2026-05-26 17:00:00,2025,Denver Nuggets,Los Angeles Clippers,104,109
+2026-05-26 19:00:00,2025,Washington Wizards,Cleveland Cavaliers,116,135
+2026-05-26 19:00:00,2025,Detroit Pistons,Boston Celtics,118,124
+2026-05-26 19:00:00,2025,Charlotte Hornets,Miami Heat,106,114
+2026-05-26 20:00:00,2025,Memphis Grizzlies,Orlando Magic,124,111
+2026-05-26 20:00:00,2025,Minnesota Timberwolves,Toronto Raptors,112,101
+2026-05-26 20:00:00,2025,Chicago Bulls,Oklahoma City Thunder,95,114
+2026-05-26 20:30:00,2025,San Antonio Spurs,Houston Rockets,109,106
+2026-05-26 22:00:00,2025,Phoenix Suns,Dallas Mavericks,114,102
+2026-05-26 22:30:00,2025,Los Angeles Lakers,Sacramento Kings,131,127
+2026-05-26 15:30:00,2025,Indiana Pacers,Philadelphia 76ers,114,118
+2026-05-26 18:00:00,2025,Portland Trail Blazers,New Orleans Pelicans,125,103
+2026-05-26 18:00:00,2025,Brooklyn Nets,Milwaukee Bucks,115,102
+2026-05-26 19:00:00,2025,Oklahoma City Thunder,Atlanta Hawks,128,104
+2026-05-26 20:30:00,2025,Golden State Warriors,Los Angeles Clippers,104,112
+2026-05-26 19:00:00,2025,Orlando Magic,Indiana Pacers,119,115
+2026-05-26 19:30:00,2025,Atlanta Hawks,Washington Wizards,119,121
+2026-05-26 19:30:00,2025,Boston Celtics,Milwaukee Bucks,119,108
+2026-05-26 19:30:00,2025,Toronto Raptors,Denver Nuggets,125,127
+2026-05-26 19:30:00,2025,Miami Heat,Detroit Pistons,106,98
+2026-05-26 19:30:00,2025,New York Knicks,Cleveland Cavaliers,104,110
+2026-05-26 20:00:00,2025,San Antonio Spurs,Houston Rockets,101,106
+2026-05-26 20:00:00,2025,Memphis Grizzlies,Chicago Bulls,123,126
+2026-05-26 20:30:00,2025,Dallas Mavericks,Utah Jazz,110,102
+2026-05-26 22:00:00,2025,Sacramento Kings,Portland Trail Blazers,111,98
+2026-05-26 22:00:00,2025,Phoenix Suns,Los Angeles Lakers,109,105
+2026-05-26 19:30:00,2025,Brooklyn Nets,Denver Nuggets,139,144
+2026-05-26 19:30:00,2025,Minnesota Timberwolves,Dallas Mavericks,114,120
+2026-05-26 21:00:00,2025,Utah Jazz,Sacramento Kings,96,113
+2026-05-26 22:00:00,2025,Golden State Warriors,New Orleans Pelicans,124,106
+2026-05-26 19:00:00,2025,Philadelphia 76ers,Detroit Pistons,95,105
+2026-05-26 19:00:00,2025,Washington Wizards,Atlanta Hawks,133,120
+2026-05-26 19:00:00,2025,Indiana Pacers,Boston Celtics,135,132
+2026-05-26 19:00:00,2025,Cleveland Cavaliers,Los Angeles Lakers,134,110
+2026-05-26 19:00:00,2025,Charlotte Hornets,Toronto Raptors,138,133
+2026-05-26 19:30:00,2025,Miami Heat,New York Knicks,107,116
+2026-05-26 20:00:00,2025,Chicago Bulls,Orlando Magic,102,99
+2026-05-26 20:00:00,2025,Memphis Grizzlies,Brooklyn Nets,106,119
+2026-05-26 21:30:00,2025,Oklahoma City Thunder,San Antonio Spurs,105,93
+2026-05-26 22:00:00,2025,Golden State Warriors,New Orleans Pelicans,104,89
+2026-05-26 22:30:00,2025,Los Angeles Clippers,Portland Trail Blazers,105,106
+2026-05-26 20:00:00,2025,Memphis Grizzlies,Milwaukee Bucks,122,99
+2026-05-26 20:30:00,2025,Dallas Mavericks,Houston Rockets,102,108
+2026-05-26 21:00:00,2025,Utah Jazz,San Antonio Spurs,88,106
+2026-05-26 22:30:00,2025,Los Angeles Clippers,Phoenix Suns,119,125

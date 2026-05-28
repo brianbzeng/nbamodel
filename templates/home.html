@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Home | ESPN Odds Predictor{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Resume-ready NBA analytics project</p>
+    <h1>Odds prediction with a scraper, an Elo model, and a clean browser UI.</h1>
+    <p class="lede">
+      This project pulls NBA game results from Basketball-Reference, normalizes the data, and
+      turns it into live Elo standings that you can explore in the browser.
+    </p>
+  </div>
+  <div class="hero-panel">
+    <div class="metric">
+      <span>Games tracked</span>
+      <strong>{{ stats.game_count or 0 }}</strong>
+    </div>
+    <div class="metric">
+      <span>Teams modeled</span>
+      <strong>{{ stats.team_count or 0 }}</strong>
+    </div>
+    <div class="metric">
+      <span>Seasons covered</span>
+      <strong>{{ stats.season_count or 0 }}</strong>
+    </div>
+    <div class="metric">
+      <span>Latest season</span>
+      <strong>{{ stats.latest_season or "N/A" }}</strong>
+    </div>
+  </div>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <h2>What it does</h2>
+    <ul class="feature-list">
+      <li>Scrapes regular-season NBA results</li>
+      <li>Cleans and normalizes team names into abbreviations</li>
+      <li>Runs an Elo model with home-court advantage and margin weighting</li>
+      <li>Saves processed CSV outputs for analysis and presentation</li>
+    </ul>
+  </article>
+
+  <article class="card">
+    <h2>How the pipeline works</h2>
+    <ol class="feature-list ordered">
+      <li>Scrape game results from Basketball-Reference.</li>
+      <li>Clean the data and normalize team names.</li>
+      <li>Run Elo ratings across the full season history.</li>
+      <li>Render the latest standings on the leaderboard page.</li>
+    </ol>
+  </article>
+</section>
+
+<section class="card story">
+  <h2>Bayesian Elo</h2>
+  <p>
+    The model treats each team rating like a belief that gets updated after every game. Ratings
+    begin at a shared prior, then move toward a posterior estimate based on the result and how
+    surprising it was. A favorite winning by a lot shifts the rating only a little, while an
+    underdog win creates a larger update because the evidence contradicts the prior more strongly.
+  </p>
+  <p>
+    That is the core Bayesian idea here: start with a prior, observe evidence, and update the
+    estimate rather than replacing it. The result is a rating system that is simple enough to
+    explain, but still feels probabilistic and data-driven.
+  </p>
+</section>
+
+<section class="card">
+  <div class="section-header">
+    <h2>Current top team</h2>
+    <p>Based on the latest processed dataset.</p>
+  </div>
+  {% if stats.top_team %}
+    <div class="featured-team">
+      <strong>{{ stats.top_team.team }}</strong>
+      <span>Rating {{ "%.1f"|format(stats.top_team.rating) }}</span>
+      <span>Rank #{{ stats.top_team.rank }}</span>
+    </div>
+  {% else %}
+    <p class="muted">No processed data has been loaded yet. Use the Scrape page to import games.</p>
+  {% endif %}
+</section>
+{% endblock %}

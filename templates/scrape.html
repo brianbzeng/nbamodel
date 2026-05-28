@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Scrape | ESPN Odds Predictor{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Data import</p>
+    <h1>Scrape NBA games</h1>
+    <p class="lede">
+      Import regular-season games for any season range, then refresh the processed dataset and
+      leaderboard in one step.
+    </p>
+  </div>
+</section>
+
+<section class="grid scrape-grid">
+  <article class="card">
+    <form method="post" class="form">
+      <label>
+        <span>Start season end year</span>
+        <input name="start_season" type="number" value="{{ start_season }}" min="1947" step="1" />
+      </label>
+      <label>
+        <span>End season end year</span>
+        <input name="end_season" type="number" value="{{ end_season }}" min="1947" step="1" />
+      </label>
+      <button type="submit">Scrape games</button>
+    </form>
+
+    {% if message %}
+      <div class="notice success">{{ message }}</div>
+    {% endif %}
+    {% if error %}
+      <div class="notice error">{{ error }}</div>
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <div class="section-header">
+      <h2>Processed preview</h2>
+      <p>Top entries from the refreshed leaderboard data.</p>
+    </div>
+    {% if preview %}
+      <div class="table-wrap">
+        <table class="leaderboard">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Team</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in preview %}
+              <tr>
+                <td>{{ row.rank }}</td>
+                <td>{{ row.team }}</td>
+                <td>{{ "%.1f"|format(row.rating) }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted">No scrape has been run in this session yet.</p>
+    {% endif %}
+  </article>
+</section>
+{% endblock %}

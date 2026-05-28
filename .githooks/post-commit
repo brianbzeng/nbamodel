@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+
+remote_url="$(git config --get remote.origin.url || true)"
+if [ -z "$remote_url" ]; then
+  echo "[post-commit] No origin remote is configured, skipping automatic push."
+  exit 0
+fi
+
+branch="$(git rev-parse --abbrev-ref HEAD)"
+git push origin "$branch"
