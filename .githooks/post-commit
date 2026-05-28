@@ -8,4 +8,4 @@ if [ -z "$remote_url" ]; then
 fi
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
-git push origin "$branch"
+GIT_TERMINAL_PROMPT=0 git push origin "$branch"
