@@ -1,16 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Home | ESPN Odds Predictor{% endblock %}
+{% block title %}Home | {{ app_title or "NBA Odds Predictor" }}{% endblock %}
 {% block content %}
-<section class="hero">
+<section class="hero hero-home">
   <div class="hero-copy">
-    <p class="eyebrow">Resume-ready NBA analytics project</p>
-    <h1>Odds prediction with a scraper, an Elo model, and a clean browser UI.</h1>
+    <p class="eyebrow">NBA scraper and rating dashboard</p>
+    <h1>NBA Odds Predictor</h1>
     <p class="lede">
-      This project pulls NBA game results from Basketball-Reference, normalizes the data, and
-      turns it into live Elo standings that you can explore in the browser.
+      A Basketball-Reference scraper plus a Bayesian-flavored Elo model that turns completed
+      NBA games into a live, browser-based leaderboard.
+    </p>
+    <p class="lede">
+      The project stays intentionally narrow: pull games, normalize them, update ratings, and
+      present the current state of the model with enough detail to explain what is happening.
     </p>
   </div>
-  <div class="hero-panel">
+
+  <div class="hero-panel stats-panel">
     <div class="metric">
       <span>Games tracked</span>
       <strong>{{ stats.game_count or 0 }}</strong>
@@ -27,59 +32,90 @@
       <span>Latest season</span>
       <strong>{{ stats.latest_season or "N/A" }}</strong>
     </div>
+    <div class="metric metric-accent">
+      <span>Latest season games</span>
+      <strong>{{ stats.latest_season_games or 0 }}</strong>
+    </div>
+    <div class="metric metric-accent">
+      <span>Last updated</span>
+      <strong>{{ stats.last_updated or "N/A" }}</strong>
+    </div>
+    <div class="home-actions">
+      <form
+        method="post"
+        action="{{ url_for('reset_data') }}"
+        data-show-loading="true"
+        data-confirm="Reset all scraped data, processed data, and saved results?"
+      >
+        <button type="submit" class="button-danger">Reset data</button>
+      </form>
+    </div>
   </div>
+</section>
+
+<section class="grid pipeline-grid">
+  <article class="card pipeline-card">
+    <h2>Scraping</h2>
+    <ul class="feature-list">
+      <li>Basketball-Reference regular-season pages are parsed season by season.</li>
+      <li>Only finished games are written to the raw CSV output.</li>
+      <li>Current-season scrapes only include games that have already been played.</li>
+    </ul>
+  </article>
+
+  <article class="card pipeline-card">
+    <h2>Cleaning</h2>
+    <ul class="feature-list">
+      <li>Team names are normalized into NBA abbreviations such as BOS, GSW, and DEN.</li>
+      <li>Game rows are stamped with `home_win` and `margin` for model input.</li>
+      <li>Processed data is saved so the leaderboard can be rebuilt on demand.</li>
+    </ul>
+  </article>
+
+  <article class="card pipeline-card">
+    <h2>Elo updates</h2>
+    <ul class="feature-list">
+      <li>Every team starts from a 1500-point prior rating.</li>
+      <li>Home-court advantage shifts the expected win probability upward for the home team.</li>
+      <li>Margin of victory scales the size of the update when results are more or less surprising.</li>
+    </ul>
+  </article>
+
+  <article class="card pipeline-card">
+    <h2>Outputs</h2>
+    <ul class="feature-list">
+      <li>The leaderboard reflects the live current-season ratings, or the most recent season if the current one has not started yet.</li>
+      <li>Ratings can be refreshed from the latest scrape at any time.</li>
+      <li>Data files can be reset if a scrape gets messy or you want to start over cleanly.</li>
+    </ul>
+  </article>
 </section>
 
 <section class="grid">
   <article class="card">
-    <h2>What it does</h2>
+    <h2>What 1500 means</h2>
+    <p>
+      In this project, 1500 is the prior rating assigned to every team before the model sees any
+      games. It is not a points-scored stat, just a shared starting belief.
+    </p>
     <ul class="feature-list">
-      <li>Scrapes regular-season NBA results</li>
-      <li>Cleans and normalizes team names into abbreviations</li>
-      <li>Runs an Elo model with home-court advantage and margin weighting</li>
-      <li>Saves processed CSV outputs for analysis and presentation</li>
+      <li>Expected performance is measured as a difference relative to that baseline.</li>
+      <li>Ratings above 1500 indicate a team has outperformed the prior.</li>
+      <li>Ratings below 1500 indicate a team has underperformed the prior.</li>
     </ul>
   </article>
 
   <article class="card">
-    <h2>How the pipeline works</h2>
-    <ol class="feature-list ordered">
-      <li>Scrape game results from Basketball-Reference.</li>
-      <li>Clean the data and normalize team names.</li>
-      <li>Run Elo ratings across the full season history.</li>
-      <li>Render the latest standings on the leaderboard page.</li>
-    </ol>
+    <h2>Latest snapshot</h2>
+    {% if stats.latest_season %}
+      <div class="featured-team">
+        <strong>Season {{ stats.latest_season }}</strong>
+        <span>{{ stats.latest_season_games }} games in the live season dataset</span>
+        <span>Leaderboard reflects the live Elo state for that season.</span>
+      </div>
+    {% else %}
+      <p class="muted">No processed data has been loaded yet. Use the Scrape page to import games.</p>
+    {% endif %}
   </article>
-</section>
-
-<section class="card story">
-  <h2>Bayesian Elo</h2>
-  <p>
-    The model treats each team rating like a belief that gets updated after every game. Ratings
-    begin at a shared prior, then move toward a posterior estimate based on the result and how
-    surprising it was. A favorite winning by a lot shifts the rating only a little, while an
-    underdog win creates a larger update because the evidence contradicts the prior more strongly.
-  </p>
-  <p>
-    That is the core Bayesian idea here: start with a prior, observe evidence, and update the
-    estimate rather than replacing it. The result is a rating system that is simple enough to
-    explain, but still feels probabilistic and data-driven.
-  </p>
-</section>
-
-<section class="card">
-  <div class="section-header">
-    <h2>Current top team</h2>
-    <p>Based on the latest processed dataset.</p>
-  </div>
-  {% if stats.top_team %}
-    <div class="featured-team">
-      <strong>{{ stats.top_team.team }}</strong>
-      <span>Rating {{ "%.1f"|format(stats.top_team.rating) }}</span>
-      <span>Rank #{{ stats.top_team.rank }}</span>
-    </div>
-  {% else %}
-    <p class="muted">No processed data has been loaded yet. Use the Scrape page to import games.</p>
-  {% endif %}
 </section>
 {% endblock %}

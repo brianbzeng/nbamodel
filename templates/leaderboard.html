@@ -1,14 +1,29 @@
 {% extends "base.html" %}
-{% block title %}Leaderboard | ESPN Odds Predictor{% endblock %}
+{% block title %}Leaderboard | {{ app_title or "NBA Odds Predictor" }}{% endblock %}
 {% block content %}
 <section class="page-heading">
   <div>
     <p class="eyebrow">Live Elo standings</p>
     <h1>Leaderboard</h1>
     <p class="lede">
-      Current team ratings from the latest processed dataset.
+      Live team ratings from the current season, or the most recent season if the current one has
+      not started yet.
       {% if latest_season %}Latest season included: {{ latest_season }}.{% endif %}
+      The board always reflects the current Elo state of the latest live dataset.
     </p>
+  </div>
+
+  <div class="page-actions">
+    <form method="post" action="{{ url_for('refresh_leaderboard') }}" data-show-loading="true">
+      <button type="submit" class="button-primary">Refresh leaderboard</button>
+    </form>
+  </div>
+</section>
+
+<section class="card info-card">
+  <div class="info-row">
+    <span>Data snapshot</span>
+    <strong>{{ last_updated or "Not available yet" }}</strong>
   </div>
 </section>
 

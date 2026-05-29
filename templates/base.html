@@ -3,17 +3,19 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>{% block title %}ESPN Odds Predictor{% endblock %}</title>
+    <title>{% block title %}{{ app_title or "NBA Odds Predictor" }}{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+    <script defer src="{{ url_for('static', filename='app.js') }}"></script>
   </head>
   <body>
+    <div class="loading-bar" id="loading-bar" aria-hidden="true"></div>
     <div class="page-shell">
       <header class="topbar">
         <a class="brand" href="{{ url_for('home') }}">
-          <span class="brand-mark">EO</span>
+          <span class="brand-mark">NB</span>
           <span class="brand-copy">
-            <strong>ESPN Odds Predictor</strong>
-            <small>NBA scraper and Elo dashboard</small>
+            <strong>{{ app_title or "NBA Odds Predictor" }}</strong>
+            <small>NBA scraper, Bayesian Elo, and live leaderboard</small>
           </span>
         </a>
         <nav class="nav">
@@ -22,6 +24,16 @@
           {% endfor %}
         </nav>
       </header>
+
+      <section class="flash-stack" aria-live="polite">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </section>
 
       <main class="content">
         {% block content %}{% endblock %}
