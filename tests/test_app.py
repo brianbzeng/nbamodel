@@ -9,7 +9,7 @@ def test_homepage_contains_project_sections():
 
     assert response.status_code == 200
     assert "NBA Odds Predictor" in body
-    assert "Bayesian Elo" in body
+    assert "NBA Elo Model" in body
     assert "Current-season behavior" not in body
 
 
@@ -85,7 +85,7 @@ def test_bayesian_page_renders():
     body = response.get_data(as_text=True)
 
     assert response.status_code == 200
-    assert "Bayesian Elo, written out" in body
+    assert "NBA Elo Model - Inner Statistical Workings" in body
     assert "Beta" in body
     assert "1500" in body
     assert "<math" in body

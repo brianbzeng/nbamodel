@@ -1,23 +1,36 @@
 {% extends "base.html" %}
-{% block title %}Bayesian Elo | {{ app_title or "NBA Odds Predictor" }}{% endblock %}
+{% block title %}NBA Elo Model - Inner Statistical Workings | {{ app_title or "NBA Odds Predictor" }}{% endblock %}
 {% block content %}
 <section class="page-heading">
   <div>
-    <p class="eyebrow">Method</p>
-    <h1>Bayesian Elo, written out</h1>
+    <p class="eyebrow">Model</p>
+    <h1>NBA Elo Model - Inner Statistical Workings</h1>
     <p class="lede">
-      This page separates the exact Bayesian benchmark from the Elo-style approximation used in
-      the app so the math is explicit and easy to inspect.
+      This page explains the actual update mechanics used by the app. It is inspired by Bayesian
+      thinking in the sense that ratings evolve by incorporating evidence, but it does not use a
+      conjugate prior or posterior in the code.
     </p>
   </div>
+</section>
+
+<section class="card note-card">
+  <div class="section-header">
+    <h2>Biggest issue</h2>
+  </div>
+  <p class="callout">
+    The old title implied Bayesian posterior inference. The model actually uses Elo, logistic win
+    probability, margin-of-victory adjustment, and season regression. That is an update rule, not
+    a posterior calculation.
+  </p>
 </section>
 
 <section class="grid method-grid">
   <article class="card math-card">
     <h2>1. A true conjugate benchmark</h2>
     <p>
-      If we were modeling a single team's win probability as a fixed parameter, the clean
-      conjugate pair is a Beta prior with a Bernoulli likelihood.
+      This section is included only as a comparison point. It shows what actual Bayesian updating
+      looks like for a single fixed win probability, which is not how the team-vs-team rating
+      system works.
     </p>
     <div class="math-block">
       <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
@@ -67,31 +80,6 @@
       </math>
       <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
         <mrow>
-          <mi>p</mi>
-          <mo>(</mo>
-          <mi>&theta;</mi>
-          <mo>|</mo>
-          <mi>y</mi>
-          <mo>)</mo>
-          <mo>&propto;</mo>
-          <msup>
-            <mi>&theta;</mi>
-            <mrow><msub><mi>&alpha;</mi><mn>0</mn></msub><mo>+</mo><mi>y</mi><mo>&minus;</mo><mn>1</mn></mrow>
-          </msup>
-          <msup>
-            <mrow><mo>(</mo><mn>1</mn><mo>&minus;</mo><mi>&theta;</mi><mo>)</mo></mrow>
-            <mrow>
-              <msub><mi>&beta;</mi><mn>0</mn></msub>
-              <mo>+</mo>
-              <mo>(</mo><mn>1</mn><mo>&minus;</mo><mi>y</mi><mo>)</mo>
-              <mo>&minus;</mo>
-              <mn>1</mn>
-            </mrow>
-          </msup>
-        </mrow>
-      </math>
-      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-        <mrow>
           <mi>&theta;</mi>
           <mo>|</mo>
           <mi>y</mi>
@@ -105,59 +93,47 @@
         </mrow>
       </math>
     </div>
-    <p class="muted">
-      That is the exact conjugate story, but it is not the rating system this app uses.
-    </p>
+    <blockquote class="callout">
+      This benchmark models a single team's underlying win probability and is shown for
+      comparison. It is not suitable for opponent-specific ratings, which is why Elo is used
+      instead.
+    </blockquote>
   </article>
 
   <article class="card math-card">
-    <h2>2. The prior used in this app</h2>
+    <h2>2. Initialization at 1500</h2>
     <p>
-      Each team starts with the same prior rating centered at 1500:
+      The app does not sample ratings from a distribution. Every team is initialized at the same
+      baseline rating before any game results are observed.
     </p>
     <div class="math-block">
       <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
         <mrow>
           <msub><mi>r</mi><mi>i</mi></msub>
-          <mo>&sim;</mo>
-          <mtext>N</mtext>
-          <mo>(</mo>
+          <mo>=</mo>
           <mn>1500</mn>
-          <mo>,</mo>
-          <msup><msub><mi>&sigma;</mi><mn>0</mn></msub><mn>2</mn></msup>
-          <mo>)</mo>
         </mrow>
       </math>
     </div>
-    <p>
-      Here, 1500 is only the shared starting belief. It is not a point total or an offensive
-      stat. It is a baseline around which ratings move up or down as game evidence arrives.
-    </p>
+    <blockquote class="callout">
+      Each team is initialized at a common baseline rating of 1500 before any game results are
+      observed.
+    </blockquote>
   </article>
 </section>
 
 <section class="card math-card">
-  <h2>3. Likelihood and expected win probability</h2>
+  <h2>3. Logistic win probability</h2>
   <p>
-    The app uses the standard Elo logistic curve for the home team's expected win probability:
+    The model converts rating differences into a home-win probability with a standard Elo logistic
+    curve.
   </p>
   <div class="math-block">
     <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
       <mrow>
-        <msub><mi>p</mi><mtext>home</mtext></msub>
-        <mo>=</mo>
-        <mi>&sigma;</mi>
+        <mi>P</mi>
         <mo>(</mo>
-        <mfrac>
-          <mrow>
-            <msub><mi>r</mi><mtext>home</mtext></msub>
-            <mo>&minus;</mo>
-            <msub><mi>r</mi><mtext>away</mtext></msub>
-            <mo>+</mo>
-            <mi>h</mi>
-          </mrow>
-          <mi>s</mi>
-        </mfrac>
+        <mtext>home win</mtext>
         <mo>)</mo>
         <mo>=</mo>
         <mfrac>
@@ -166,7 +142,7 @@
             <mn>1</mn>
             <mo>+</mo>
             <msup>
-              <mi>e</mi>
+              <mn>10</mn>
               <mrow>
                 <mo>&minus;</mo>
                 <mfrac>
@@ -186,116 +162,121 @@
       </mrow>
     </math>
   </div>
-  <ul class="feature-list">
-    <li><code>h</code> is the home-court advantage bonus, set in the model as a fixed shift.</li>
-    <li><code>s</code> is the rating scale factor that controls how quickly probability changes with rating gaps.</li>
-    <li>Differences in ratings translate into probabilities, not directly into points scored.</li>
-  </ul>
-</section>
-
-<section class="grid method-grid">
-  <article class="card math-card">
-    <h2>4. Posterior update used by the model</h2>
-    <p>
-      Because the logistic likelihood is not conjugate with the Gaussian prior, the app uses an
-      online approximation instead of a closed-form posterior. The update rule is:
-    </p>
-    <div class="math-block">
-      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-        <mrow>
-          <msub><mi>r</mi><mtext>home</mtext></msub>
-          <mo>(</mo><mtext>new</mtext><mo>)</mo>
-          <mo>=</mo>
-          <msub><mi>r</mi><mtext>home</mtext></msub>
-          <mo>+</mo>
-          <mi>K</mi>
-          <mo>&#x2062;</mo>
-          <mi>m</mi>
-          <mo>&#x2062;</mo>
-          <mo>(</mo>
-          <mi>y</mi>
-          <mo>&minus;</mo>
-          <msub><mi>p</mi><mtext>home</mtext></msub>
-          <mo>)</mo>
-        </mrow>
-      </math>
-      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-        <mrow>
-          <msub><mi>r</mi><mtext>away</mtext></msub>
-          <mo>(</mo><mtext>new</mtext><mo>)</mo>
-          <mo>=</mo>
-          <msub><mi>r</mi><mtext>away</mtext></msub>
-          <mo>&minus;</mo>
-          <mi>K</mi>
-          <mo>&#x2062;</mo>
-          <mi>m</mi>
-          <mo>&#x2062;</mo>
-          <mo>(</mo>
-          <mi>y</mi>
-          <mo>&minus;</mo>
-          <msub><mi>p</mi><mtext>home</mtext></msub>
-          <mo>)</mo>
-        </mrow>
-      </math>
-      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-        <mrow>
-          <mi>m</mi>
-          <mo>=</mo>
-          <mi>log</mi>
-          <mo>(</mo>
-          <mrow><mi>margin</mi><mo>+</mo><mn>1</mn></mrow>
-          <mo>)</mo>
-        </mrow>
-      </math>
-    </div>
-    <p>
-      The term <code>y - p_home</code> is the surprise term. A result that matches the expectation
-      changes the rating only a little. A surprising upset changes it more.
-    </p>
-  </article>
-
-  <article class="card math-card">
-    <h2>5. Season regression</h2>
-    <p>
-      Between seasons, ratings are pulled back toward the prior:
-    </p>
-    <div class="math-block">
-      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-        <mrow>
-          <msub>
-            <mi>r</mi>
-            <mrow><mi>i</mi><mo>,</mo><mtext>next season</mtext></mrow>
-          </msub>
-          <mo>=</mo>
-          <mi>&lambda;</mi>
-          <mo>&#x2062;</mo>
-          <msub>
-            <mi>r</mi>
-            <mrow><mi>i</mi><mo>,</mo><mtext>end of season</mtext></mrow>
-          </msub>
-          <mo>+</mo>
-          <mrow>
-            <mo>(</mo><mn>1</mn><mo>&minus;</mo><mi>&lambda;</mi><mo>)</mo>
-            <mo>&#x2062;</mo>
-            <mn>1500</mn>
-          </mrow>
-        </mrow>
-      </math>
-    </div>
-    <p>
-      This keeps the model from becoming overly certain forever and lets new information matter at
-      the start of a season.
-    </p>
-  </article>
+  <p class="muted">
+    The code uses the same relationship through a sigmoid helper, so either notation is fine.
+  </p>
 </section>
 
 <section class="card math-card">
-  <h2>What that means in practice</h2>
-  <ul class="feature-list">
-    <li>A team that keeps winning moves above 1500.</li>
-    <li>A team that loses to expected opponents drifts below 1500.</li>
-    <li>Home court and blowout margin change how large each update is.</li>
-    <li>The leaderboard is therefore a live reflection of the latest live season data.</li>
-  </ul>
+  <h2>4. Rating update rule</h2>
+  <p>
+    This is the main update step. It is an Elo update, not a Bayesian posterior computation.
+  </p>
+  <div class="math-block">
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+      <mrow>
+        <mi>&#x0394;</mi>
+        <mo>=</mo>
+        <mi>K</mi>
+        <mo>&#x2062;</mo>
+        <mi>m</mi>
+        <mo>&#x2062;</mo>
+        <mo>(</mo>
+        <mi>y</mi>
+        <mo>&minus;</mo>
+        <mi>p</mi>
+        <mo>)</mo>
+      </mrow>
+    </math>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+      <mrow>
+        <msup><msub><mi>r</mi><mtext>home</mtext></msub><mtext>new</mtext></msup>
+        <mo>=</mo>
+        <msub><mi>r</mi><mtext>home</mtext></msub>
+        <mo>+</mo>
+        <mi>&#x0394;</mi>
+      </mrow>
+    </math>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+      <mrow>
+        <msup><msub><mi>r</mi><mtext>away</mtext></msub><mtext>new</mtext></msup>
+        <mo>=</mo>
+        <msub><mi>r</mi><mtext>away</mtext></msub>
+        <mo>&minus;</mo>
+        <mi>&#x0394;</mi>
+      </mrow>
+    </math>
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+      <mrow>
+        <mi>m</mi>
+        <mo>=</mo>
+        <mi>log</mi>
+        <mo>(</mo>
+        <mrow><mi>margin</mi><mo>+</mo><mn>1</mn></mrow>
+        <mo>)</mo>
+      </mrow>
+    </math>
+  </div>
+  <p>
+    The surprise term <code>y - p</code> drives the update. Winning as expected changes ratings a
+    little. Winning or losing in a surprising way changes them more.
+  </p>
+</section>
+
+<section class="card math-card">
+  <h2>5. Season regression</h2>
+  <p>
+    Between seasons, ratings are pulled back toward the baseline so they do not stay locked to
+    one historical run forever.
+  </p>
+  <div class="math-block">
+    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
+      <mrow>
+        <msub>
+          <mi>r</mi>
+          <mrow><mi>i</mi><mo>,</mo><mtext>next season</mtext></mrow>
+        </msub>
+        <mo>=</mo>
+        <mi>&lambda;</mi>
+        <mo>&#x2062;</mo>
+        <msub>
+          <mi>r</mi>
+          <mrow><mi>i</mi><mo>,</mo><mtext>end of season</mtext></mrow>
+        </msub>
+        <mo>+</mo>
+        <mrow>
+          <mo>(</mo><mn>1</mn><mo>&minus;</mo><mi>&lambda;</mi><mo>)</mo>
+          <mo>&#x2062;</mo>
+          <mn>1500</mn>
+        </mrow>
+      </mrow>
+    </math>
+  </div>
+  <blockquote class="callout">
+    This prevents ratings from becoming permanently anchored to historical performance and allows
+    teams to change over time.
+  </blockquote>
+</section>
+
+<section class="card">
+  <h2>Current parameters</h2>
+  <div class="grid method-grid parameter-grid">
+    <article class="card parameter-card">
+      <h3><code>K</code></h3>
+      <p>Base update strength. Higher values make ratings move faster after each game.</p>
+    </article>
+    <article class="card parameter-card">
+      <h3><code>h</code></h3>
+      <p>Home-court adjustment added to the home team's rating gap before computing win probability.</p>
+    </article>
+    <article class="card parameter-card">
+      <h3><code>s</code></h3>
+      <p>Scale factor in the logistic win probability. It controls how quickly probabilities change as ratings separate.</p>
+    </article>
+    <article class="card parameter-card">
+      <h3><code>&lambda;</code></h3>
+      <p>Season regression factor. Values closer to 1 preserve more of last season's rating; lower values pull harder toward 1500.</p>
+    </article>
+  </div>
 </section>
 {% endblock %}

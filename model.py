@@ -17,7 +17,7 @@ def win_prob(r_home, r_away, hca=50, scale=400):
 
 def update_ratings(ratings, home, away, y, k=20, hca=50, scale=400, margin=None):
     """
-    One-game Elo/Bayesian-style update.
+    One-game Elo-style update.
     ratings: dict[team -> rating]
     home, away: team codes (e.g. 'GSW')
     y: 1 if home won, 0 if home lost
