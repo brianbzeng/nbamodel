@@ -542,6 +542,38 @@ tbody tr:nth-child(even) {
   align-items: start;
 }
 
+.predictor-grid {
+  align-items: start;
+}
+
+.form-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.injury-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.section-header.compact {
+  margin: 8px 0 0;
+}
+
+.section-header.compact h2 {
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.predictor-summary {
+  margin-bottom: 16px;
+}
+
+.predictor-results {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 16px;
+}
+
 @media (max-width: 920px) {
   .hero,
   .grid {
@@ -573,6 +605,12 @@ tbody tr:nth-child(even) {
 
   h1 {
     font-size: 2.15rem;
+  }
+
+  .form-columns,
+  .injury-grid,
+  .predictor-results {
+    grid-template-columns: 1fr;
   }
 }
 

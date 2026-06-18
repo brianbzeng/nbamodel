@@ -13,6 +13,7 @@ NBA game scraper and Elo rating browser app built from Basketball-Reference data
 
 - `Home` explains the project, the pipeline, and the current-season behavior
 - `Leaderboard` shows the latest team ratings and can be refreshed from the processed data
+- `Predictor` trains the home-win models on completed games and scores a custom matchup
 - `Scrape` imports NBA games for a chosen season range and refreshes the processed dataset
 - `NBA Elo Model` walks through the update rule, logistic win probability, and season regression in math notation
 
