@@ -574,6 +574,10 @@ tbody tr:nth-child(even) {
   margin-bottom: 16px;
 }
 
+.predictor-results-three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 @media (max-width: 920px) {
   .hero,
   .grid {
@@ -609,6 +613,7 @@ tbody tr:nth-child(even) {
 
   .form-columns,
   .injury-grid,
+  .predictor-results-three,
   .predictor-results {
     grid-template-columns: 1fr;
   }

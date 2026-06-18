@@ -6,8 +6,8 @@
     <p class="eyebrow">Model feature</p>
     <h1>Home-win predictor</h1>
     <p class="lede">
-      Use the class-project model inside the app: choose a matchup, set a game date, optionally
-      override injury counts, and compare the logistic regression and random forest predictions.
+      Pick a home team and away team, then let the app combine recent team form, Elo rating,
+      blended strength, and the latest saved injury context into a game prediction.
     </p>
   </div>
 </section>
@@ -16,30 +16,20 @@
   <article class="card">
     <div class="section-header">
       <h2>Matchup inputs</h2>
-      <p>Predictions are built from historical team form up to the selected date.</p>
+      <p>The app uses the latest processed season automatically.</p>
     </div>
 
     {% if error %}
       <div class="notice error">{{ error }}</div>
     {% endif %}
 
+    <div class="featured-team predictor-summary">
+      <strong>Season {{ selected_season or "N/A" }}</strong>
+      <span>Latest completed games through {{ latest_completed_date or "N/A" }}</span>
+      <span>Prediction target date {{ prediction_date or "N/A" }}</span>
+    </div>
+
     <form method="post" class="form" data-show-loading="true">
-      <label>
-        <span>Season end year</span>
-        <select name="season">
-          {% for season in seasons %}
-            <option value="{{ season }}" {% if season == selected_season %}selected{% endif %}>
-              {{ season }}
-            </option>
-          {% endfor %}
-        </select>
-      </label>
-
-      <label>
-        <span>Game date</span>
-        <input name="game_date" type="date" value="{{ game_date }}" />
-      </label>
-
       <div class="form-columns">
         <label>
           <span>Home team</span>
@@ -60,46 +50,6 @@
         </label>
       </div>
 
-      <div class="section-header compact">
-        <h2>Optional injury overrides</h2>
-        <p>Leave these at zero if you want to ignore manual injury inputs.</p>
-      </div>
-
-      <div class="form-columns injury-grid">
-        <label>
-          <span>Home out</span>
-          <input name="home_out_count" type="number" min="0" step="1" value="{{ injury_inputs.home_out_count }}" />
-        </label>
-        <label>
-          <span>Away out</span>
-          <input name="away_out_count" type="number" min="0" step="1" value="{{ injury_inputs.away_out_count }}" />
-        </label>
-        <label>
-          <span>Home doubtful</span>
-          <input name="home_doubtful_count" type="number" min="0" step="1" value="{{ injury_inputs.home_doubtful_count }}" />
-        </label>
-        <label>
-          <span>Away doubtful</span>
-          <input name="away_doubtful_count" type="number" min="0" step="1" value="{{ injury_inputs.away_doubtful_count }}" />
-        </label>
-        <label>
-          <span>Home questionable</span>
-          <input name="home_questionable_count" type="number" min="0" step="1" value="{{ injury_inputs.home_questionable_count }}" />
-        </label>
-        <label>
-          <span>Away questionable</span>
-          <input name="away_questionable_count" type="number" min="0" step="1" value="{{ injury_inputs.away_questionable_count }}" />
-        </label>
-        <label>
-          <span>Home probable</span>
-          <input name="home_probable_count" type="number" min="0" step="1" value="{{ injury_inputs.home_probable_count }}" />
-        </label>
-        <label>
-          <span>Away probable</span>
-          <input name="away_probable_count" type="number" min="0" step="1" value="{{ injury_inputs.away_probable_count }}" />
-        </label>
-      </div>
-
       <button type="submit" class="button-primary">Generate prediction</button>
     </form>
   </article>
@@ -107,28 +57,36 @@
   <article class="card">
     <div class="section-header">
       <h2>Prediction output</h2>
-      <p>Both models are trained on all completed games before the selected date.</p>
+      <p>The models are trained on all completed games before the target date.</p>
     </div>
 
     {% if prediction %}
       <div class="featured-team predictor-summary">
         <strong>{{ prediction.matchup }}</strong>
-        <span>Season {{ prediction.season }} | {{ prediction.game_date }}</span>
+        <span>Season {{ prediction.season }} | projected for {{ prediction.game_date }}</span>
         <span>
           {% if prediction.injury_data_used %}
-            Historical injury features available for this dataset
+            Latest saved injury report was folded into the matchup features
           {% else %}
-            No historical injury file detected, using game-form features only
+            No injury file was found, so this run used team-form and Elo features only
           {% endif %}
         </span>
       </div>
 
-      <div class="grid predictor-results">
+      <div class="grid predictor-results predictor-results-three">
         <div class="metric metric-accent">
+          <span>Elo winner</span>
+          <strong>{{ prediction.elo.predicted_winner }}</strong>
+        </div>
+        <div class="metric metric-accent">
+          <span>Elo home win %</span>
+          <strong>{{ "%.1f"|format(prediction.elo.home_win_probability * 100) }}%</strong>
+        </div>
+        <div class="metric">
           <span>Logistic winner</span>
           <strong>{{ prediction.logistic.predicted_winner }}</strong>
         </div>
-        <div class="metric metric-accent">
+        <div class="metric">
           <span>Logistic home win %</span>
           <strong>{{ "%.1f"|format(prediction.logistic.home_win_probability * 100) }}%</strong>
         </div>
@@ -163,6 +121,16 @@
               <td>{{ "%.3f"|format(prediction.context.away_team_strength) }}</td>
             </tr>
             <tr>
+              <td>Elo rating</td>
+              <td>{{ "%.1f"|format(prediction.context.home_elo_rating) }}</td>
+              <td>{{ "%.1f"|format(prediction.context.away_elo_rating) }}</td>
+            </tr>
+            <tr>
+              <td>Blended strength</td>
+              <td>{{ "%.3f"|format(prediction.context.home_blended_strength) }}</td>
+              <td>{{ "%.3f"|format(prediction.context.away_blended_strength) }}</td>
+            </tr>
+            <tr>
               <td>Rest days</td>
               <td>{{ prediction.context.home_rest_days }}</td>
               <td>{{ prediction.context.away_rest_days }}</td>
@@ -178,14 +146,18 @@
               <td>{{ "%.1f"|format(prediction.context.away_injury_impact_score) }}</td>
             </tr>
             <tr>
-              <td>Strength diff</td>
-              <td colspan="2">{{ "%.3f"|format(prediction.context.team_strength_diff) }}</td>
+              <td>Elo diff</td>
+              <td colspan="2">{{ "%.1f"|format(prediction.context.elo_diff) }}</td>
+            </tr>
+            <tr>
+              <td>Blended diff</td>
+              <td colspan="2">{{ "%.3f"|format(prediction.context.blended_strength_diff) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
     {% else %}
-      <p class="muted">Choose a matchup and submit the form to see model predictions.</p>
+      <p class="muted">Choose a matchup and submit the form to see the combined prediction.</p>
     {% endif %}
   </article>
 </section>

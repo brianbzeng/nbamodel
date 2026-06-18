@@ -12,7 +12,7 @@ from flask import Flask, flash, redirect, render_template, request, send_from_di
 
 from cleaner import clean_games, normalize_team_names
 from model import run_elo
-from predictor import get_prediction_seasons, get_prediction_teams, predict_matchup_from_games
+from predictor import get_latest_prediction_context, predict_matchup_from_games
 from scraper import scrape_bref_season_games, scrape_multiple_seasons
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -322,31 +322,15 @@ def create_app() -> Flask:
 
         try:
             games = load_processed_games()
-            seasons = get_prediction_seasons(games)
-            default_season = seasons[-1]
-            selected_season = int(request.form.get("season", default_season))
-            teams = get_prediction_teams(games, selected_season)
+            context = get_latest_prediction_context(games)
+            selected_season = int(context["season"])
+            prediction_date = context["prediction_date"]
+            latest_completed_date = context["latest_completed_date"]
+            teams = context["teams"]
             default_home_team = teams[0] if teams else ""
             default_away_team = teams[1] if len(teams) > 1 else default_home_team
-            game_date = request.form.get("game_date", datetime.now().strftime("%Y-%m-%d"))
             home_team = request.form.get("home_team", default_home_team)
             away_team = request.form.get("away_team", default_away_team)
-
-            # Keep the manual injury overrides lightweight for quick front-end use.
-            def parse_count(field_name: str) -> float:
-                raw_value = request.form.get(field_name, "0").strip()
-                return float(raw_value) if raw_value else 0.0
-
-            injury_inputs = {
-                "home_out_count": parse_count("home_out_count"),
-                "away_out_count": parse_count("away_out_count"),
-                "home_doubtful_count": parse_count("home_doubtful_count"),
-                "away_doubtful_count": parse_count("away_doubtful_count"),
-                "home_questionable_count": parse_count("home_questionable_count"),
-                "away_questionable_count": parse_count("away_questionable_count"),
-                "home_probable_count": parse_count("home_probable_count"),
-                "away_probable_count": parse_count("away_probable_count"),
-            }
 
             if request.method == "POST":
                 prediction = predict_matchup_from_games(
@@ -354,39 +338,27 @@ def create_app() -> Flask:
                     home_team = home_team,
                     away_team = away_team,
                     season = selected_season,
-                    game_date = pd.Timestamp(game_date),
-                    injury_overrides = injury_inputs,
+                    game_date = pd.Timestamp(prediction_date),
                 )
         except Exception as exc:  # noqa: BLE001 - user-facing feedback
             error = str(exc)
-            seasons = []
             teams = []
             selected_season = None
-            game_date = datetime.now().strftime("%Y-%m-%d")
+            prediction_date = datetime.now().strftime("%Y-%m-%d")
+            latest_completed_date = None
             home_team = ""
             away_team = ""
-            injury_inputs = {
-                "home_out_count": 0,
-                "away_out_count": 0,
-                "home_doubtful_count": 0,
-                "away_doubtful_count": 0,
-                "home_questionable_count": 0,
-                "away_questionable_count": 0,
-                "home_probable_count": 0,
-                "away_probable_count": 0,
-            }
 
         return render_template(
             "predictor.html",
             prediction = prediction,
             error = error,
-            seasons = seasons,
             selected_season = selected_season,
             teams = teams,
             home_team = home_team,
             away_team = away_team,
-            game_date = game_date,
-            injury_inputs = injury_inputs,
+            prediction_date = prediction_date,
+            latest_completed_date = latest_completed_date,
         )
 
     @app.post("/reset-data")
