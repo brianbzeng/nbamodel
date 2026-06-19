@@ -3,5 +3,6 @@ numpy
 requests
 beautifulsoup4
 Flask
+scikit-learn
 pytest
 pylatex

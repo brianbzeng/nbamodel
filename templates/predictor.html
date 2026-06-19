@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Predictor | {{ app_title or "NBA Odds Predictor" }}{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Model feature</p>
+    <h1>Home-win predictor</h1>
+    <p class="lede">
+      Pick a home team and away team, then let the app combine recent team form, Elo rating,
+      blended strength, and the latest saved injury context into a game prediction.
+    </p>
+  </div>
+</section>
+
+<section class="grid predictor-grid">
+  <article class="card">
+    <div class="section-header">
+      <h2>Matchup inputs</h2>
+      <p>The app uses the latest processed season automatically.</p>
+    </div>
+
+    {% if error %}
+      <div class="notice error">{{ error }}</div>
+    {% endif %}
+
+    <div class="featured-team predictor-summary">
+      <strong>Season {{ selected_season or "N/A" }}</strong>
+      <span>Latest completed games through {{ latest_completed_date or "N/A" }}</span>
+      <span>Prediction target date {{ prediction_date or "N/A" }}</span>
+    </div>
+
+    <form method="post" class="form" data-show-loading="true">
+      <div class="form-columns">
+        <label>
+          <span>Home team</span>
+          <select name="home_team">
+            {% for team in teams %}
+              <option value="{{ team }}" {% if team == home_team %}selected{% endif %}>{{ team }}</option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>
+          <span>Away team</span>
+          <select name="away_team">
+            {% for team in teams %}
+              <option value="{{ team }}" {% if team == away_team %}selected{% endif %}>{{ team }}</option>
+            {% endfor %}
+          </select>
+        </label>
+      </div>
+
+      <button type="submit" class="button-primary">Generate prediction</button>
+    </form>
+  </article>
+
+  <article class="card">
+    <div class="section-header">
+      <h2>Prediction output</h2>
+      <p>The models are trained on all completed games before the target date.</p>
+    </div>
+
+    {% if prediction %}
+      <div class="featured-team predictor-summary">
+        <strong>{{ prediction.matchup }}</strong>
+        <span>Season {{ prediction.season }} | projected for {{ prediction.game_date }}</span>
+        <span>
+          {% if prediction.injury_data_used %}
+            Latest saved injury report was folded into the matchup features
+          {% else %}
+            No injury file was found, so this run used team-form and Elo features only
+          {% endif %}
+        </span>
+      </div>
+
+      <div class="grid predictor-results predictor-results-three">
+        <div class="metric metric-accent">
+          <span>Elo winner</span>
+          <strong>{{ prediction.elo.predicted_winner }}</strong>
+        </div>
+        <div class="metric metric-accent">
+          <span>Elo home win %</span>
+          <strong>{{ "%.1f"|format(prediction.elo.home_win_probability * 100) }}%</strong>
+        </div>
+        <div class="metric">
+          <span>Logistic winner</span>
+          <strong>{{ prediction.logistic.predicted_winner }}</strong>
+        </div>
+        <div class="metric">
+          <span>Logistic home win %</span>
+          <strong>{{ "%.1f"|format(prediction.logistic.home_win_probability * 100) }}%</strong>
+        </div>
+        <div class="metric">
+          <span>Random forest winner</span>
+          <strong>{{ prediction.random_forest.predicted_winner }}</strong>
+        </div>
+        <div class="metric">
+          <span>Random forest home win %</span>
+          <strong>{{ "%.1f"|format(prediction.random_forest.home_win_probability * 100) }}%</strong>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="leaderboard">
+          <thead>
+            <tr>
+              <th>Context</th>
+              <th>Home</th>
+              <th>Away</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Win %</td>
+              <td>{{ "%.3f"|format(prediction.context.home_win_pct) }}</td>
+              <td>{{ "%.3f"|format(prediction.context.away_win_pct) }}</td>
+            </tr>
+            <tr>
+              <td>Strength</td>
+              <td>{{ "%.3f"|format(prediction.context.home_team_strength) }}</td>
+              <td>{{ "%.3f"|format(prediction.context.away_team_strength) }}</td>
+            </tr>
+            <tr>
+              <td>Elo rating</td>
+              <td>{{ "%.1f"|format(prediction.context.home_elo_rating) }}</td>
+              <td>{{ "%.1f"|format(prediction.context.away_elo_rating) }}</td>
+            </tr>
+            <tr>
+              <td>Blended strength</td>
+              <td>{{ "%.3f"|format(prediction.context.home_blended_strength) }}</td>
+              <td>{{ "%.3f"|format(prediction.context.away_blended_strength) }}</td>
+            </tr>
+            <tr>
+              <td>Rest days</td>
+              <td>{{ prediction.context.home_rest_days }}</td>
+              <td>{{ prediction.context.away_rest_days }}</td>
+            </tr>
+            <tr>
+              <td>Out players</td>
+              <td>{{ prediction.context.home_out_count }}</td>
+              <td>{{ prediction.context.away_out_count }}</td>
+            </tr>
+            <tr>
+              <td>Injury impact</td>
+              <td>{{ "%.1f"|format(prediction.context.home_injury_impact_score) }}</td>
+              <td>{{ "%.1f"|format(prediction.context.away_injury_impact_score) }}</td>
+            </tr>
+            <tr>
+              <td>Elo diff</td>
+              <td colspan="2">{{ "%.1f"|format(prediction.context.elo_diff) }}</td>
+            </tr>
+            <tr>
+              <td>Blended diff</td>
+              <td colspan="2">{{ "%.3f"|format(prediction.context.blended_strength_diff) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted">Choose a matchup and submit the form to see the combined prediction.</p>
+    {% endif %}
+  </article>
+</section>
+{% endblock %}

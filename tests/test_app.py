@@ -78,6 +78,158 @@ def test_leaderboard_route_renders():
     assert "Rating" in body
 
 
+def test_predictor_page_renders(monkeypatch):
+    import app as app_module
+
+    games = app_module.pd.DataFrame(
+        [
+            {
+                "date": "2024-10-22",
+                "season": 2025,
+                "home_team": "BOS",
+                "away_team": "NYK",
+                "home_pts": 110,
+                "away_pts": 101,
+                "home_win": 1,
+                "margin": 9,
+            },
+            {
+                "date": "2024-10-23",
+                "season": 2025,
+                "home_team": "LAL",
+                "away_team": "DEN",
+                "home_pts": 99,
+                "away_pts": 104,
+                "home_win": 0,
+                "margin": -5,
+            },
+        ]
+    )
+
+    monkeypatch.setattr(app_module, "load_processed_games", lambda: games)
+    monkeypatch.setattr(
+        app_module,
+        "get_latest_prediction_context",
+        lambda frame: {
+            "season": 2025,
+            "latest_completed_date": "2024-10-23",
+            "prediction_date": "2024-10-24",
+            "teams": ["BOS", "DEN", "LAL", "NYK"],
+        },
+    )
+
+    app = create_app()
+    client = app.test_client()
+    response = client.get("/predictor")
+    body = response.get_data(as_text = True)
+
+    assert response.status_code == 200
+    assert "Home-win predictor" in body
+    assert "Generate prediction" in body
+    assert "BOS" in body
+    assert "Latest completed games through 2024-10-23" in body
+
+
+def test_predictor_page_accepts_post(monkeypatch):
+    import app as app_module
+
+    games = app_module.pd.DataFrame(
+        [
+            {
+                "date": "2024-10-22",
+                "season": 2025,
+                "home_team": "BOS",
+                "away_team": "NYK",
+                "home_pts": 110,
+                "away_pts": 101,
+                "home_win": 1,
+                "margin": 9,
+            },
+            {
+                "date": "2024-10-23",
+                "season": 2025,
+                "home_team": "LAL",
+                "away_team": "DEN",
+                "home_pts": 99,
+                "away_pts": 104,
+                "home_win": 0,
+                "margin": -5,
+            },
+        ]
+    )
+
+    # Keep the route test focused on wiring instead of model internals.
+    def fake_predict_matchup_from_games(*args, **kwargs):
+        return {
+            "matchup": "NYK @ BOS",
+            "season": 2025,
+            "game_date": "2025-01-01",
+            "elo": {
+                "home_win_probability": 0.58,
+                "predicted_winner": "BOS",
+            },
+            "logistic": {
+                "home_win_probability": 0.64,
+                "predicted_winner": "BOS",
+            },
+            "random_forest": {
+                "home_win_probability": 0.61,
+                "predicted_winner": "BOS",
+            },
+            "context": {
+                "home_win_pct": 0.700,
+                "away_win_pct": 0.500,
+                "home_team_strength": 0.760,
+                "away_team_strength": 0.540,
+                "team_strength_diff": 0.220,
+                "home_elo_rating": 1610.0,
+                "away_elo_rating": 1535.0,
+                "elo_diff": 75.0,
+                "home_blended_strength": 0.801,
+                "away_blended_strength": 0.623,
+                "blended_strength_diff": 0.178,
+                "home_rest_days": 1,
+                "away_rest_days": 0,
+                "home_out_count": 1.0,
+                "away_out_count": 2.0,
+                "home_injury_impact_score": 7.0,
+                "away_injury_impact_score": 14.0,
+            },
+            "injury_data_used": True,
+        }
+
+    monkeypatch.setattr(app_module, "load_processed_games", lambda: games)
+    monkeypatch.setattr(
+        app_module,
+        "get_latest_prediction_context",
+        lambda frame: {
+            "season": 2025,
+            "latest_completed_date": "2024-10-23",
+            "prediction_date": "2025-01-01",
+            "teams": ["BOS", "DEN", "LAL", "NYK"],
+        },
+    )
+    monkeypatch.setattr(app_module, "predict_matchup_from_games", fake_predict_matchup_from_games)
+
+    app = create_app()
+    client = app.test_client()
+    response = client.post(
+        "/predictor",
+        data = {
+            "home_team": "BOS",
+            "away_team": "NYK",
+        },
+    )
+    body = response.get_data(as_text = True)
+
+    assert response.status_code == 200
+    assert "NYK @ BOS" in body
+    assert "58.0%" in body
+    assert "64.0%" in body
+    assert "61.0%" in body
+    assert "Latest saved injury report was folded into the matchup features" in body
+
+
 def test_bayesian_page_renders():
     app = create_app()
     client = app.test_client()
