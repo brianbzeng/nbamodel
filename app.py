@@ -25,6 +25,12 @@ SCRAPE_EXPORTS_DIR = EXPORTS_DIR / "scrapes"
 
 RAW_FILE = RAW_DIR / "bref_games_2016_2025.csv"
 PROCESSED_FILE = PROCESSED_DIR / "games_2016_2025_normalized.csv"
+PREDICTOR_START_SEASON = 2020
+PREDICTOR_END_SEASON = 2025
+PREDICTOR_RAW_FILE = RAW_DIR / f"bref_games_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.csv"
+PREDICTOR_PROCESSED_FILE = (
+    PROCESSED_DIR / f"games_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}_normalized.csv"
+)
 APP_TITLE = "NBA Odds Predictor"
 
 DEFAULT_START_SEASON = 2016
@@ -69,6 +75,51 @@ def save_processed_games(games: pd.DataFrame) -> pd.DataFrame:
     processed = normalize_team_names(clean_games(games))
     processed.to_csv(PROCESSED_FILE, index=False)
     return processed
+
+
+def load_predictor_games() -> pd.DataFrame:
+    if PREDICTOR_PROCESSED_FILE.exists():
+        return pd.read_csv(PREDICTOR_PROCESSED_FILE, parse_dates=["date"])
+
+    if not PREDICTOR_RAW_FILE.exists():
+        raise FileNotFoundError(
+            "Predictor training data is missing. Refresh predictor data on the Predictor page first."
+        )
+
+    raw_games = pd.read_csv(PREDICTOR_RAW_FILE, parse_dates=["date"])
+    processed = normalize_team_names(clean_games(raw_games))
+    processed.to_csv(PREDICTOR_PROCESSED_FILE, index=False)
+    return processed
+
+
+def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool]:
+    existing_processed = None
+    if PREDICTOR_PROCESSED_FILE.exists():
+        existing_processed = pd.read_csv(PREDICTOR_PROCESSED_FILE, parse_dates=["date"])
+
+    fresh_games = scrape_multiple_seasons(
+        PREDICTOR_START_SEASON, PREDICTOR_END_SEASON, sleep=2
+    )
+    if fresh_games.empty:
+        if PREDICTOR_PROCESSED_FILE.exists():
+            return load_predictor_games(), True
+        return pd.DataFrame(), True
+
+    fresh_games.to_csv(PREDICTOR_RAW_FILE, index=False)
+    fresh_processed = normalize_team_names(clean_games(fresh_games))
+
+    if existing_processed is not None:
+        current_sorted = existing_processed.sort_values(
+            ["date", "home_team", "away_team"]
+        ).reset_index(drop=True)
+        fresh_sorted = fresh_processed.sort_values(
+            ["date", "home_team", "away_team"]
+        ).reset_index(drop=True)
+        if current_sorted.equals(fresh_sorted):
+            return existing_processed, True
+
+    fresh_processed.to_csv(PREDICTOR_PROCESSED_FILE, index=False)
+    return fresh_processed, False
 
 
 def save_scraped_games(start_season: int, end_season: int) -> tuple[pd.DataFrame, str]:
@@ -321,7 +372,7 @@ def create_app() -> Flask:
         error = None
 
         try:
-            games = load_processed_games()
+            games = load_predictor_games()
             context = get_latest_prediction_context(games)
             selected_season = int(context["season"])
             prediction_date = context["prediction_date"]
@@ -353,6 +404,8 @@ def create_app() -> Flask:
             "predictor.html",
             prediction = prediction,
             error = error,
+            predictor_start_season = PREDICTOR_START_SEASON,
+            predictor_end_season = PREDICTOR_END_SEASON,
             selected_season = selected_season,
             teams = teams,
             home_team = home_team,
@@ -360,6 +413,26 @@ def create_app() -> Flask:
             prediction_date = prediction_date,
             latest_completed_date = latest_completed_date,
         )
+
+    @app.post("/predictor/refresh")
+    def refresh_predictor():
+        games, already_current = refresh_predictor_dataset()
+        if games.empty and already_current:
+            flash(
+                "Predictor refresh did not return any games yet. Try again in a bit.",
+                "error",
+            )
+        elif already_current:
+            flash(
+                f"Predictor training data for {PREDICTOR_START_SEASON}-{PREDICTOR_END_SEASON} is already up to date.",
+                "info",
+            )
+        else:
+            flash(
+                f"Predictor training data refreshed for {PREDICTOR_START_SEASON}-{PREDICTOR_END_SEASON}.",
+                "success",
+            )
+        return redirect(url_for("predictor"))
 
     @app.post("/reset-data")
     def reset_data():

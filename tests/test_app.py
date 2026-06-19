@@ -127,6 +127,8 @@ def test_predictor_page_renders(monkeypatch):
     assert "Home-win predictor" in body
     assert "Generate prediction" in body
     assert "BOS" in body
+    assert "Refresh predictor data" in body
+    assert "Training range 2020-2025" in body
     assert "Latest completed games through 2024-10-23" in body
 
 
@@ -229,6 +231,68 @@ def test_predictor_page_accepts_post(monkeypatch):
     assert "61.0%" in body
     assert "Latest saved injury report was folded into the matchup features" in body
     assert "Random forest is running on the Elo-enhanced feature set" in body
+
+
+def test_predictor_refresh_route(monkeypatch):
+    import app as app_module
+
+    monkeypatch.setattr(
+        app_module,
+        "refresh_predictor_dataset",
+        lambda: (
+            app_module.pd.DataFrame(
+                [
+                    {
+                        "date": "2025-04-12",
+                        "season": 2025,
+                        "home_team": "BOS",
+                        "away_team": "NYK",
+                        "home_pts": 110,
+                        "away_pts": 101,
+                        "home_win": 1,
+                        "margin": 9,
+                    }
+                ]
+            ),
+            False,
+        ),
+    )
+    monkeypatch.setattr(
+        app_module,
+        "load_predictor_games",
+        lambda: app_module.pd.DataFrame(
+            [
+                {
+                    "date": "2025-04-12",
+                    "season": 2025,
+                    "home_team": "BOS",
+                    "away_team": "NYK",
+                    "home_pts": 110,
+                    "away_pts": 101,
+                    "home_win": 1,
+                    "margin": 9,
+                }
+            ]
+        ),
+    )
+    monkeypatch.setattr(
+        app_module,
+        "get_latest_prediction_context",
+        lambda frame: {
+            "season": 2025,
+            "latest_completed_date": "2025-04-12",
+            "prediction_date": "2025-04-13",
+            "teams": ["BOS", "NYK"],
+        },
+    )
+
+    app = create_app()
+    client = app.test_client()
+    response = client.post("/predictor/refresh", follow_redirects = True)
+    body = response.get_data(as_text = True)
+
+    assert response.status_code == 200
+    assert "Predictor training data refreshed for 2020-2025." in body
 
 
 def test_bayesian_page_renders():

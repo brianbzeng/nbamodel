@@ -16,7 +16,7 @@
   <article class="card">
     <div class="section-header">
       <h2>Matchup inputs</h2>
-      <p>The app uses the latest processed season automatically.</p>
+      <p>The app uses the predictor training window automatically.</p>
     </div>
 
     {% if error %}
@@ -24,9 +24,16 @@
     {% endif %}
 
     <div class="featured-team predictor-summary">
-      <strong>Season {{ selected_season or "N/A" }}</strong>
+      <strong>Training range {{ predictor_start_season }}-{{ predictor_end_season }}</strong>
+      <span>Season {{ selected_season or "N/A" }}</span>
       <span>Latest completed games through {{ latest_completed_date or "N/A" }}</span>
       <span>Prediction target date {{ prediction_date or "N/A" }}</span>
+    </div>
+
+    <div class="page-actions">
+      <form method="post" action="{{ url_for('refresh_predictor') }}" data-show-loading="true">
+        <button type="submit" class="button-secondary">Refresh predictor data</button>
+      </form>
     </div>
 
     <form method="post" class="form" data-show-loading="true">
