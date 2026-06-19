@@ -81,31 +81,57 @@
         <span>Random forest is running on the Elo-enhanced feature set.</span>
       </div>
 
-      <div class="grid predictor-results predictor-results-three">
-        <div class="metric metric-accent">
-          <span>Elo winner</span>
-          <strong>{{ prediction.elo.predicted_winner }}</strong>
-        </div>
-        <div class="metric metric-accent">
-          <span>Elo home win %</span>
-          <strong>{{ "%.1f"|format(prediction.elo.home_win_probability * 100) }}%</strong>
-        </div>
-        <div class="metric">
-          <span>Logistic winner</span>
-          <strong>{{ prediction.logistic.predicted_winner }}</strong>
-        </div>
-        <div class="metric">
-          <span>Logistic home win %</span>
-          <strong>{{ "%.1f"|format(prediction.logistic.home_win_probability * 100) }}%</strong>
-        </div>
-        <div class="metric">
-          <span>Random forest winner</span>
-          <strong>{{ prediction.random_forest.predicted_winner }}</strong>
-        </div>
-        <div class="metric">
-          <span>Random forest home win %</span>
-          <strong>{{ "%.1f"|format(prediction.random_forest.home_win_probability * 100) }}%</strong>
-        </div>
+      <div class="predictor-model-grid">
+        <section class="predictor-model-card predictor-model-card-elo">
+          <div class="predictor-model-head">
+            <span class="predictor-model-label">Elo</span>
+            <span class="predictor-model-badge">Baseline</span>
+          </div>
+          <div class="predictor-model-body">
+            <p class="predictor-model-kicker">Predicted winner</p>
+            <strong class="predictor-model-winner">{{ prediction.elo.predicted_winner }}</strong>
+            <div class="predictor-model-stats">
+              <div class="predictor-model-stat">
+                <span>Home win %</span>
+                <strong>{{ "%.1f"|format(prediction.elo.home_win_probability * 100) }}%</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="predictor-model-card predictor-model-card-logistic">
+          <div class="predictor-model-head">
+            <span class="predictor-model-label">Logistic regression</span>
+            <span class="predictor-model-badge">Classifier</span>
+          </div>
+          <div class="predictor-model-body">
+            <p class="predictor-model-kicker">Predicted winner</p>
+            <strong class="predictor-model-winner">{{ prediction.logistic.predicted_winner }}</strong>
+            <div class="predictor-model-stats">
+              <div class="predictor-model-stat">
+                <span>Home win %</span>
+                <strong>{{ "%.1f"|format(prediction.logistic.home_win_probability * 100) }}%</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="predictor-model-card predictor-model-card-rf">
+          <div class="predictor-model-head">
+            <span class="predictor-model-label">Random forest</span>
+            <span class="predictor-model-badge">Elo-enhanced</span>
+          </div>
+          <div class="predictor-model-body">
+            <p class="predictor-model-kicker">Predicted winner</p>
+            <strong class="predictor-model-winner">{{ prediction.random_forest.predicted_winner }}</strong>
+            <div class="predictor-model-stats">
+              <div class="predictor-model-stat">
+                <span>Home win %</span>
+                <strong>{{ "%.1f"|format(prediction.random_forest.home_win_probability * 100) }}%</strong>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       <div class="table-wrap">
