@@ -451,7 +451,7 @@ def create_app() -> Flask:
 
         if injury_status["status"] == "refreshed":
             flash(injury_status["message"], "success")
-        elif injury_status["status"] in {"missing_dependency", "no_reports", "no_overlap"}:
+        elif injury_status["status"] in {"missing_dependency", "no_overlap"}:
             flash(injury_status["message"], "info")
         elif injury_status["status"] == "no_games":
             flash(injury_status["message"], "error")
