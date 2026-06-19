@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict, deque
+from datetime import datetime, timedelta
 from math import exp
 from pathlib import Path
 from typing import Optional
@@ -16,11 +17,22 @@ from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
+from cleaner import TEAM_MAP_BREF
 from model import run_elo, win_prob
 
 
 BASE_DIR = Path(__file__).resolve().parent
 RAW_DIR = BASE_DIR / "data" / "raw"
+OFFICIAL_INJURY_FIRST_SEASON = 2022
+INJURY_REPORT_HOURS_ET = tuple(range(23, 10, -1))
+LONG_TERM_REASON_KEYWORDS = (
+    "acl",
+    "achilles",
+    "fracture",
+    "surgery",
+    "tear",
+    "torn",
+)
 
 BASE_NUMERIC_FEATURES = [
     "season",
@@ -155,6 +167,166 @@ def load_optional_team_injuries(games: pd.DataFrame) -> Optional[pd.DataFrame]:
         subset = ["game_date", "team"], keep = "last"
     )
     return injury_df
+
+
+def _status_count(frame: pd.DataFrame, status: str) -> int:
+    return int((frame["Current Status"].astype(str).str.casefold() == status).sum())
+
+
+def _estimate_absence_days(status: str, reason: str) -> int:
+    status_value = str(status).casefold()
+    reason_value = str(reason).casefold()
+    if status_value == "out":
+        return 30 if any(keyword in reason_value for keyword in LONG_TERM_REASON_KEYWORDS) else 10
+    if status_value == "doubtful":
+        return 7
+    if status_value == "questionable":
+        return 4
+    if status_value == "probable":
+        return 2
+    return 0
+
+
+def summarize_injury_report(report_df: pd.DataFrame, report_timestamp: datetime) -> pd.DataFrame:
+    if report_df.empty:
+        return pd.DataFrame()
+
+    frame = report_df.copy()
+    frame["Team"] = frame["Team"].map(TEAM_MAP_BREF).fillna(frame["Team"])
+    frame["Current Status"] = frame["Current Status"].fillna("Available")
+    frame["Reason"] = frame["Reason"].fillna("")
+    frame["estimated_absence_days"] = frame.apply(
+        lambda row: _estimate_absence_days(row["Current Status"], row["Reason"]),
+        axis = 1,
+    )
+
+    rows = []
+    for team, team_frame in frame.groupby("Team", sort = True):
+        out_count = _status_count(team_frame, "out")
+        doubtful_count = _status_count(team_frame, "doubtful")
+        questionable_count = _status_count(team_frame, "questionable")
+        probable_count = _status_count(team_frame, "probable")
+        available_count = _status_count(team_frame, "available")
+        weighted_injury_score = (
+            out_count * 1.0
+            + doubtful_count * 0.75
+            + questionable_count * 0.5
+            + probable_count * 0.25
+        )
+        long_term_absence_count = int(
+            team_frame[
+                (team_frame["Current Status"].astype(str).str.casefold() == "out")
+                & team_frame["Reason"].astype(str).str.casefold().str.contains(
+                    "|".join(LONG_TERM_REASON_KEYWORDS),
+                    regex = True,
+                )
+            ].shape[0]
+        )
+
+        rows.append(
+            {
+                "game_date": pd.Timestamp(report_timestamp.date()),
+                "team": team,
+                "latest_report_datetime": pd.Timestamp(report_timestamp),
+                "out_count": out_count,
+                "doubtful_count": doubtful_count,
+                "questionable_count": questionable_count,
+                "probable_count": probable_count,
+                "available_count": available_count,
+                "weighted_injury_score": weighted_injury_score,
+                "reported_player_count": int(len(team_frame)),
+                "estimated_absence_days_total": float(team_frame["estimated_absence_days"].sum()),
+                "estimated_absence_days_max": float(team_frame["estimated_absence_days"].max()),
+                "injury_impact_score": weighted_injury_score * 7.0,
+                "long_term_absence_count": long_term_absence_count,
+            }
+        )
+
+    return pd.DataFrame(rows)
+
+
+def refresh_official_injury_dataset(games: pd.DataFrame) -> dict[str, object]:
+    try:
+        from nbainjuries import injury
+    except ImportError:
+        return {
+            "status": "missing_dependency",
+            "message": "Install the nbainjuries package to refresh official injury data.",
+            "rows": 0,
+            "file": None,
+        }
+
+    if games.empty:
+        return {
+            "status": "no_games",
+            "message": "No predictor games are available yet, so injury refresh was skipped.",
+            "rows": 0,
+            "file": None,
+        }
+
+    eligible_games = games[games["season"] >= OFFICIAL_INJURY_FIRST_SEASON].copy()
+    if eligible_games.empty:
+        return {
+            "status": "no_overlap",
+            "message": f"Official NBA injury reports begin with season {OFFICIAL_INJURY_FIRST_SEASON}.",
+            "rows": 0,
+            "file": None,
+        }
+
+    game_dates = sorted(pd.to_datetime(eligible_games["date"]).dt.normalize().unique())
+    report_rows = []
+    missing_dates = []
+
+    for game_date in game_dates:
+        report_timestamp = None
+        report_df = None
+        base_date = pd.Timestamp(game_date).to_pydatetime()
+
+        # Walk backward through likely end-of-day report times to find the latest valid report.
+        for hour in INJURY_REPORT_HOURS_ET:
+            candidate = datetime.combine(base_date.date(), datetime.min.time()).replace(
+                hour = hour,
+                minute = 30,
+            )
+            try:
+                if injury.check_reportvalid(candidate):
+                    report_timestamp = candidate
+                    report_df = injury.get_reportdata(candidate, return_df = True)
+                    break
+            except Exception:
+                continue
+
+        if report_timestamp is None or report_df is None or report_df.empty:
+            missing_dates.append(str(pd.Timestamp(game_date).date()))
+            continue
+
+        report_rows.append(summarize_injury_report(report_df, report_timestamp))
+
+    if not report_rows:
+        return {
+            "status": "no_reports",
+            "message": "No valid official NBA injury reports were found for the predictor range.",
+            "rows": 0,
+            "file": None,
+            "missing_dates": missing_dates,
+        }
+
+    injury_df = pd.concat(report_rows, ignore_index = True)
+    start_season = OFFICIAL_INJURY_FIRST_SEASON
+    end_season = int(eligible_games["season"].max())
+    output_path = RAW_DIR / f"official_nba_injuries_by_team_{start_season}_{end_season}.csv"
+    injury_df.to_csv(output_path, index = False)
+
+    return {
+        "status": "refreshed",
+        "message": (
+            f"Official injury data refreshed for seasons {start_season}-{end_season} "
+            f"across {injury_df['game_date'].nunique()} game dates."
+        ),
+        "rows": int(len(injury_df)),
+        "file": str(output_path),
+        "missing_dates": missing_dates,
+    }
 
 
 def get_numeric_features(include_elo_features: bool = True) -> list[str]:

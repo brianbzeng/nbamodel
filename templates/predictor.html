@@ -28,6 +28,13 @@
       <span>Season {{ selected_season or "N/A" }}</span>
       <span>Latest completed games through {{ latest_completed_date or "N/A" }}</span>
       <span>Prediction target date {{ prediction_date or "N/A" }}</span>
+      <span>
+        {% if injury_file_present %}
+          Official injury CSV detected for the supported seasons
+        {% else %}
+          No official injury CSV detected yet. Use Refresh predictor data after installing `nbainjuries`.
+        {% endif %}
+      </span>
     </div>
 
     <div class="page-actions">

@@ -106,7 +106,8 @@ def test_predictor_page_renders(monkeypatch):
         ]
     )
 
-    monkeypatch.setattr(app_module, "load_processed_games", lambda: games)
+    monkeypatch.setattr(app_module, "load_predictor_games", lambda: games)
+    monkeypatch.setattr(app_module, "load_optional_team_injuries", lambda frame: None)
     monkeypatch.setattr(
         app_module,
         "get_latest_prediction_context",
@@ -129,6 +130,7 @@ def test_predictor_page_renders(monkeypatch):
     assert "BOS" in body
     assert "Refresh predictor data" in body
     assert "Training range 2020-2025" in body
+    assert "No official injury CSV detected yet." in body
     assert "Latest completed games through 2024-10-23" in body
 
 
@@ -200,7 +202,8 @@ def test_predictor_page_accepts_post(monkeypatch):
             "injury_data_used": True,
         }
 
-    monkeypatch.setattr(app_module, "load_processed_games", lambda: games)
+    monkeypatch.setattr(app_module, "load_predictor_games", lambda: games)
+    monkeypatch.setattr(app_module, "load_optional_team_injuries", lambda frame: app_module.pd.DataFrame([{"team": "BOS"}]))
     monkeypatch.setattr(
         app_module,
         "get_latest_prediction_context",
@@ -255,6 +258,12 @@ def test_predictor_refresh_route(monkeypatch):
                 ]
             ),
             False,
+            {
+                "status": "refreshed",
+                "message": "Official injury data refreshed for seasons 2022-2025 across 10 game dates.",
+                "rows": 40,
+                "file": "data/raw/official_nba_injuries_by_team_2022_2025.csv",
+            },
         ),
     )
     monkeypatch.setattr(
@@ -293,6 +302,7 @@ def test_predictor_refresh_route(monkeypatch):
 
     assert response.status_code == 200
     assert "Predictor training data refreshed for 2020-2025." in body
+    assert "Official injury data refreshed for seasons 2022-2025 across 10 game dates." in body
 
 
 def test_bayesian_page_renders():

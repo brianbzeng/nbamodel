@@ -580,7 +580,7 @@ tbody tr:nth-child(even) {
 
 .predictor-model-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 16px;
   margin-bottom: 16px;
 }
@@ -589,6 +589,7 @@ tbody tr:nth-child(even) {
   display: grid;
   gap: 18px;
   padding: 20px;
+  min-height: 260px;
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.035);
@@ -610,18 +611,19 @@ tbody tr:nth-child(even) {
 }
 
 .predictor-model-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
 }
 
 .predictor-model-label {
-  font-size: 1rem;
+  font-size: 1.25rem;
   font-weight: 800;
+  line-height: 1.1;
 }
 
 .predictor-model-badge {
+  width: max-content;
   padding: 6px 10px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.08);
@@ -644,8 +646,9 @@ tbody tr:nth-child(even) {
 }
 
 .predictor-model-winner {
-  font-size: 2rem;
-  line-height: 1;
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  line-height: 1.02;
+  word-break: break-word;
 }
 
 .predictor-model-stats {
@@ -654,18 +657,17 @@ tbody tr:nth-child(even) {
 }
 
 .predictor-model-stat {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  display: grid;
   gap: 12px;
 }
 
 .predictor-model-stat span {
   color: var(--muted);
+  font-size: 0.95rem;
 }
 
 .predictor-model-stat strong {
-  font-size: 1.65rem;
+  font-size: 1.9rem;
 }
 
 @media (max-width: 920px) {

@@ -12,7 +12,12 @@ from flask import Flask, flash, redirect, render_template, request, send_from_di
 
 from cleaner import clean_games, normalize_team_names
 from model import run_elo
-from predictor import get_latest_prediction_context, predict_matchup_from_games
+from predictor import (
+    get_latest_prediction_context,
+    load_optional_team_injuries,
+    predict_matchup_from_games,
+    refresh_official_injury_dataset,
+)
 from scraper import scrape_bref_season_games, scrape_multiple_seasons
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -92,7 +97,7 @@ def load_predictor_games() -> pd.DataFrame:
     return processed
 
 
-def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool]:
+def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool, dict[str, object]]:
     existing_processed = None
     if PREDICTOR_PROCESSED_FILE.exists():
         existing_processed = pd.read_csv(PREDICTOR_PROCESSED_FILE, parse_dates=["date"])
@@ -102,8 +107,14 @@ def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool]:
     )
     if fresh_games.empty:
         if PREDICTOR_PROCESSED_FILE.exists():
-            return load_predictor_games(), True
-        return pd.DataFrame(), True
+            existing_games = load_predictor_games()
+            return existing_games, True, refresh_official_injury_dataset(existing_games)
+        return pd.DataFrame(), True, {
+            "status": "no_games",
+            "message": "Predictor game refresh did not return any games yet.",
+            "rows": 0,
+            "file": None,
+        }
 
     fresh_games.to_csv(PREDICTOR_RAW_FILE, index=False)
     fresh_processed = normalize_team_names(clean_games(fresh_games))
@@ -116,10 +127,10 @@ def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool]:
             ["date", "home_team", "away_team"]
         ).reset_index(drop=True)
         if current_sorted.equals(fresh_sorted):
-            return existing_processed, True
+            return existing_processed, True, refresh_official_injury_dataset(existing_processed)
 
     fresh_processed.to_csv(PREDICTOR_PROCESSED_FILE, index=False)
-    return fresh_processed, False
+    return fresh_processed, False, refresh_official_injury_dataset(fresh_processed)
 
 
 def save_scraped_games(start_season: int, end_season: int) -> tuple[pd.DataFrame, str]:
@@ -370,10 +381,13 @@ def create_app() -> Flask:
     def predictor():
         prediction = None
         error = None
+        injury_file_present = False
 
         try:
             games = load_predictor_games()
             context = get_latest_prediction_context(games)
+            injury_df = load_optional_team_injuries(games)
+            injury_file_present = injury_df is not None
             selected_season = int(context["season"])
             prediction_date = context["prediction_date"]
             latest_completed_date = context["latest_completed_date"]
@@ -399,6 +413,7 @@ def create_app() -> Flask:
             latest_completed_date = None
             home_team = ""
             away_team = ""
+            injury_file_present = False
 
         return render_template(
             "predictor.html",
@@ -412,11 +427,12 @@ def create_app() -> Flask:
             away_team = away_team,
             prediction_date = prediction_date,
             latest_completed_date = latest_completed_date,
+            injury_file_present = injury_file_present,
         )
 
     @app.post("/predictor/refresh")
     def refresh_predictor():
-        games, already_current = refresh_predictor_dataset()
+        games, already_current, injury_status = refresh_predictor_dataset()
         if games.empty and already_current:
             flash(
                 "Predictor refresh did not return any games yet. Try again in a bit.",
@@ -432,6 +448,13 @@ def create_app() -> Flask:
                 f"Predictor training data refreshed for {PREDICTOR_START_SEASON}-{PREDICTOR_END_SEASON}.",
                 "success",
             )
+
+        if injury_status["status"] == "refreshed":
+            flash(injury_status["message"], "success")
+        elif injury_status["status"] in {"missing_dependency", "no_reports", "no_overlap"}:
+            flash(injury_status["message"], "info")
+        elif injury_status["status"] == "no_games":
+            flash(injury_status["message"], "error")
         return redirect(url_for("predictor"))
 
     @app.post("/reset-data")
