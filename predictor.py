@@ -12,6 +12,7 @@ from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
@@ -21,7 +22,7 @@ from model import run_elo, win_prob
 BASE_DIR = Path(__file__).resolve().parent
 RAW_DIR = BASE_DIR / "data" / "raw"
 
-NUMERIC_FEATURES = [
+BASE_NUMERIC_FEATURES = [
     "season",
     "home_games_played",
     "away_games_played",
@@ -43,13 +44,6 @@ NUMERIC_FEATURES = [
     "home_team_strength",
     "away_team_strength",
     "team_strength_diff",
-    "home_elo_rating",
-    "away_elo_rating",
-    "elo_diff",
-    "elo_home_win_prob",
-    "home_blended_strength",
-    "away_blended_strength",
-    "blended_strength_diff",
     "home_recent_win_pct",
     "away_recent_win_pct",
     "recent_win_pct_diff",
@@ -59,6 +53,19 @@ NUMERIC_FEATURES = [
     "home_rest_days",
     "away_rest_days",
     "rest_diff",
+]
+
+ELO_NUMERIC_FEATURES = [
+    "home_elo_rating",
+    "away_elo_rating",
+    "elo_diff",
+    "elo_home_win_prob",
+    "home_blended_strength",
+    "away_blended_strength",
+    "blended_strength_diff",
+]
+
+INJURY_NUMERIC_FEATURES = [
     "home_out_count",
     "away_out_count",
     "home_doubtful_count",
@@ -91,6 +98,8 @@ NUMERIC_FEATURES = [
     "injury_impact_diff",
     "long_term_absence_diff",
 ]
+
+NUMERIC_FEATURES = BASE_NUMERIC_FEATURES + ELO_NUMERIC_FEATURES + INJURY_NUMERIC_FEATURES
 
 CATEGORICAL_FEATURES = ["home_team", "away_team"]
 INJURY_OVERRIDE_FIELDS = (
@@ -146,6 +155,14 @@ def load_optional_team_injuries(games: pd.DataFrame) -> Optional[pd.DataFrame]:
         subset = ["game_date", "team"], keep = "last"
     )
     return injury_df
+
+
+def get_numeric_features(include_elo_features: bool = True) -> list[str]:
+    features = list(BASE_NUMERIC_FEATURES)
+    if include_elo_features:
+        features.extend(ELO_NUMERIC_FEATURES)
+    features.extend(INJURY_NUMERIC_FEATURES)
+    return features
 
 
 def _team_state() -> dict[str, object]:
@@ -561,7 +578,7 @@ def merge_latest_injury_snapshot(
     return frame
 
 
-def _build_preprocessor() -> ColumnTransformer:
+def _build_preprocessor(numeric_features: list[str]) -> ColumnTransformer:
     categorical_transformer = Pipeline(
         steps = [
             ("imputer", SimpleImputer(strategy = "most_frequent")),
@@ -579,7 +596,7 @@ def _build_preprocessor() -> ColumnTransformer:
     return ColumnTransformer(
         transformers = [
             ("cat", categorical_transformer, CATEGORICAL_FEATURES),
-            ("num", numeric_transformer, NUMERIC_FEATURES),
+            ("num", numeric_transformer, numeric_features),
         ]
     )
 
@@ -587,6 +604,8 @@ def _build_preprocessor() -> ColumnTransformer:
 def train_prediction_models(
     games: pd.DataFrame,
     injury_df: Optional[pd.DataFrame] = None,
+    logistic_include_elo_features: bool = True,
+    random_forest_include_elo_features: bool = True,
 ) -> tuple[Pipeline, Pipeline, pd.DataFrame]:
     if games.empty:
         raise ValueError("At least one completed game is required to train the predictor.")
@@ -595,19 +614,25 @@ def train_prediction_models(
     if feature_df.empty:
         raise ValueError("Feature engineering produced no training rows.")
 
-    X = feature_df[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
     y = feature_df["home_win"]
-    preprocessor = _build_preprocessor()
+    logistic_numeric_features = get_numeric_features(
+        include_elo_features = logistic_include_elo_features
+    )
+    random_forest_numeric_features = get_numeric_features(
+        include_elo_features = random_forest_include_elo_features
+    )
+    logistic_columns = CATEGORICAL_FEATURES + logistic_numeric_features
+    random_forest_columns = CATEGORICAL_FEATURES + random_forest_numeric_features
 
     logistic_regression = Pipeline(
         steps = [
-            ("preprocessor", preprocessor),
+            ("preprocessor", _build_preprocessor(logistic_numeric_features)),
             ("classifier", LogisticRegression(max_iter = 2000, random_state = 100)),
         ]
     )
     random_forest = Pipeline(
         steps = [
-            ("preprocessor", preprocessor),
+            ("preprocessor", _build_preprocessor(random_forest_numeric_features)),
             (
                 "classifier",
                 RandomForestClassifier(
@@ -620,9 +645,88 @@ def train_prediction_models(
         ]
     )
 
-    logistic_regression.fit(X, y)
-    random_forest.fit(X, y)
+    logistic_regression.fit(feature_df[logistic_columns], y)
+    random_forest.fit(feature_df[random_forest_columns], y)
     return logistic_regression, random_forest, feature_df
+
+
+def evaluate_random_forest_elo_impact(
+    games: pd.DataFrame,
+    injury_df: Optional[pd.DataFrame] = None,
+) -> dict[str, float | int | str]:
+    if games.empty:
+        raise ValueError("At least one completed game is required to evaluate the predictor.")
+
+    feature_df = merge_injury_features(build_pregame_features(games), injury_df)
+    feature_df = feature_df.sort_values("date").reset_index(drop = True)
+    if len(feature_df) < 10:
+        raise ValueError("Not enough completed games are available for a meaningful comparison.")
+
+    latest_season = int(feature_df["season"].max())
+    if feature_df["season"].nunique() > 1:
+        train_df = feature_df[feature_df["season"] < latest_season].copy()
+        test_df = feature_df[feature_df["season"] == latest_season].copy()
+        split_label = f"train_before_{latest_season}_test_{latest_season}"
+    else:
+        split_index = max(int(len(feature_df) * 0.8), 1)
+        train_df = feature_df.iloc[:split_index].copy()
+        test_df = feature_df.iloc[split_index:].copy()
+        split_label = "chronological_80_20"
+
+    if train_df.empty or test_df.empty:
+        raise ValueError("Evaluation split produced an empty train or test set.")
+
+    y_train = train_df["home_win"]
+    y_test = test_df["home_win"]
+    base_numeric_features = get_numeric_features(include_elo_features = False)
+    elo_numeric_features = get_numeric_features(include_elo_features = True)
+    base_columns = CATEGORICAL_FEATURES + base_numeric_features
+    elo_columns = CATEGORICAL_FEATURES + elo_numeric_features
+
+    base_random_forest = Pipeline(
+        steps = [
+            ("preprocessor", _build_preprocessor(base_numeric_features)),
+            (
+                "classifier",
+                RandomForestClassifier(
+                    n_estimators = 300,
+                    min_samples_leaf = 3,
+                    random_state = 100,
+                    n_jobs = -1,
+                ),
+            ),
+        ]
+    )
+    elo_random_forest = Pipeline(
+        steps = [
+            ("preprocessor", _build_preprocessor(elo_numeric_features)),
+            (
+                "classifier",
+                RandomForestClassifier(
+                    n_estimators = 300,
+                    min_samples_leaf = 3,
+                    random_state = 100,
+                    n_jobs = -1,
+                ),
+            ),
+        ]
+    )
+
+    base_random_forest.fit(train_df[base_columns], y_train)
+    elo_random_forest.fit(train_df[elo_columns], y_train)
+    base_predictions = base_random_forest.predict(test_df[base_columns])
+    elo_predictions = elo_random_forest.predict(test_df[elo_columns])
+    base_accuracy = accuracy_score(y_test, base_predictions)
+    elo_accuracy = accuracy_score(y_test, elo_predictions)
+
+    return {
+        "split": split_label,
+        "train_rows": int(len(train_df)),
+        "test_rows": int(len(test_df)),
+        "without_elo_accuracy": float(base_accuracy),
+        "with_elo_accuracy": float(elo_accuracy),
+        "accuracy_gain": float(elo_accuracy - base_accuracy),
+    }
 
 
 def _compute_state_snapshot(
@@ -806,12 +910,13 @@ def predict_matchup_from_games(
         injury_df = injury_df,
         injury_overrides = injury_overrides,
     )
-    model_input = matchup_df[CATEGORICAL_FEATURES + NUMERIC_FEATURES]
+    logistic_input = matchup_df[list(logistic_regression.feature_names_in_)]
+    random_forest_input = matchup_df[list(random_forest.feature_names_in_)]
 
-    lr_home_prob = float(logistic_regression.predict_proba(model_input)[0][1])
-    rf_home_prob = float(random_forest.predict_proba(model_input)[0][1])
-    lr_home_pred = int(logistic_regression.predict(model_input)[0])
-    rf_home_pred = int(random_forest.predict(model_input)[0])
+    lr_home_prob = float(logistic_regression.predict_proba(logistic_input)[0][1])
+    rf_home_prob = float(random_forest.predict_proba(random_forest_input)[0][1])
+    lr_home_pred = int(logistic_regression.predict(logistic_input)[0])
+    rf_home_pred = int(random_forest.predict(random_forest_input)[0])
     elo_home_prob = float(matchup_df.at[0, "elo_home_win_prob"])
     elo_home_pred = int(elo_home_prob >= 0.5)
 
@@ -835,6 +940,7 @@ def predict_matchup_from_games(
             "home_win_probability": rf_home_prob,
             "home_win_prediction": rf_home_pred,
             "predicted_winner": home_team if rf_home_pred == 1 else away_team,
+            "feature_set": "elo_enhanced",
         },
         "context": {
             "home_win_pct": float(matchup_df.at[0, "home_win_pct"]),

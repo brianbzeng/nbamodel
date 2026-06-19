@@ -228,6 +228,7 @@ def test_predictor_page_accepts_post(monkeypatch):
     assert "64.0%" in body
     assert "61.0%" in body
     assert "Latest saved injury report was folded into the matchup features" in body
+    assert "Random forest is running on the Elo-enhanced feature set" in body
 
 
 def test_bayesian_page_renders():
