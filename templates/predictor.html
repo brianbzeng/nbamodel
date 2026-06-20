@@ -45,18 +45,6 @@
         </div>
       </section>
 
-      <section class="predictor-model-card predictor-model-card-elo">
-        <div class="predictor-model-head">
-          <span class="predictor-model-label">Elo</span>
-        </div>
-        <div class="predictor-model-body">
-          <p class="predictor-model-kicker">Accuracy</p>
-          <strong class="predictor-model-winner">
-            {{ "%.1f"|format(benchmark_summary.elo_accuracy * 100) }}%
-          </strong>
-        </div>
-      </section>
-
       <section class="predictor-model-card predictor-model-card-logistic">
         <div class="predictor-model-head">
           <span class="predictor-model-label">Logistic regression</span>
@@ -85,7 +73,8 @@
     <div class="featured-team predictor-summary predictor-summary-tight">
       <strong>Best model: {{ benchmark_summary.best_model }}</strong>
       <span>Split {{ benchmark_summary.split }}</span>
-      <span>RF vs Elo gain {{ "%.1f"|format(benchmark_summary.random_forest_vs_elo_gain * 100) }} pts</span>
+      <span>Logistic vs baseline gain {{ "%.1f"|format(benchmark_summary.logistic_vs_baseline_gain * 100) }} pts</span>
+      <span>RF vs baseline gain {{ "%.1f"|format(benchmark_summary.random_forest_vs_baseline_gain * 100) }} pts</span>
       <span>{{ benchmark_summary.notes }}</span>
     </div>
 
@@ -180,23 +169,6 @@
       </div>
 
       <div class="predictor-model-grid">
-        <section class="predictor-model-card predictor-model-card-elo">
-          <div class="predictor-model-head">
-            <span class="predictor-model-label">Elo</span>
-            <span class="predictor-model-badge">Baseline</span>
-          </div>
-          <div class="predictor-model-body">
-            <p class="predictor-model-kicker">Predicted winner</p>
-            <strong class="predictor-model-winner">{{ prediction.elo.predicted_winner }}</strong>
-            <div class="predictor-model-stats">
-              <div class="predictor-model-stat">
-                <span>Home win %</span>
-                <strong>{{ "%.1f"|format(prediction.elo.home_win_probability * 100) }}%</strong>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section class="predictor-model-card predictor-model-card-logistic">
           <div class="predictor-model-head">
             <span class="predictor-model-label">Logistic regression</span>

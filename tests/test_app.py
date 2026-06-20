@@ -87,11 +87,11 @@ def test_predictor_page_renders(monkeypatch):
         "test_rows": 5,
         "test_season": 2025,
         "home_baseline_accuracy": 0.54,
-        "elo_accuracy": 0.61,
         "logistic_accuracy": 0.64,
         "random_forest_accuracy": 0.66,
         "best_model": "Random forest",
-        "random_forest_vs_elo_gain": 0.05,
+        "logistic_vs_baseline_gain": 0.10,
+        "random_forest_vs_baseline_gain": 0.12,
         "export_name": "predictor_latest_season_predictions_2025.csv",
     }
 
@@ -162,11 +162,11 @@ def test_predictor_page_accepts_post(monkeypatch):
         "test_rows": 5,
         "test_season": 2025,
         "home_baseline_accuracy": 0.54,
-        "elo_accuracy": 0.61,
         "logistic_accuracy": 0.64,
         "random_forest_accuracy": 0.66,
         "best_model": "Random forest",
-        "random_forest_vs_elo_gain": 0.05,
+        "logistic_vs_baseline_gain": 0.10,
+        "random_forest_vs_baseline_gain": 0.12,
         "export_name": "predictor_latest_season_predictions_2025.csv",
     }
 
@@ -263,7 +263,6 @@ def test_predictor_page_accepts_post(monkeypatch):
 
     assert response.status_code == 200
     assert "NYK @ BOS" in body
-    assert "58.0%" in body
     assert "64.0%" in body
     assert "61.0%" in body
     assert "Latest saved injury report was folded into the matchup features" in body

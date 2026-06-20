@@ -59,14 +59,14 @@ PREDICTOR_BENCHMARK_SUMMARY = {
     "label": "Final project benchmark",
     "split": "chronological holdout with normal historical conditions",
     "home_baseline_accuracy": 0.5459,
-    "elo_accuracy": 0.5459,
     "logistic_accuracy": 0.6479,
     "random_forest_accuracy": 0.6451,
     "best_model": "Logistic regression",
-    "random_forest_vs_elo_gain": 0.0992,
+    "logistic_vs_baseline_gain": 0.1020,
+    "random_forest_vs_baseline_gain": 0.0992,
     "notes": (
-        "These static benchmark numbers come from the strongest clean run of the original "
-        "project before the app integration work."
+        "Elo still helps inside the engineered feature set, but the app now foregrounds the "
+        "two strongest classifiers and the home-team baseline."
     ),
 }
 
