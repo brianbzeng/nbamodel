@@ -1,6 +1,7 @@
 # scraper.py
 
 from pathlib import Path
+import re
 import time
 from bs4 import BeautifulSoup, Comment
 import pandas as pd
@@ -52,62 +53,68 @@ def _collect_tables(soup: BeautifulSoup) -> list:
     return tables
 
 
-def scrape_bref_season_games(season: int, sleep=3) -> pd.DataFrame:
-    """
-    Scrape regular-season NBA games for a given season from Basketball-Reference.
-    season: ending year (e.g., 2019 = 2018-19 season)
-    """
+def _available_months_for_season(season: int) -> list[int]:
     url = f"{BASE_URL}NBA_{season}_games.html"
-    print(f"Scraping {url}")
+    print(f"Discovering month pages from {url}")
 
     soup = _fetch_soup(url)
-    games = []
+    month_lookup = {slug: month for month, slug in MONTH_SLUGS.items()}
+    discovered_months = []
 
-    tables = _collect_tables(soup)
-
-    for table in tables:
-        tbody = table.find("tbody")
-        if not tbody:
+    # Basketball-Reference exposes season schedule pages as month links on the season hub.
+    for link in soup.find_all("a", href = True):
+        href = link["href"]
+        match = re.search(rf"NBA_{season}_games-([a-z]+)\.html", href)
+        if not match:
             continue
 
-        for row in tbody.find_all("tr"):
-            # Skip header separator rows
-            if "class" in row.attrs and "thead" in row["class"]:
+        slug = match.group(1).casefold()
+        month = month_lookup.get(slug)
+        if month is not None:
+            discovered_months.append(month)
+
+    unique_months = sorted(set(discovered_months), key = lambda month: (month < 10, month))
+    if unique_months:
+        return unique_months
+
+    # Fall back to the standard NBA season months if the hub page does not expose links.
+    return [10, 11, 12, 1, 2, 3, 4]
+
+
+def scrape_bref_season_games(season: int, sleep=3) -> pd.DataFrame:
+    """
+    Scrape a full season of NBA games month by month from Basketball-Reference.
+    season: ending year (e.g., 2025 = 2024-25 season)
+    """
+    all_months = []
+    months = _available_months_for_season(season)
+
+    for month in months:
+        try:
+            month_games = scrape_bref_month_games(season, month, sleep = sleep)
+        except requests.HTTPError as exc:
+            status_code = getattr(exc.response, "status_code", None)
+            if status_code == 404:
+                print(f"Skipping unavailable month {month} for season {season}")
                 continue
+            raise
 
-            cols = row.find_all("td")
-            if len(cols) < 5:
-                continue
+        if not month_games.empty:
+            all_months.append(month_games)
 
-            date = cols[0].text.strip()
-            away_team = cols[1].text.strip()
-            away_pts = cols[2].text.strip()
-            home_team = cols[3].text.strip()
-            home_pts = cols[4].text.strip()
-
-            # Skip future/unplayed games
-            if not away_pts or not home_pts:
-                continue
-
-            games.append(
-                {
-                    "date": pd.to_datetime(date),
-                    "season": season,
-                    "home_team": home_team,
-                    "away_team": away_team,
-                    "home_pts": int(home_pts),
-                    "away_pts": int(away_pts),
-                }
-            )
-
-    time.sleep(sleep)  # be polite between seasons
-
-    if not games:
+    if not all_months:
         return pd.DataFrame(
             columns=["date", "season", "home_team", "away_team", "home_pts", "away_pts"]
         )
 
-    return pd.DataFrame(games)
+    season_games = pd.concat(all_months, ignore_index = True)
+
+    # Drop any duplicated rows if Basketball-Reference exposes overlapping month links.
+    season_games = season_games.drop_duplicates(
+        subset = ["date", "season", "home_team", "away_team", "home_pts", "away_pts"]
+    ).sort_values(["date", "home_team", "away_team"]).reset_index(drop = True)
+
+    return season_games
 
 
 def scrape_multiple_seasons(start_season=2016, end_season=2025, sleep=3) -> pd.DataFrame:
@@ -122,7 +129,9 @@ def scrape_multiple_seasons(start_season=2016, end_season=2025, sleep=3) -> pd.D
             columns=["date", "season", "home_team", "away_team", "home_pts", "away_pts"]
         )
 
-    return pd.concat(all_games, ignore_index=True)
+    return pd.concat(all_games, ignore_index = True).sort_values(
+        ["date", "season", "home_team", "away_team"]
+    ).reset_index(drop = True)
 
 
 def scrape_bref_month_games(season: int, month: int, sleep=3) -> pd.DataFrame:
