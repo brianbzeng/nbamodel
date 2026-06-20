@@ -12,7 +12,7 @@
   </div>
 </section>
 
-{% if evaluation_summary %}
+{% if benchmark_summary %}
 <section class="grid predictor-overview-grid">
   <article class="card">
     <div class="section-header">
@@ -29,7 +29,7 @@
   <article class="card">
     <div class="section-header">
       <h2>Model comparison</h2>
-      <p>Latest holdout evaluation mirrors the final project workflow.</p>
+      <p>{{ benchmark_summary.label }}.</p>
     </div>
 
     <div class="predictor-model-grid predictor-model-grid-compact">
@@ -40,7 +40,7 @@
         <div class="predictor-model-body">
           <p class="predictor-model-kicker">Accuracy</p>
           <strong class="predictor-model-winner">
-            {{ "%.1f"|format(evaluation_summary.home_baseline_accuracy * 100) }}%
+            {{ "%.1f"|format(benchmark_summary.home_baseline_accuracy * 100) }}%
           </strong>
         </div>
       </section>
@@ -52,7 +52,7 @@
         <div class="predictor-model-body">
           <p class="predictor-model-kicker">Accuracy</p>
           <strong class="predictor-model-winner">
-            {{ "%.1f"|format(evaluation_summary.elo_accuracy * 100) }}%
+            {{ "%.1f"|format(benchmark_summary.elo_accuracy * 100) }}%
           </strong>
         </div>
       </section>
@@ -64,7 +64,7 @@
         <div class="predictor-model-body">
           <p class="predictor-model-kicker">Accuracy</p>
           <strong class="predictor-model-winner">
-            {{ "%.1f"|format(evaluation_summary.logistic_accuracy * 100) }}%
+            {{ "%.1f"|format(benchmark_summary.logistic_accuracy * 100) }}%
           </strong>
         </div>
       </section>
@@ -76,18 +76,17 @@
         <div class="predictor-model-body">
           <p class="predictor-model-kicker">Accuracy</p>
           <strong class="predictor-model-winner">
-            {{ "%.1f"|format(evaluation_summary.random_forest_accuracy * 100) }}%
+            {{ "%.1f"|format(benchmark_summary.random_forest_accuracy * 100) }}%
           </strong>
         </div>
       </section>
     </div>
 
     <div class="featured-team predictor-summary predictor-summary-tight">
-      <strong>Best model: {{ evaluation_summary.best_model }}</strong>
-      <span>Split {{ evaluation_summary.split }}</span>
-      <span>Train rows {{ evaluation_summary.train_rows }} | test rows {{ evaluation_summary.test_rows }}</span>
-      <span>Test season {{ evaluation_summary.test_season }}</span>
-      <span>RF vs Elo gain {{ "%.1f"|format(evaluation_summary.random_forest_vs_elo_gain * 100) }} pts</span>
+      <strong>Best model: {{ benchmark_summary.best_model }}</strong>
+      <span>Split {{ benchmark_summary.split }}</span>
+      <span>RF vs Elo gain {{ "%.1f"|format(benchmark_summary.random_forest_vs_elo_gain * 100) }} pts</span>
+      <span>{{ benchmark_summary.notes }}</span>
     </div>
 
     {% if evaluation_summary.export_name %}

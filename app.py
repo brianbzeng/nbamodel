@@ -55,6 +55,20 @@ ENGINEERED_HEURISTICS = (
     "Rest measures days since each team last played before the matchup.",
     "Injury impact uses official status counts, weighted severity, and estimated absence days.",
 )
+PREDICTOR_BENCHMARK_SUMMARY = {
+    "label": "Final project benchmark",
+    "split": "chronological holdout with normal historical conditions",
+    "home_baseline_accuracy": 0.5459,
+    "elo_accuracy": 0.5459,
+    "logistic_accuracy": 0.6479,
+    "random_forest_accuracy": 0.6451,
+    "best_model": "Logistic regression",
+    "random_forest_vs_elo_gain": 0.0992,
+    "notes": (
+        "These static benchmark numbers come from the strongest clean run of the original "
+        "project before the app integration work."
+    ),
+}
 
 NAV_ITEMS = (
     {"endpoint": "home", "label": "Home"},
@@ -421,6 +435,7 @@ def create_app() -> Flask:
         error = None
         injury_file_present = False
         evaluation_summary = None
+        benchmark_summary = PREDICTOR_BENCHMARK_SUMMARY
 
         try:
             games = load_predictor_games()
@@ -460,6 +475,7 @@ def create_app() -> Flask:
             away_team = ""
             injury_file_present = False
             evaluation_summary = None
+            benchmark_summary = PREDICTOR_BENCHMARK_SUMMARY
 
         return render_template(
             "predictor.html",
@@ -475,6 +491,7 @@ def create_app() -> Flask:
             latest_completed_date = latest_completed_date,
             injury_file_present = injury_file_present,
             evaluation_summary = evaluation_summary,
+            benchmark_summary = benchmark_summary,
             engineered_heuristics = ENGINEERED_HEURISTICS,
         )
 

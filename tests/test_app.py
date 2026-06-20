@@ -149,6 +149,7 @@ def test_predictor_page_renders(monkeypatch):
     assert "Latest completed games through 2024-10-23" in body
     assert "Engineered heuristics" in body
     assert "Model comparison" in body
+    assert "Final project benchmark" in body
     assert "Download predicted vs true CSV" in body
 
 
