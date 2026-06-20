@@ -23,6 +23,7 @@ from model import run_elo, win_prob
 
 BASE_DIR = Path(__file__).resolve().parent
 RAW_DIR = BASE_DIR / "data" / "raw"
+REFERENCE_DIR = BASE_DIR / "data" / "reference"
 OFFICIAL_INJURY_FIRST_SEASON = 2022
 INJURY_REPORT_HOURS_ET = tuple(range(23, 10, -1))
 LONG_TERM_REASON_KEYWORDS = (
@@ -149,11 +150,30 @@ def get_latest_prediction_context(games: pd.DataFrame) -> dict[str, object]:
     }
 
 
+def _injury_csv_candidates() -> list[Path]:
+    preferred_paths = [
+        *sorted(RAW_DIR.glob("official_nba_injuries_by_team*.csv")),
+        *sorted(REFERENCE_DIR.glob("official_nba_injuries_by_team*.csv")),
+    ]
+    deduped_by_name: dict[str, Path] = {}
+
+    # Prefer freshly scraped raw files over bundled reference files with the same name.
+    for path in reversed(preferred_paths):
+        deduped_by_name[path.name] = path
+
+    return sorted(deduped_by_name.values())
+
+
+def get_cached_injury_dataset_path() -> Optional[Path]:
+    candidates = _injury_csv_candidates()
+    return candidates[-1] if candidates else None
+
+
 def load_optional_team_injuries(games: pd.DataFrame) -> Optional[pd.DataFrame]:
     if games.empty:
         return None
 
-    injury_paths = sorted(RAW_DIR.glob("official_nba_injuries_by_team*.csv"))
+    injury_paths = _injury_csv_candidates()
     if not injury_paths:
         return None
 
@@ -303,6 +323,16 @@ def refresh_official_injury_dataset(games: pd.DataFrame) -> dict[str, object]:
         report_rows.append(summarize_injury_report(report_df, report_timestamp))
 
     if not report_rows:
+        cached_path = get_cached_injury_dataset_path()
+        if cached_path is not None:
+            return {
+                "status": "cached",
+                "message": f"Using cached injury dataset from {cached_path.name}.",
+                "rows": 0,
+                "file": str(cached_path),
+                "missing_dates": missing_dates,
+            }
+
         return {
             "status": "no_reports",
             "message": "No valid official NBA injury reports were found for the predictor range.",

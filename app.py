@@ -23,6 +23,7 @@ from scraper import scrape_bref_season_games, scrape_multiple_seasons
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 RAW_DIR = DATA_DIR / "raw"
+REFERENCE_DIR = DATA_DIR / "reference"
 PROCESSED_DIR = DATA_DIR / "processed"
 RESULTS_DIR = DATA_DIR / "results"
 EXPORTS_DIR = DATA_DIR / "exports"
@@ -53,6 +54,7 @@ NAV_ITEMS = (
 
 def ensure_data_dirs() -> None:
     RAW_DIR.mkdir(parents=True, exist_ok=True)
+    REFERENCE_DIR.mkdir(parents=True, exist_ok=True)
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     SCRAPE_EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
