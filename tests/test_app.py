@@ -81,6 +81,20 @@ def test_leaderboard_route_renders():
 def test_predictor_page_renders(monkeypatch):
     import app as app_module
 
+    evaluation_summary = {
+        "split": "train_before_2025_test_2025",
+        "train_rows": 10,
+        "test_rows": 5,
+        "test_season": 2025,
+        "home_baseline_accuracy": 0.54,
+        "elo_accuracy": 0.61,
+        "logistic_accuracy": 0.64,
+        "random_forest_accuracy": 0.66,
+        "best_model": "Random forest",
+        "random_forest_vs_elo_gain": 0.05,
+        "export_name": "predictor_latest_season_predictions_2025.csv",
+    }
+
     games = app_module.pd.DataFrame(
         [
             {
@@ -108,6 +122,7 @@ def test_predictor_page_renders(monkeypatch):
 
     monkeypatch.setattr(app_module, "load_predictor_games", lambda: games)
     monkeypatch.setattr(app_module, "load_optional_team_injuries", lambda frame: None)
+    monkeypatch.setattr(app_module, "load_predictor_artifacts", lambda: evaluation_summary)
     monkeypatch.setattr(
         app_module,
         "get_latest_prediction_context",
@@ -132,10 +147,27 @@ def test_predictor_page_renders(monkeypatch):
     assert "Training range 2020-2025" in body
     assert "No official injury CSV detected yet." in body
     assert "Latest completed games through 2024-10-23" in body
+    assert "Engineered heuristics" in body
+    assert "Model comparison" in body
+    assert "Download predicted vs true CSV" in body
 
 
 def test_predictor_page_accepts_post(monkeypatch):
     import app as app_module
+
+    evaluation_summary = {
+        "split": "train_before_2025_test_2025",
+        "train_rows": 10,
+        "test_rows": 5,
+        "test_season": 2025,
+        "home_baseline_accuracy": 0.54,
+        "elo_accuracy": 0.61,
+        "logistic_accuracy": 0.64,
+        "random_forest_accuracy": 0.66,
+        "best_model": "Random forest",
+        "random_forest_vs_elo_gain": 0.05,
+        "export_name": "predictor_latest_season_predictions_2025.csv",
+    }
 
     games = app_module.pd.DataFrame(
         [
@@ -204,6 +236,7 @@ def test_predictor_page_accepts_post(monkeypatch):
 
     monkeypatch.setattr(app_module, "load_predictor_games", lambda: games)
     monkeypatch.setattr(app_module, "load_optional_team_injuries", lambda frame: app_module.pd.DataFrame([{"team": "BOS"}]))
+    monkeypatch.setattr(app_module, "load_predictor_artifacts", lambda: evaluation_summary)
     monkeypatch.setattr(
         app_module,
         "get_latest_prediction_context",
@@ -239,6 +272,11 @@ def test_predictor_page_accepts_post(monkeypatch):
 def test_predictor_refresh_route(monkeypatch):
     import app as app_module
 
+    evaluation_summary = {
+        "test_season": 2025,
+        "export_name": "predictor_latest_season_predictions_2025.csv",
+    }
+
     monkeypatch.setattr(
         app_module,
         "refresh_predictor_dataset",
@@ -266,6 +304,7 @@ def test_predictor_refresh_route(monkeypatch):
             },
         ),
     )
+    monkeypatch.setattr(app_module, "build_predictor_artifacts", lambda games: evaluation_summary)
     monkeypatch.setattr(
         app_module,
         "load_predictor_games",
@@ -303,6 +342,7 @@ def test_predictor_refresh_route(monkeypatch):
     assert response.status_code == 200
     assert "Predictor training data refreshed for 2020-2025." in body
     assert "Official injury data refreshed for seasons 2022-2025 across 10 game dates." in body
+    assert "Updated predictor comparison on test season 2025 and exported latest-season predictions." in body
 
 
 def test_bayesian_page_renders():

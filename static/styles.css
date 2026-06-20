@@ -546,6 +546,11 @@ tbody tr:nth-child(even) {
   align-items: start;
 }
 
+.predictor-overview-grid {
+  align-items: start;
+  margin-bottom: 16px;
+}
+
 .form-columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -585,6 +590,10 @@ tbody tr:nth-child(even) {
   margin-bottom: 16px;
 }
 
+.predictor-model-grid-compact {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
 .predictor-model-card {
   display: grid;
   gap: 18px;
@@ -593,6 +602,10 @@ tbody tr:nth-child(even) {
   border-radius: 20px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.035);
+}
+
+.predictor-model-grid-compact .predictor-model-card {
+  min-height: 180px;
 }
 
 .predictor-model-card-elo {
@@ -668,6 +681,10 @@ tbody tr:nth-child(even) {
 
 .predictor-model-stat strong {
   font-size: 1.9rem;
+}
+
+.predictor-summary-tight {
+  margin-top: 6px;
 }
 
 @media (max-width: 920px) {

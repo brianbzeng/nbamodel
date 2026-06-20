@@ -12,6 +12,98 @@
   </div>
 </section>
 
+{% if evaluation_summary %}
+<section class="grid predictor-overview-grid">
+  <article class="card">
+    <div class="section-header">
+      <h2>Engineered heuristics</h2>
+      <p>The final project features are now part of the app pipeline.</p>
+    </div>
+    <ul class="feature-list">
+      {% for item in engineered_heuristics %}
+        <li>{{ item }}</li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article class="card">
+    <div class="section-header">
+      <h2>Model comparison</h2>
+      <p>Latest holdout evaluation mirrors the final project workflow.</p>
+    </div>
+
+    <div class="predictor-model-grid predictor-model-grid-compact">
+      <section class="predictor-model-card predictor-model-card-elo">
+        <div class="predictor-model-head">
+          <span class="predictor-model-label">Home baseline</span>
+        </div>
+        <div class="predictor-model-body">
+          <p class="predictor-model-kicker">Accuracy</p>
+          <strong class="predictor-model-winner">
+            {{ "%.1f"|format(evaluation_summary.home_baseline_accuracy * 100) }}%
+          </strong>
+        </div>
+      </section>
+
+      <section class="predictor-model-card predictor-model-card-elo">
+        <div class="predictor-model-head">
+          <span class="predictor-model-label">Elo</span>
+        </div>
+        <div class="predictor-model-body">
+          <p class="predictor-model-kicker">Accuracy</p>
+          <strong class="predictor-model-winner">
+            {{ "%.1f"|format(evaluation_summary.elo_accuracy * 100) }}%
+          </strong>
+        </div>
+      </section>
+
+      <section class="predictor-model-card predictor-model-card-logistic">
+        <div class="predictor-model-head">
+          <span class="predictor-model-label">Logistic regression</span>
+        </div>
+        <div class="predictor-model-body">
+          <p class="predictor-model-kicker">Accuracy</p>
+          <strong class="predictor-model-winner">
+            {{ "%.1f"|format(evaluation_summary.logistic_accuracy * 100) }}%
+          </strong>
+        </div>
+      </section>
+
+      <section class="predictor-model-card predictor-model-card-rf">
+        <div class="predictor-model-head">
+          <span class="predictor-model-label">Random forest</span>
+        </div>
+        <div class="predictor-model-body">
+          <p class="predictor-model-kicker">Accuracy</p>
+          <strong class="predictor-model-winner">
+            {{ "%.1f"|format(evaluation_summary.random_forest_accuracy * 100) }}%
+          </strong>
+        </div>
+      </section>
+    </div>
+
+    <div class="featured-team predictor-summary predictor-summary-tight">
+      <strong>Best model: {{ evaluation_summary.best_model }}</strong>
+      <span>Split {{ evaluation_summary.split }}</span>
+      <span>Train rows {{ evaluation_summary.train_rows }} | test rows {{ evaluation_summary.test_rows }}</span>
+      <span>Test season {{ evaluation_summary.test_season }}</span>
+      <span>RF vs Elo gain {{ "%.1f"|format(evaluation_summary.random_forest_vs_elo_gain * 100) }} pts</span>
+    </div>
+
+    {% if evaluation_summary.export_name %}
+      <div class="page-actions">
+        <a
+          class="button-secondary"
+          href="{{ url_for('download_predictor_export', filename=evaluation_summary.export_name) }}"
+        >
+          Download predicted vs true CSV
+        </a>
+      </div>
+    {% endif %}
+  </article>
+</section>
+{% endif %}
+
 <section class="grid predictor-grid">
   <article class="card">
     <div class="section-header">

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from pathlib import Path
 from shutil import rmtree
@@ -13,6 +14,7 @@ from flask import Flask, flash, redirect, render_template, request, send_from_di
 from cleaner import clean_games, normalize_team_names
 from model import run_elo
 from predictor import (
+    evaluate_prediction_models,
     get_latest_prediction_context,
     load_optional_team_injuries,
     predict_matchup_from_games,
@@ -28,6 +30,7 @@ PROCESSED_DIR = DATA_DIR / "processed"
 RESULTS_DIR = DATA_DIR / "results"
 EXPORTS_DIR = DATA_DIR / "exports"
 SCRAPE_EXPORTS_DIR = EXPORTS_DIR / "scrapes"
+PREDICTOR_EXPORTS_DIR = EXPORTS_DIR / "predictor"
 
 RAW_FILE = RAW_DIR / "bref_games_2016_2025.csv"
 PROCESSED_FILE = PROCESSED_DIR / "games_2016_2025_normalized.csv"
@@ -37,11 +40,21 @@ PREDICTOR_RAW_FILE = RAW_DIR / f"bref_games_{PREDICTOR_START_SEASON}_{PREDICTOR_
 PREDICTOR_PROCESSED_FILE = (
     PROCESSED_DIR / f"games_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}_normalized.csv"
 )
+PREDICTOR_EVAL_SUMMARY_FILE = (
+    RESULTS_DIR / f"predictor_eval_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.json"
+)
 APP_TITLE = "NBA Odds Predictor"
 
 DEFAULT_START_SEASON = 2016
 DEFAULT_END_SEASON = 2025
 PREVIEW_OPTIONS = (5, 10, 25, 50, 100)
+ENGINEERED_HEURISTICS = (
+    "Team strength blends season win percentage with average scoring margin.",
+    "Blended strength combines the team-strength score with normalized Elo.",
+    "Recent form tracks rolling five-game win rate and scoring margin.",
+    "Rest measures days since each team last played before the matchup.",
+    "Injury impact uses official status counts, weighted severity, and estimated absence days.",
+)
 
 NAV_ITEMS = (
     {"endpoint": "home", "label": "Home"},
@@ -58,6 +71,7 @@ def ensure_data_dirs() -> None:
     PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     SCRAPE_EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
+    PREDICTOR_EXPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def load_raw_games() -> pd.DataFrame:
@@ -133,6 +147,28 @@ def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool, dict[str, object]]:
 
     fresh_processed.to_csv(PREDICTOR_PROCESSED_FILE, index=False)
     return fresh_processed, False, refresh_official_injury_dataset(fresh_processed)
+
+
+def build_predictor_artifacts(games: pd.DataFrame) -> dict[str, object]:
+    injury_df = load_optional_team_injuries(games)
+    evaluation_summary, export_df = evaluate_prediction_models(games, injury_df)
+    export_name = (
+        f"predictor_latest_season_predictions_{int(evaluation_summary['test_season'])}.csv"
+    )
+    export_path = PREDICTOR_EXPORTS_DIR / export_name
+    export_df.to_csv(export_path, index = False)
+
+    serialized_summary = dict(evaluation_summary)
+    serialized_summary["export_name"] = export_name
+    serialized_summary["export_path"] = str(export_path)
+    PREDICTOR_EVAL_SUMMARY_FILE.write_text(json.dumps(serialized_summary, indent = 2))
+    return serialized_summary
+
+
+def load_predictor_artifacts() -> dict[str, object] | None:
+    if not PREDICTOR_EVAL_SUMMARY_FILE.exists():
+        return None
+    return json.loads(PREDICTOR_EVAL_SUMMARY_FILE.read_text())
 
 
 def save_scraped_games(start_season: int, end_season: int) -> tuple[pd.DataFrame, str]:
@@ -384,12 +420,19 @@ def create_app() -> Flask:
         prediction = None
         error = None
         injury_file_present = False
+        evaluation_summary = None
 
         try:
             games = load_predictor_games()
             context = get_latest_prediction_context(games)
             injury_df = load_optional_team_injuries(games)
             injury_file_present = injury_df is not None
+            evaluation_summary = load_predictor_artifacts()
+            if evaluation_summary is None:
+                try:
+                    evaluation_summary = build_predictor_artifacts(games)
+                except Exception:  # noqa: BLE001 - keep the predictor page usable without cached evals
+                    evaluation_summary = None
             selected_season = int(context["season"])
             prediction_date = context["prediction_date"]
             latest_completed_date = context["latest_completed_date"]
@@ -416,6 +459,7 @@ def create_app() -> Flask:
             home_team = ""
             away_team = ""
             injury_file_present = False
+            evaluation_summary = None
 
         return render_template(
             "predictor.html",
@@ -430,6 +474,8 @@ def create_app() -> Flask:
             prediction_date = prediction_date,
             latest_completed_date = latest_completed_date,
             injury_file_present = injury_file_present,
+            evaluation_summary = evaluation_summary,
+            engineered_heuristics = ENGINEERED_HEURISTICS,
         )
 
     @app.post("/predictor/refresh")
@@ -457,6 +503,20 @@ def create_app() -> Flask:
             flash(injury_status["message"], "info")
         elif injury_status["status"] == "no_games":
             flash(injury_status["message"], "error")
+
+        if not games.empty:
+            try:
+                evaluation_summary = build_predictor_artifacts(games)
+                flash(
+                    (
+                        f"Updated predictor comparison on test season "
+                        f"{evaluation_summary['test_season']} and exported latest-season predictions."
+                    ),
+                    "success",
+                )
+            except Exception as exc:  # noqa: BLE001 - user-facing feedback
+                flash(f"Predictor evaluation refresh skipped: {exc}", "info")
+
         return redirect(url_for("predictor"))
 
     @app.post("/reset-data")
@@ -476,6 +536,10 @@ def create_app() -> Flask:
     @app.get("/downloads/scrapes/<path:filename>")
     def download_scrape_export(filename: str):
         return send_from_directory(SCRAPE_EXPORTS_DIR, filename, as_attachment=True)
+
+    @app.get("/downloads/predictor/<path:filename>")
+    def download_predictor_export(filename: str):
+        return send_from_directory(PREDICTOR_EXPORTS_DIR, filename, as_attachment = True)
 
     return app
 

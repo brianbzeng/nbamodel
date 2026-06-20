@@ -931,6 +931,152 @@ def evaluate_random_forest_elo_impact(
     }
 
 
+def evaluate_prediction_models(
+    games: pd.DataFrame,
+    injury_df: Optional[pd.DataFrame] = None,
+) -> tuple[dict[str, float | int | str | bool], pd.DataFrame]:
+    if games.empty:
+        raise ValueError("At least one completed game is required to evaluate the predictor.")
+
+    ordered_games = games.sort_values(["date", "home_team", "away_team"]).reset_index(drop = True)
+    feature_df = merge_injury_features(build_pregame_features(ordered_games), injury_df)
+    feature_df = feature_df.sort_values(["date", "home_team", "away_team"]).reset_index(drop = True)
+
+    if len(feature_df) < 10:
+        raise ValueError("Not enough completed games are available for a meaningful evaluation.")
+
+    latest_season = int(feature_df["season"].max())
+    if feature_df["season"].nunique() > 1:
+        train_games = ordered_games[ordered_games["season"] < latest_season].copy()
+        test_df = feature_df[feature_df["season"] == latest_season].copy()
+        split_label = f"train_before_{latest_season}_test_{latest_season}"
+        test_season = latest_season
+    else:
+        split_index = max(int(len(feature_df) * 0.8), 1)
+        train_games = ordered_games.iloc[:split_index].copy()
+        test_df = feature_df.iloc[split_index:].copy()
+        split_label = "chronological_80_20"
+        test_season = int(test_df["season"].max())
+
+    if train_games.empty or test_df.empty:
+        raise ValueError("Evaluation split produced an empty train or test set.")
+
+    logistic_regression, random_forest, _ = train_prediction_models(train_games, injury_df)
+    logistic_columns = list(logistic_regression.feature_names_in_)
+    random_forest_columns = list(random_forest.feature_names_in_)
+
+    logistic_home_probs = logistic_regression.predict_proba(test_df[logistic_columns])[:, 1]
+    random_forest_home_probs = random_forest.predict_proba(test_df[random_forest_columns])[:, 1]
+    logistic_predictions = (logistic_home_probs >= 0.5).astype(int)
+    random_forest_predictions = (random_forest_home_probs >= 0.5).astype(int)
+    elo_home_probs = test_df["elo_home_win_prob"].astype(float).to_numpy()
+    elo_predictions = (elo_home_probs >= 0.5).astype(int)
+    actual_home_wins = test_df["home_win"].astype(int).to_numpy()
+    home_baseline_predictions = [1] * len(test_df)
+
+    summary = {
+        "split": split_label,
+        "train_rows": int(len(train_games)),
+        "test_rows": int(len(test_df)),
+        "test_season": int(test_season),
+        "injury_data_used": bool(injury_df is not None and not injury_df.empty),
+        "home_baseline_accuracy": float(accuracy_score(actual_home_wins, home_baseline_predictions)),
+        "elo_accuracy": float(accuracy_score(actual_home_wins, elo_predictions)),
+        "logistic_accuracy": float(accuracy_score(actual_home_wins, logistic_predictions)),
+        "random_forest_accuracy": float(accuracy_score(actual_home_wins, random_forest_predictions)),
+    }
+    summary["best_model"] = max(
+        (
+            ("Home baseline", summary["home_baseline_accuracy"]),
+            ("Elo", summary["elo_accuracy"]),
+            ("Logistic regression", summary["logistic_accuracy"]),
+            ("Random forest", summary["random_forest_accuracy"]),
+        ),
+        key = lambda item: item[1],
+    )[0]
+    summary["random_forest_vs_logistic_gain"] = (
+        summary["random_forest_accuracy"] - summary["logistic_accuracy"]
+    )
+    summary["random_forest_vs_elo_gain"] = (
+        summary["random_forest_accuracy"] - summary["elo_accuracy"]
+    )
+
+    export_df = test_df[
+        [
+            "date",
+            "season",
+            "home_team",
+            "away_team",
+            "home_win",
+            "home_win_pct",
+            "away_win_pct",
+            "home_team_strength",
+            "away_team_strength",
+            "home_blended_strength",
+            "away_blended_strength",
+            "home_out_count",
+            "away_out_count",
+            "home_injury_impact_score",
+            "away_injury_impact_score",
+        ]
+    ].copy()
+    export_df["matchup"] = export_df["away_team"] + " @ " + export_df["home_team"]
+    export_df["true_winner"] = export_df.apply(
+        lambda row: row["home_team"] if int(row["home_win"]) == 1 else row["away_team"],
+        axis = 1,
+    )
+    export_df["home_baseline_predicted_winner"] = export_df["home_team"]
+    export_df["elo_home_win_probability"] = elo_home_probs
+    export_df["elo_predicted_winner"] = export_df.apply(
+        lambda row: row["home_team"] if float(row["elo_home_win_probability"]) >= 0.5 else row["away_team"],
+        axis = 1,
+    )
+    export_df["logistic_home_win_probability"] = logistic_home_probs
+    export_df["logistic_predicted_winner"] = export_df.apply(
+        lambda row: row["home_team"] if float(row["logistic_home_win_probability"]) >= 0.5 else row["away_team"],
+        axis = 1,
+    )
+    export_df["random_forest_home_win_probability"] = random_forest_home_probs
+    export_df["random_forest_predicted_winner"] = export_df.apply(
+        lambda row: (
+            row["home_team"]
+            if float(row["random_forest_home_win_probability"]) >= 0.5
+            else row["away_team"]
+        ),
+        axis = 1,
+    )
+    export_df = export_df[
+        [
+            "date",
+            "season",
+            "matchup",
+            "home_team",
+            "away_team",
+            "true_winner",
+            "home_win",
+            "home_baseline_predicted_winner",
+            "elo_predicted_winner",
+            "elo_home_win_probability",
+            "logistic_predicted_winner",
+            "logistic_home_win_probability",
+            "random_forest_predicted_winner",
+            "random_forest_home_win_probability",
+            "home_win_pct",
+            "away_win_pct",
+            "home_team_strength",
+            "away_team_strength",
+            "home_blended_strength",
+            "away_blended_strength",
+            "home_out_count",
+            "away_out_count",
+            "home_injury_impact_score",
+            "away_injury_impact_score",
+        ]
+    ]
+
+    return summary, export_df
+
+
 def _compute_state_snapshot(
     games: pd.DataFrame,
     season: int,
