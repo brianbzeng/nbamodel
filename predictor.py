@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict, deque
-from datetime import datetime, timedelta
-from math import exp
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -18,14 +17,17 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from cleaner import TEAM_MAP_BREF
-from model import run_elo, win_prob
 
 
 BASE_DIR = Path(__file__).resolve().parent
 RAW_DIR = BASE_DIR / "data" / "raw"
 REFERENCE_DIR = BASE_DIR / "data" / "reference"
 OFFICIAL_INJURY_FIRST_SEASON = 2022
-INJURY_REPORT_HOURS_ET = tuple(range(23, 10, -1))
+REPORT_HOURS = [17, 14, 13, 12, 11, 10, 9]
+MAX_REPORT_FETCH_ATTEMPTS = 3
+RETRY_DELAY_SECONDS = 2
+MAX_REST_DAYS = 7
+MAX_INJURY_LOOKBACK_DAYS = 3
 LONG_TERM_REASON_KEYWORDS = (
     "acl",
     "achilles",
@@ -34,6 +36,13 @@ LONG_TERM_REASON_KEYWORDS = (
     "tear",
     "torn",
 )
+STATUS_IMPACT_MULTIPLIERS = {
+    "OUT": 1.0,
+    "DOUBTFUL": 0.75,
+    "QUESTIONABLE": 0.45,
+    "PROBABLE": 0.15,
+    "AVAILABLE": 0.0,
+}
 
 BASE_NUMERIC_FEATURES = [
     "season",
@@ -66,16 +75,6 @@ BASE_NUMERIC_FEATURES = [
     "home_rest_days",
     "away_rest_days",
     "rest_diff",
-]
-
-ELO_NUMERIC_FEATURES = [
-    "home_elo_rating",
-    "away_elo_rating",
-    "elo_diff",
-    "elo_home_win_prob",
-    "home_blended_strength",
-    "away_blended_strength",
-    "blended_strength_diff",
 ]
 
 INJURY_NUMERIC_FEATURES = [
@@ -112,7 +111,7 @@ INJURY_NUMERIC_FEATURES = [
     "long_term_absence_diff",
 ]
 
-NUMERIC_FEATURES = BASE_NUMERIC_FEATURES + ELO_NUMERIC_FEATURES + INJURY_NUMERIC_FEATURES
+NUMERIC_FEATURES = BASE_NUMERIC_FEATURES + INJURY_NUMERIC_FEATURES
 
 CATEGORICAL_FEATURES = ["home_team", "away_team"]
 INJURY_OVERRIDE_FIELDS = (
@@ -169,11 +168,22 @@ def get_cached_injury_dataset_path() -> Optional[Path]:
     return candidates[-1] if candidates else None
 
 
+def get_exact_injury_dataset_path(games: pd.DataFrame) -> Optional[Path]:
+    if games.empty:
+        return None
+
+    start_season = int(games["season"].min())
+    end_season = int(games["season"].max())
+    exact_path = RAW_DIR / f"official_nba_injuries_by_team_{start_season}_{end_season}.csv"
+    return exact_path if exact_path.exists() else None
+
+
 def load_optional_team_injuries(games: pd.DataFrame) -> Optional[pd.DataFrame]:
     if games.empty:
         return None
 
-    injury_paths = _injury_csv_candidates()
+    exact_path = get_exact_injury_dataset_path(games)
+    injury_paths = [exact_path] if exact_path is not None else _injury_csv_candidates()
     if not injury_paths:
         return None
 
@@ -181,6 +191,7 @@ def load_optional_team_injuries(games: pd.DataFrame) -> Optional[pd.DataFrame]:
     injury_df = pd.concat(frames, ignore_index = True)
     injury_df["game_date"] = pd.to_datetime(injury_df["game_date"]).dt.normalize()
     injury_df["latest_report_datetime"] = pd.to_datetime(injury_df["latest_report_datetime"])
+    injury_df["team"] = injury_df["team"].map(TEAM_MAP_BREF).fillna(injury_df["team"])
     injury_df = injury_df.sort_values(
         ["game_date", "latest_report_datetime", "team"]
     ).drop_duplicates(
@@ -189,80 +200,246 @@ def load_optional_team_injuries(games: pd.DataFrame) -> Optional[pd.DataFrame]:
     return injury_df
 
 
-def _status_count(frame: pd.DataFrame, status: str) -> int:
-    return int((frame["Current Status"].astype(str).str.casefold() == status).sum())
+def estimate_absence_days(reason: str) -> float:
+    # Map common injury descriptions to rough expected absence lengths.
+    reason_text = str(reason).strip().lower()
+    if not reason_text or reason_text == "nan":
+        return 5.0
+
+    specific_patterns = [
+        (("achilles", "repair"), 180.0),
+        (("acl",), 240.0),
+        (("reconstruction", "surgery"), 120.0),
+        (("surgery",), 45.0),
+        (("meniscus", "tear"), 30.0),
+        (("tendon", "strain"), 21.0),
+        (("stress", "fracture"), 45.0),
+        (("fracture",), 25.0),
+        (("hamstring", "strain"), 14.0),
+        (("groin", "strain"), 10.0),
+        (("ankle", "sprain"), 10.0),
+        (("knee", "sprain"), 12.0),
+        (("calf", "strain"), 10.0),
+        (("shoulder", "strain"), 10.0),
+        (("thumb", "sprain"), 8.0),
+        (("injury", "recovery"), 7.0),
+        (("injury", "management"), 4.0),
+        (("concussion",), 6.0),
+        (("illness",), 3.0),
+    ]
+    for keywords, days in specific_patterns:
+        if all(keyword in reason_text for keyword in keywords):
+            return days
+
+    fallback_days = {
+        "tear": 30.0,
+        "surgery": 45.0,
+        "repair": 120.0,
+        "fracture": 25.0,
+        "sprain": 10.0,
+        "strain": 11.0,
+        "soreness": 3.0,
+        "tightness": 3.0,
+        "discomfort": 3.0,
+        "inflammation": 5.0,
+        "contusion": 4.0,
+        "management": 4.0,
+        "reconditioning": 7.0,
+        "recovery": 7.0,
+        "illness": 3.0,
+        "ankle": 8.0,
+        "knee": 10.0,
+        "hamstring": 11.0,
+        "groin": 9.0,
+        "calf": 9.0,
+        "foot": 10.0,
+        "back": 6.0,
+        "hip": 10.0,
+        "shoulder": 9.0,
+        "elbow": 8.0,
+        "wrist": 8.0,
+        "thumb": 7.0,
+        "finger": 6.0,
+        "achilles": 90.0,
+        "not with team": 5.0,
+        "personal reasons": 3.0,
+    }
+    for keyword, days in fallback_days.items():
+        if keyword in reason_text:
+            return days
+
+    return 5.0
 
 
-def _estimate_absence_days(status: str, reason: str) -> int:
-    status_value = str(status).casefold()
-    reason_value = str(reason).casefold()
-    if status_value == "out":
-        return 30 if any(keyword in reason_value for keyword in LONG_TERM_REASON_KEYWORDS) else 10
-    if status_value == "doubtful":
-        return 7
-    if status_value == "questionable":
-        return 4
-    if status_value == "probable":
-        return 2
-    return 0
+def aggregate_team_injuries(injury_df: pd.DataFrame) -> pd.DataFrame:
+    # Collapse detailed player rows into team-level features for each game date.
+    if injury_df.empty:
+        return pd.DataFrame(
+            columns = [
+                "game_date",
+                "team",
+                "latest_report_datetime",
+                "out_count",
+                "doubtful_count",
+                "questionable_count",
+                "probable_count",
+                "available_count",
+                "weighted_injury_score",
+                "reported_player_count",
+                "estimated_absence_days_total",
+                "estimated_absence_days_max",
+                "injury_impact_score",
+                "long_term_absence_count",
+            ]
+        )
 
-
-def summarize_injury_report(report_df: pd.DataFrame, report_timestamp: datetime) -> pd.DataFrame:
-    if report_df.empty:
-        return pd.DataFrame()
-
-    frame = report_df.copy()
-    frame["Team"] = frame["Team"].map(TEAM_MAP_BREF).fillna(frame["Team"])
-    frame["Current Status"] = frame["Current Status"].fillna("Available")
-    frame["Reason"] = frame["Reason"].fillna("")
-    frame["estimated_absence_days"] = frame.apply(
-        lambda row: _estimate_absence_days(row["Current Status"], row["Reason"]),
-        axis = 1,
+    latest_player_status = (
+        injury_df.sort_values("report_datetime")
+        .drop_duplicates(subset = ["game_date", "team", "player_name"], keep = "last")
+        .copy()
     )
 
-    rows = []
-    for team, team_frame in frame.groupby("Team", sort = True):
-        out_count = _status_count(team_frame, "out")
-        doubtful_count = _status_count(team_frame, "doubtful")
-        questionable_count = _status_count(team_frame, "questionable")
-        probable_count = _status_count(team_frame, "probable")
-        available_count = _status_count(team_frame, "available")
-        weighted_injury_score = (
-            out_count * 1.0
-            + doubtful_count * 0.75
-            + questionable_count * 0.5
-            + probable_count * 0.25
-        )
-        long_term_absence_count = int(
-            team_frame[
-                (team_frame["Current Status"].astype(str).str.casefold() == "out")
-                & team_frame["Reason"].astype(str).str.casefold().str.contains(
-                    "|".join(LONG_TERM_REASON_KEYWORDS),
-                    regex = True,
-                )
-            ].shape[0]
-        )
+    status_series = latest_player_status["status"].str.upper()
+    latest_player_status["out_flag"] = status_series.eq("OUT").astype(int)
+    latest_player_status["doubtful_flag"] = status_series.eq("DOUBTFUL").astype(int)
+    latest_player_status["questionable_flag"] = status_series.eq("QUESTIONABLE").astype(int)
+    latest_player_status["probable_flag"] = status_series.eq("PROBABLE").astype(int)
+    latest_player_status["available_flag"] = status_series.eq("AVAILABLE").astype(int)
+    latest_player_status["reported_player_flag"] = latest_player_status["player_name"].ne("").astype(int)
+    latest_player_status["estimated_absence_days"] = latest_player_status["reason"].map(
+        estimate_absence_days
+    )
+    latest_player_status["status_impact_multiplier"] = status_series.map(
+        STATUS_IMPACT_MULTIPLIERS
+    ).fillna(0.25)
+    latest_player_status["weighted_status_score"] = (
+        latest_player_status["out_flag"] * 1.0
+        + latest_player_status["doubtful_flag"] * 0.75
+        + latest_player_status["questionable_flag"] * 0.5
+        + latest_player_status["probable_flag"] * 0.25
+    )
+    latest_player_status["injury_impact_score"] = (
+        latest_player_status["estimated_absence_days"]
+        * latest_player_status["status_impact_multiplier"]
+    )
+    latest_player_status["long_term_absence_flag"] = (
+        (latest_player_status["estimated_absence_days"] >= 14.0)
+        & status_series.ne("AVAILABLE")
+    ).astype(int)
 
-        rows.append(
-            {
-                "game_date": pd.Timestamp(report_timestamp.date()),
-                "team": team,
-                "latest_report_datetime": pd.Timestamp(report_timestamp),
-                "out_count": out_count,
-                "doubtful_count": doubtful_count,
-                "questionable_count": questionable_count,
-                "probable_count": probable_count,
-                "available_count": available_count,
-                "weighted_injury_score": weighted_injury_score,
-                "reported_player_count": int(len(team_frame)),
-                "estimated_absence_days_total": float(team_frame["estimated_absence_days"].sum()),
-                "estimated_absence_days_max": float(team_frame["estimated_absence_days"].max()),
-                "injury_impact_score": weighted_injury_score * 7.0,
-                "long_term_absence_count": long_term_absence_count,
+    return (
+        latest_player_status.groupby(["game_date", "team"], as_index = False)
+        .agg(
+            latest_report_datetime = ("report_datetime", "max"),
+            out_count = ("out_flag", "sum"),
+            doubtful_count = ("doubtful_flag", "sum"),
+            questionable_count = ("questionable_flag", "sum"),
+            probable_count = ("probable_flag", "sum"),
+            available_count = ("available_flag", "sum"),
+            weighted_injury_score = ("weighted_status_score", "sum"),
+            reported_player_count = ("reported_player_flag", "sum"),
+            estimated_absence_days_total = ("estimated_absence_days", "sum"),
+            estimated_absence_days_max = ("estimated_absence_days", "max"),
+            injury_impact_score = ("injury_impact_score", "sum"),
+            long_term_absence_count = ("long_term_absence_flag", "sum"),
+        )
+        .sort_values(["game_date", "team"])
+        .reset_index(drop = True)
+    )
+
+
+def find_latest_report_timestamp_for_date(game_date: pd.Timestamp) -> Optional[datetime]:
+    # Keep one latest valid report per game date to match the original project workflow.
+    try:
+        from nbainjuries.injury import check_reportvalid
+    except ImportError:
+        return None
+
+    for hour in REPORT_HOURS:
+        timestamp = datetime(game_date.year, game_date.month, game_date.day, hour, 0)
+        try:
+            if check_reportvalid(timestamp):
+                return timestamp
+        except Exception:
+            continue
+    return None
+
+
+def fetch_report_with_retries(timestamp: datetime) -> Optional[pd.DataFrame]:
+    try:
+        from nbainjuries.injury import get_reportdata
+    except ImportError:
+        return None
+
+    last_error = None
+    for attempt in range(1, MAX_REPORT_FETCH_ATTEMPTS + 1):
+        try:
+            return get_reportdata(timestamp, return_df = True)
+        except Exception as exc:
+            last_error = exc
+            if attempt < MAX_REPORT_FETCH_ATTEMPTS:
+                import time
+
+                time.sleep(RETRY_DELAY_SECONDS)
+
+    if last_error is not None:
+        print(f"Giving up on injury report {timestamp}: {last_error}")
+    return None
+
+
+def get_latest_available_report_timestamp(
+    reference_timestamp: Optional[datetime] = None,
+    lookback_days: int = 30,
+) -> Optional[datetime]:
+    # Walk backward from the reference time to find the latest report that actually exists.
+    reference = reference_timestamp or datetime.now()
+    for day_offset in range(lookback_days + 1):
+        candidate_date = pd.Timestamp(reference.date()) - pd.Timedelta(days = day_offset)
+        report_timestamp = find_latest_report_timestamp_for_date(candidate_date)
+        if report_timestamp is not None:
+            return report_timestamp
+    return None
+
+
+def scrape_injury_reports_for_dates(game_dates: list[pd.Timestamp]) -> tuple[pd.DataFrame, list[str]]:
+    # Reuse the same latest-valid-report logic for arbitrary date lists.
+    detail_frames = []
+    missing_dates = []
+
+    for game_date in sorted(pd.to_datetime(game_dates).normalize().unique()):
+        report_timestamp = find_latest_report_timestamp_for_date(pd.Timestamp(game_date))
+        if report_timestamp is None:
+            missing_dates.append(str(pd.Timestamp(game_date).date()))
+            continue
+
+        report_df = fetch_report_with_retries(report_timestamp)
+        if report_df is None or report_df.empty:
+            missing_dates.append(str(pd.Timestamp(game_date).date()))
+            continue
+
+        report_df = report_df.copy().rename(
+            columns = {
+                "Game Date": "game_date",
+                "Game Time": "game_time",
+                "Matchup": "matchup",
+                "Team": "team",
+                "Player Name": "player_name",
+                "Current Status": "status",
+                "Reason": "reason",
             }
         )
+        report_df["game_date"] = pd.to_datetime(report_df["game_date"]).dt.normalize()
+        report_df["team"] = report_df["team"].map(TEAM_MAP_BREF).fillna(report_df["team"])
+        report_df["player_name"] = report_df["player_name"].astype(str).str.strip()
+        report_df["status"] = report_df["status"].astype(str).str.strip()
+        report_df["reason"] = report_df["reason"].astype(str).str.strip()
+        report_df["report_datetime"] = pd.Timestamp(report_timestamp)
+        detail_frames.append(report_df)
 
-    return pd.DataFrame(rows)
+    if not detail_frames:
+        return pd.DataFrame(), missing_dates
+
+    return pd.concat(detail_frames, ignore_index = True), missing_dates
 
 
 def refresh_official_injury_dataset(games: pd.DataFrame) -> dict[str, object]:
@@ -294,35 +471,40 @@ def refresh_official_injury_dataset(games: pd.DataFrame) -> dict[str, object]:
         }
 
     game_dates = sorted(pd.to_datetime(eligible_games["date"]).dt.normalize().unique())
-    report_rows = []
+    detail_frames = []
     missing_dates = []
 
     for game_date in game_dates:
-        report_timestamp = None
-        report_df = None
-        base_date = pd.Timestamp(game_date).to_pydatetime()
-
-        # Walk backward through likely end-of-day report times to find the latest valid report.
-        for hour in INJURY_REPORT_HOURS_ET:
-            candidate = datetime.combine(base_date.date(), datetime.min.time()).replace(
-                hour = hour,
-                minute = 30,
-            )
-            try:
-                if injury.check_reportvalid(candidate):
-                    report_timestamp = candidate
-                    report_df = injury.get_reportdata(candidate, return_df = True)
-                    break
-            except Exception:
-                continue
-
-        if report_timestamp is None or report_df is None or report_df.empty:
+        report_timestamp = find_latest_report_timestamp_for_date(pd.Timestamp(game_date))
+        if report_timestamp is None:
             missing_dates.append(str(pd.Timestamp(game_date).date()))
             continue
 
-        report_rows.append(summarize_injury_report(report_df, report_timestamp))
+        report_df = fetch_report_with_retries(report_timestamp)
+        if report_df is None or report_df.empty:
+            missing_dates.append(str(pd.Timestamp(game_date).date()))
+            continue
 
-    if not report_rows:
+        report_df = report_df.copy().rename(
+            columns = {
+                "Game Date": "game_date",
+                "Game Time": "game_time",
+                "Matchup": "matchup",
+                "Team": "team",
+                "Player Name": "player_name",
+                "Current Status": "status",
+                "Reason": "reason",
+            }
+        )
+        report_df["game_date"] = pd.to_datetime(report_df["game_date"]).dt.normalize()
+        report_df["team"] = report_df["team"].map(TEAM_MAP_BREF).fillna(report_df["team"])
+        report_df["player_name"] = report_df["player_name"].astype(str).str.strip()
+        report_df["status"] = report_df["status"].astype(str).str.strip()
+        report_df["reason"] = report_df["reason"].astype(str).str.strip()
+        report_df["report_datetime"] = pd.Timestamp(report_timestamp)
+        detail_frames.append(report_df)
+
+    if not detail_frames:
         cached_path = get_cached_injury_dataset_path()
         if cached_path is not None:
             return {
@@ -341,10 +523,13 @@ def refresh_official_injury_dataset(games: pd.DataFrame) -> dict[str, object]:
             "missing_dates": missing_dates,
         }
 
-    injury_df = pd.concat(report_rows, ignore_index = True)
+    detailed_injury_df = pd.concat(detail_frames, ignore_index = True)
+    injury_df = aggregate_team_injuries(detailed_injury_df)
     start_season = OFFICIAL_INJURY_FIRST_SEASON
     end_season = int(eligible_games["season"].max())
+    detail_output_path = RAW_DIR / f"official_nba_injuries_detailed_{start_season}_{end_season}.csv"
     output_path = RAW_DIR / f"official_nba_injuries_by_team_{start_season}_{end_season}.csv"
+    detailed_injury_df.to_csv(detail_output_path, index = False)
     injury_df.to_csv(output_path, index = False)
 
     return {
@@ -359,12 +544,8 @@ def refresh_official_injury_dataset(games: pd.DataFrame) -> dict[str, object]:
     }
 
 
-def get_numeric_features(include_elo_features: bool = True) -> list[str]:
-    features = list(BASE_NUMERIC_FEATURES)
-    if include_elo_features:
-        features.extend(ELO_NUMERIC_FEATURES)
-    features.extend(INJURY_NUMERIC_FEATURES)
-    return features
+def get_numeric_features() -> list[str]:
+    return list(NUMERIC_FEATURES)
 
 
 def _team_state() -> dict[str, object]:
@@ -403,12 +584,12 @@ def _team_strength_score(win_pct: float, avg_margin: float) -> float:
     return win_pct * 0.7 + margin_component * 0.3
 
 
-def _normalize_elo_rating(elo_rating: float) -> float:
-    return 1.0 / (1.0 + exp(-(elo_rating - 1500.0) / 120.0))
+def _bounded_rest_days(last_date: Optional[pd.Timestamp], game_date: pd.Timestamp) -> int:
+    if last_date is None:
+        return MAX_REST_DAYS
 
-
-def _blended_team_strength(team_strength: float, elo_rating: float) -> float:
-    return team_strength * 0.65 + _normalize_elo_rating(elo_rating) * 0.35
+    raw_rest_days = (game_date - last_date).days - 1
+    return max(0, min(raw_rest_days, MAX_REST_DAYS))
 
 
 def _update_states_from_game(states: dict[str, dict[str, object]], row) -> None:
@@ -451,16 +632,8 @@ def _build_base_matchup_features(
     home_state: dict[str, object],
     away_state: dict[str, object],
 ) -> dict[str, object]:
-    home_rest_days = (
-        (game_date - home_state["last_date"]).days - 1
-        if home_state["last_date"] is not None
-        else 7
-    )
-    away_rest_days = (
-        (game_date - away_state["last_date"]).days - 1
-        if away_state["last_date"] is not None
-        else 7
-    )
+    home_rest_days = _bounded_rest_days(home_state["last_date"], game_date)
+    away_rest_days = _bounded_rest_days(away_state["last_date"], game_date)
 
     home_win_pct = _safe_pct(home_state["wins"], home_state["games"])
     away_win_pct = _safe_pct(away_state["wins"], away_state["games"])
@@ -508,22 +681,15 @@ def _build_base_matchup_features(
         "home_team_strength": home_team_strength,
         "away_team_strength": away_team_strength,
         "team_strength_diff": home_team_strength - away_team_strength,
-        "home_elo_rating": 1500.0,
-        "away_elo_rating": 1500.0,
-        "elo_diff": 0.0,
-        "elo_home_win_prob": 0.5,
-        "home_blended_strength": home_team_strength,
-        "away_blended_strength": away_team_strength,
-        "blended_strength_diff": home_team_strength - away_team_strength,
         "home_recent_win_pct": home_recent_win_pct,
         "away_recent_win_pct": away_recent_win_pct,
         "recent_win_pct_diff": home_recent_win_pct - away_recent_win_pct,
         "home_recent_margin": home_recent_margin,
         "away_recent_margin": away_recent_margin,
         "recent_margin_diff": home_recent_margin - away_recent_margin,
-        "home_rest_days": max(home_rest_days, 0),
-        "away_rest_days": max(away_rest_days, 0),
-        "rest_diff": max(home_rest_days, 0) - max(away_rest_days, 0),
+        "home_rest_days": home_rest_days,
+        "away_rest_days": away_rest_days,
+        "rest_diff": home_rest_days - away_rest_days,
     }
 
 
@@ -551,25 +717,7 @@ def build_pregame_features(df: pd.DataFrame) -> pd.DataFrame:
 
         _update_states_from_game(season_states[season], row)
 
-    feature_df = pd.DataFrame(feature_rows)
-    elo_results, _ = run_elo(df)
-
-    feature_df["home_elo_rating"] = elo_results["r_home_pre"].astype(float).values
-    feature_df["away_elo_rating"] = elo_results["r_away_pre"].astype(float).values
-    feature_df["elo_diff"] = feature_df["home_elo_rating"] - feature_df["away_elo_rating"]
-    feature_df["elo_home_win_prob"] = elo_results["p_home_win"].astype(float).values
-    feature_df["home_blended_strength"] = feature_df.apply(
-        lambda row: _blended_team_strength(row["home_team_strength"], row["home_elo_rating"]),
-        axis = 1,
-    )
-    feature_df["away_blended_strength"] = feature_df.apply(
-        lambda row: _blended_team_strength(row["away_team_strength"], row["away_elo_rating"]),
-        axis = 1,
-    )
-    feature_df["blended_strength_diff"] = (
-        feature_df["home_blended_strength"] - feature_df["away_blended_strength"]
-    )
-    return feature_df
+    return pd.DataFrame(feature_rows)
 
 
 def merge_injury_features(feature_df: pd.DataFrame, injury_df: Optional[pd.DataFrame]) -> pd.DataFrame:
@@ -754,6 +902,10 @@ def merge_latest_injury_snapshot(
             (injury_df["team"] == team) & (injury_df["game_date"] <= normalized_game_date)
         ].sort_values(["game_date", "latest_report_datetime"])
         latest_row = team_rows.iloc[-1] if not team_rows.empty else None
+        if latest_row is not None:
+            report_age_days = (normalized_game_date - latest_row["game_date"]).days
+            if report_age_days > MAX_INJURY_LOOKBACK_DAYS:
+                latest_row = None
         _apply_injury_row(frame, side, latest_row)
 
     frame["out_count_diff"] = frame["away_out_count"] - frame["home_out_count"]
@@ -806,8 +958,6 @@ def _build_preprocessor(numeric_features: list[str]) -> ColumnTransformer:
 def train_prediction_models(
     games: pd.DataFrame,
     injury_df: Optional[pd.DataFrame] = None,
-    logistic_include_elo_features: bool = True,
-    random_forest_include_elo_features: bool = True,
 ) -> tuple[Pipeline, Pipeline, pd.DataFrame]:
     if games.empty:
         raise ValueError("At least one completed game is required to train the predictor.")
@@ -817,24 +967,18 @@ def train_prediction_models(
         raise ValueError("Feature engineering produced no training rows.")
 
     y = feature_df["home_win"]
-    logistic_numeric_features = get_numeric_features(
-        include_elo_features = logistic_include_elo_features
-    )
-    random_forest_numeric_features = get_numeric_features(
-        include_elo_features = random_forest_include_elo_features
-    )
-    logistic_columns = CATEGORICAL_FEATURES + logistic_numeric_features
-    random_forest_columns = CATEGORICAL_FEATURES + random_forest_numeric_features
+    numeric_features = get_numeric_features()
+    model_columns = CATEGORICAL_FEATURES + numeric_features
 
     logistic_regression = Pipeline(
         steps = [
-            ("preprocessor", _build_preprocessor(logistic_numeric_features)),
+            ("preprocessor", _build_preprocessor(numeric_features)),
             ("classifier", LogisticRegression(max_iter = 2000, random_state = 100)),
         ]
     )
     random_forest = Pipeline(
         steps = [
-            ("preprocessor", _build_preprocessor(random_forest_numeric_features)),
+            ("preprocessor", _build_preprocessor(numeric_features)),
             (
                 "classifier",
                 RandomForestClassifier(
@@ -847,88 +991,9 @@ def train_prediction_models(
         ]
     )
 
-    logistic_regression.fit(feature_df[logistic_columns], y)
-    random_forest.fit(feature_df[random_forest_columns], y)
+    logistic_regression.fit(feature_df[model_columns], y)
+    random_forest.fit(feature_df[model_columns], y)
     return logistic_regression, random_forest, feature_df
-
-
-def evaluate_random_forest_elo_impact(
-    games: pd.DataFrame,
-    injury_df: Optional[pd.DataFrame] = None,
-) -> dict[str, float | int | str]:
-    if games.empty:
-        raise ValueError("At least one completed game is required to evaluate the predictor.")
-
-    feature_df = merge_injury_features(build_pregame_features(games), injury_df)
-    feature_df = feature_df.sort_values("date").reset_index(drop = True)
-    if len(feature_df) < 10:
-        raise ValueError("Not enough completed games are available for a meaningful comparison.")
-
-    latest_season = int(feature_df["season"].max())
-    if feature_df["season"].nunique() > 1:
-        train_df = feature_df[feature_df["season"] < latest_season].copy()
-        test_df = feature_df[feature_df["season"] == latest_season].copy()
-        split_label = f"train_before_{latest_season}_test_{latest_season}"
-    else:
-        split_index = max(int(len(feature_df) * 0.8), 1)
-        train_df = feature_df.iloc[:split_index].copy()
-        test_df = feature_df.iloc[split_index:].copy()
-        split_label = "chronological_80_20"
-
-    if train_df.empty or test_df.empty:
-        raise ValueError("Evaluation split produced an empty train or test set.")
-
-    y_train = train_df["home_win"]
-    y_test = test_df["home_win"]
-    base_numeric_features = get_numeric_features(include_elo_features = False)
-    elo_numeric_features = get_numeric_features(include_elo_features = True)
-    base_columns = CATEGORICAL_FEATURES + base_numeric_features
-    elo_columns = CATEGORICAL_FEATURES + elo_numeric_features
-
-    base_random_forest = Pipeline(
-        steps = [
-            ("preprocessor", _build_preprocessor(base_numeric_features)),
-            (
-                "classifier",
-                RandomForestClassifier(
-                    n_estimators = 300,
-                    min_samples_leaf = 3,
-                    random_state = 100,
-                    n_jobs = -1,
-                ),
-            ),
-        ]
-    )
-    elo_random_forest = Pipeline(
-        steps = [
-            ("preprocessor", _build_preprocessor(elo_numeric_features)),
-            (
-                "classifier",
-                RandomForestClassifier(
-                    n_estimators = 300,
-                    min_samples_leaf = 3,
-                    random_state = 100,
-                    n_jobs = -1,
-                ),
-            ),
-        ]
-    )
-
-    base_random_forest.fit(train_df[base_columns], y_train)
-    elo_random_forest.fit(train_df[elo_columns], y_train)
-    base_predictions = base_random_forest.predict(test_df[base_columns])
-    elo_predictions = elo_random_forest.predict(test_df[elo_columns])
-    base_accuracy = accuracy_score(y_test, base_predictions)
-    elo_accuracy = accuracy_score(y_test, elo_predictions)
-
-    return {
-        "split": split_label,
-        "train_rows": int(len(train_df)),
-        "test_rows": int(len(test_df)),
-        "without_elo_accuracy": float(base_accuracy),
-        "with_elo_accuracy": float(elo_accuracy),
-        "accuracy_gain": float(elo_accuracy - base_accuracy),
-    }
 
 
 def evaluate_prediction_models(
@@ -962,15 +1027,12 @@ def evaluate_prediction_models(
         raise ValueError("Evaluation split produced an empty train or test set.")
 
     logistic_regression, random_forest, _ = train_prediction_models(train_games, injury_df)
-    logistic_columns = list(logistic_regression.feature_names_in_)
-    random_forest_columns = list(random_forest.feature_names_in_)
+    model_columns = list(logistic_regression.feature_names_in_)
 
-    logistic_home_probs = logistic_regression.predict_proba(test_df[logistic_columns])[:, 1]
-    random_forest_home_probs = random_forest.predict_proba(test_df[random_forest_columns])[:, 1]
+    logistic_home_probs = logistic_regression.predict_proba(test_df[model_columns])[:, 1]
+    random_forest_home_probs = random_forest.predict_proba(test_df[model_columns])[:, 1]
     logistic_predictions = (logistic_home_probs >= 0.5).astype(int)
     random_forest_predictions = (random_forest_home_probs >= 0.5).astype(int)
-    elo_home_probs = test_df["elo_home_win_prob"].astype(float).to_numpy()
-    elo_predictions = (elo_home_probs >= 0.5).astype(int)
     actual_home_wins = test_df["home_win"].astype(int).to_numpy()
     home_baseline_predictions = [1] * len(test_df)
 
@@ -981,14 +1043,12 @@ def evaluate_prediction_models(
         "test_season": int(test_season),
         "injury_data_used": bool(injury_df is not None and not injury_df.empty),
         "home_baseline_accuracy": float(accuracy_score(actual_home_wins, home_baseline_predictions)),
-        "elo_accuracy": float(accuracy_score(actual_home_wins, elo_predictions)),
         "logistic_accuracy": float(accuracy_score(actual_home_wins, logistic_predictions)),
         "random_forest_accuracy": float(accuracy_score(actual_home_wins, random_forest_predictions)),
     }
     summary["best_model"] = max(
         (
             ("Home baseline", summary["home_baseline_accuracy"]),
-            ("Elo", summary["elo_accuracy"]),
             ("Logistic regression", summary["logistic_accuracy"]),
             ("Random forest", summary["random_forest_accuracy"]),
         ),
@@ -997,8 +1057,11 @@ def evaluate_prediction_models(
     summary["random_forest_vs_logistic_gain"] = (
         summary["random_forest_accuracy"] - summary["logistic_accuracy"]
     )
-    summary["random_forest_vs_elo_gain"] = (
-        summary["random_forest_accuracy"] - summary["elo_accuracy"]
+    summary["logistic_vs_baseline_gain"] = (
+        summary["logistic_accuracy"] - summary["home_baseline_accuracy"]
+    )
+    summary["random_forest_vs_baseline_gain"] = (
+        summary["random_forest_accuracy"] - summary["home_baseline_accuracy"]
     )
 
     export_df = test_df[
@@ -1012,8 +1075,6 @@ def evaluate_prediction_models(
             "away_win_pct",
             "home_team_strength",
             "away_team_strength",
-            "home_blended_strength",
-            "away_blended_strength",
             "home_out_count",
             "away_out_count",
             "home_injury_impact_score",
@@ -1023,12 +1084,6 @@ def evaluate_prediction_models(
     export_df["matchup"] = export_df["away_team"] + " @ " + export_df["home_team"]
     export_df["true_winner"] = export_df.apply(
         lambda row: row["home_team"] if int(row["home_win"]) == 1 else row["away_team"],
-        axis = 1,
-    )
-    export_df["home_baseline_predicted_winner"] = export_df["home_team"]
-    export_df["elo_home_win_probability"] = elo_home_probs
-    export_df["elo_predicted_winner"] = export_df.apply(
-        lambda row: row["home_team"] if float(row["elo_home_win_probability"]) >= 0.5 else row["away_team"],
         axis = 1,
     )
     export_df["logistic_home_win_probability"] = logistic_home_probs
@@ -1054,9 +1109,6 @@ def evaluate_prediction_models(
             "away_team",
             "true_winner",
             "home_win",
-            "home_baseline_predicted_winner",
-            "elo_predicted_winner",
-            "elo_home_win_probability",
             "logistic_predicted_winner",
             "logistic_home_win_probability",
             "random_forest_predicted_winner",
@@ -1065,8 +1117,6 @@ def evaluate_prediction_models(
             "away_win_pct",
             "home_team_strength",
             "away_team_strength",
-            "home_blended_strength",
-            "away_blended_strength",
             "home_out_count",
             "away_out_count",
             "home_injury_impact_score",
@@ -1100,23 +1150,6 @@ def _compute_state_snapshot(
         home_state = states[home_team],
         away_state = states[away_team],
     )
-
-
-def _compute_elo_snapshot(games: pd.DataFrame, home_team: str, away_team: str) -> dict[str, float]:
-    _, ratings = run_elo(games)
-    home_elo_rating = float(ratings.get(home_team, 1500.0))
-    away_elo_rating = float(ratings.get(away_team, 1500.0))
-    home_team_strength = _normalize_elo_rating(home_elo_rating)
-    away_team_strength = _normalize_elo_rating(away_elo_rating)
-
-    return {
-        "home_elo_rating": home_elo_rating,
-        "away_elo_rating": away_elo_rating,
-        "elo_diff": home_elo_rating - away_elo_rating,
-        "elo_home_win_prob": float(win_prob(home_elo_rating, away_elo_rating)),
-        "home_elo_strength": home_team_strength,
-        "away_elo_strength": away_team_strength,
-    }
 
 
 def _apply_manual_injury_overrides(
@@ -1201,22 +1234,6 @@ def build_matchup_features(
 ) -> pd.DataFrame:
     snapshot = _compute_state_snapshot(games, season, game_date, home_team, away_team)
     matchup_df = pd.DataFrame([snapshot])
-    elo_snapshot = _compute_elo_snapshot(games, home_team, away_team)
-    matchup_df["home_elo_rating"] = elo_snapshot["home_elo_rating"]
-    matchup_df["away_elo_rating"] = elo_snapshot["away_elo_rating"]
-    matchup_df["elo_diff"] = elo_snapshot["elo_diff"]
-    matchup_df["elo_home_win_prob"] = elo_snapshot["elo_home_win_prob"]
-    matchup_df["home_blended_strength"] = matchup_df.apply(
-        lambda row: _blended_team_strength(row["home_team_strength"], row["home_elo_rating"]),
-        axis = 1,
-    )
-    matchup_df["away_blended_strength"] = matchup_df.apply(
-        lambda row: _blended_team_strength(row["away_team_strength"], row["away_elo_rating"]),
-        axis = 1,
-    )
-    matchup_df["blended_strength_diff"] = (
-        matchup_df["home_blended_strength"] - matchup_df["away_blended_strength"]
-    )
     matchup_df = merge_latest_injury_snapshot(matchup_df, injury_df, game_date)
 
     if injury_overrides:
@@ -1265,8 +1282,10 @@ def predict_matchup_from_games(
     rf_home_prob = float(random_forest.predict_proba(random_forest_input)[0][1])
     lr_home_pred = int(logistic_regression.predict(logistic_input)[0])
     rf_home_pred = int(random_forest.predict(random_forest_input)[0])
-    elo_home_prob = float(matchup_df.at[0, "elo_home_win_prob"])
-    elo_home_pred = int(elo_home_prob >= 0.5)
+    injury_data_used = bool(
+        matchup_df.at[0, "home_injury_report_available"]
+        or matchup_df.at[0, "away_injury_report_available"]
+    )
 
     return {
         "matchup": f"{away_team} @ {home_team}",
@@ -1274,11 +1293,6 @@ def predict_matchup_from_games(
         "game_date": game_date.strftime("%Y-%m-%d"),
         "home_team": home_team,
         "away_team": away_team,
-        "elo": {
-            "home_win_probability": elo_home_prob,
-            "home_win_prediction": elo_home_pred,
-            "predicted_winner": home_team if elo_home_pred == 1 else away_team,
-        },
         "logistic": {
             "home_win_probability": lr_home_prob,
             "home_win_prediction": lr_home_pred,
@@ -1288,7 +1302,6 @@ def predict_matchup_from_games(
             "home_win_probability": rf_home_prob,
             "home_win_prediction": rf_home_pred,
             "predicted_winner": home_team if rf_home_pred == 1 else away_team,
-            "feature_set": "elo_enhanced",
         },
         "context": {
             "home_win_pct": float(matchup_df.at[0, "home_win_pct"]),
@@ -1296,12 +1309,6 @@ def predict_matchup_from_games(
             "home_team_strength": float(matchup_df.at[0, "home_team_strength"]),
             "away_team_strength": float(matchup_df.at[0, "away_team_strength"]),
             "team_strength_diff": float(matchup_df.at[0, "team_strength_diff"]),
-            "home_elo_rating": float(matchup_df.at[0, "home_elo_rating"]),
-            "away_elo_rating": float(matchup_df.at[0, "away_elo_rating"]),
-            "elo_diff": float(matchup_df.at[0, "elo_diff"]),
-            "home_blended_strength": float(matchup_df.at[0, "home_blended_strength"]),
-            "away_blended_strength": float(matchup_df.at[0, "away_blended_strength"]),
-            "blended_strength_diff": float(matchup_df.at[0, "blended_strength_diff"]),
             "home_rest_days": int(matchup_df.at[0, "home_rest_days"]),
             "away_rest_days": int(matchup_df.at[0, "away_rest_days"]),
             "home_out_count": float(matchup_df.at[0, "home_out_count"]),
@@ -1309,5 +1316,5 @@ def predict_matchup_from_games(
             "home_injury_impact_score": float(matchup_df.at[0, "home_injury_impact_score"]),
             "away_injury_impact_score": float(matchup_df.at[0, "away_injury_impact_score"]),
         },
-        "injury_data_used": injury_df is not None,
+        "injury_data_used": injury_data_used,
     }

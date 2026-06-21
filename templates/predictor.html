@@ -6,91 +6,11 @@
     <p class="eyebrow">Model feature</p>
     <h1>Home-win predictor</h1>
     <p class="lede">
-      Pick a home team and away team, then let the app combine recent team form, Elo rating,
-      blended strength, and the latest saved injury context into a game prediction.
+      Pick a home team and away team, then let the app combine recent team form,
+      team-strength features, and the latest saved injury context into a game prediction.
     </p>
   </div>
 </section>
-
-{% if benchmark_summary %}
-<section class="grid predictor-overview-grid">
-  <article class="card">
-    <div class="section-header">
-      <h2>Engineered heuristics</h2>
-      <p>The final project features are now part of the app pipeline.</p>
-    </div>
-    <ul class="feature-list">
-      {% for item in engineered_heuristics %}
-        <li>{{ item }}</li>
-      {% endfor %}
-    </ul>
-  </article>
-
-  <article class="card">
-    <div class="section-header">
-      <h2>Model comparison</h2>
-      <p>{{ benchmark_summary.label }}.</p>
-    </div>
-
-    <div class="predictor-model-grid predictor-model-grid-compact">
-      <section class="predictor-model-card predictor-model-card-elo">
-        <div class="predictor-model-head">
-          <span class="predictor-model-label">Home baseline</span>
-        </div>
-        <div class="predictor-model-body">
-          <p class="predictor-model-kicker">Accuracy</p>
-          <strong class="predictor-model-winner">
-            {{ "%.1f"|format(benchmark_summary.home_baseline_accuracy * 100) }}%
-          </strong>
-        </div>
-      </section>
-
-      <section class="predictor-model-card predictor-model-card-logistic">
-        <div class="predictor-model-head">
-          <span class="predictor-model-label">Logistic regression</span>
-        </div>
-        <div class="predictor-model-body">
-          <p class="predictor-model-kicker">Accuracy</p>
-          <strong class="predictor-model-winner">
-            {{ "%.1f"|format(benchmark_summary.logistic_accuracy * 100) }}%
-          </strong>
-        </div>
-      </section>
-
-      <section class="predictor-model-card predictor-model-card-rf">
-        <div class="predictor-model-head">
-          <span class="predictor-model-label">Random forest</span>
-        </div>
-        <div class="predictor-model-body">
-          <p class="predictor-model-kicker">Accuracy</p>
-          <strong class="predictor-model-winner">
-            {{ "%.1f"|format(benchmark_summary.random_forest_accuracy * 100) }}%
-          </strong>
-        </div>
-      </section>
-    </div>
-
-    <div class="featured-team predictor-summary predictor-summary-tight">
-      <strong>Best model: {{ benchmark_summary.best_model }}</strong>
-      <span>Split {{ benchmark_summary.split }}</span>
-      <span>Logistic vs baseline gain {{ "%.1f"|format(benchmark_summary.logistic_vs_baseline_gain * 100) }} pts</span>
-      <span>RF vs baseline gain {{ "%.1f"|format(benchmark_summary.random_forest_vs_baseline_gain * 100) }} pts</span>
-      <span>{{ benchmark_summary.notes }}</span>
-    </div>
-
-    {% if evaluation_summary.export_name %}
-      <div class="page-actions">
-        <a
-          class="button-secondary"
-          href="{{ url_for('download_predictor_export', filename=evaluation_summary.export_name) }}"
-        >
-          Download predicted vs true CSV
-        </a>
-      </div>
-    {% endif %}
-  </article>
-</section>
-{% endif %}
 
 <section class="grid predictor-grid">
   <article class="card">
@@ -162,10 +82,9 @@
           {% if prediction.injury_data_used %}
             Latest saved injury report was folded into the matchup features
           {% else %}
-            No injury file was found, so this run used team-form and Elo features only
+            No recent injury report matched this prediction date, so this run used team-form and strength features only
           {% endif %}
         </span>
-        <span>Random forest is running on the Elo-enhanced feature set.</span>
       </div>
 
       <div class="predictor-model-grid">
@@ -189,7 +108,7 @@
         <section class="predictor-model-card predictor-model-card-rf">
           <div class="predictor-model-head">
             <span class="predictor-model-label">Random forest</span>
-            <span class="predictor-model-badge">Elo-enhanced</span>
+            <span class="predictor-model-badge">Tree model</span>
           </div>
           <div class="predictor-model-body">
             <p class="predictor-model-kicker">Predicted winner</p>
@@ -225,16 +144,6 @@
               <td>{{ "%.3f"|format(prediction.context.away_team_strength) }}</td>
             </tr>
             <tr>
-              <td>Elo rating</td>
-              <td>{{ "%.1f"|format(prediction.context.home_elo_rating) }}</td>
-              <td>{{ "%.1f"|format(prediction.context.away_elo_rating) }}</td>
-            </tr>
-            <tr>
-              <td>Blended strength</td>
-              <td>{{ "%.3f"|format(prediction.context.home_blended_strength) }}</td>
-              <td>{{ "%.3f"|format(prediction.context.away_blended_strength) }}</td>
-            </tr>
-            <tr>
               <td>Rest days</td>
               <td>{{ prediction.context.home_rest_days }}</td>
               <td>{{ prediction.context.away_rest_days }}</td>
@@ -250,12 +159,8 @@
               <td>{{ "%.1f"|format(prediction.context.away_injury_impact_score) }}</td>
             </tr>
             <tr>
-              <td>Elo diff</td>
-              <td colspan="2">{{ "%.1f"|format(prediction.context.elo_diff) }}</td>
-            </tr>
-            <tr>
-              <td>Blended diff</td>
-              <td colspan="2">{{ "%.3f"|format(prediction.context.blended_strength_diff) }}</td>
+              <td>Strength diff</td>
+              <td colspan="2">{{ "%.3f"|format(prediction.context.team_strength_diff) }}</td>
             </tr>
           </tbody>
         </table>

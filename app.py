@@ -15,10 +15,15 @@ from cleaner import clean_games, normalize_team_names
 from model import run_elo
 from predictor import (
     evaluate_prediction_models,
+    aggregate_team_injuries,
+    fetch_report_with_retries,
+    get_exact_injury_dataset_path,
+    get_latest_available_report_timestamp,
     get_latest_prediction_context,
     load_optional_team_injuries,
     predict_matchup_from_games,
     refresh_official_injury_dataset,
+    scrape_injury_reports_for_dates,
 )
 from scraper import scrape_bref_season_games, scrape_multiple_seasons
 
@@ -34,7 +39,7 @@ PREDICTOR_EXPORTS_DIR = EXPORTS_DIR / "predictor"
 
 RAW_FILE = RAW_DIR / "bref_games_2016_2025.csv"
 PROCESSED_FILE = PROCESSED_DIR / "games_2016_2025_normalized.csv"
-PREDICTOR_START_SEASON = 2020
+PREDICTOR_START_SEASON = 2022
 PREDICTOR_END_SEASON = 2025
 PREDICTOR_RAW_FILE = RAW_DIR / f"bref_games_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.csv"
 PREDICTOR_PROCESSED_FILE = (
@@ -57,7 +62,7 @@ ENGINEERED_HEURISTICS = (
 )
 PREDICTOR_BENCHMARK_SUMMARY = {
     "label": "Final project benchmark",
-    "split": "chronological holdout with normal historical conditions",
+    "split": "train 2022-2024, test 2025",
     "home_baseline_accuracy": 0.5459,
     "logistic_accuracy": 0.6479,
     "random_forest_accuracy": 0.6451,
@@ -65,8 +70,7 @@ PREDICTOR_BENCHMARK_SUMMARY = {
     "logistic_vs_baseline_gain": 0.1020,
     "random_forest_vs_baseline_gain": 0.0992,
     "notes": (
-        "Elo still helps inside the engineered feature set, but the app now foregrounds the "
-        "two strongest classifiers and the home-team baseline."
+        "These are the benchmark numbers from the standalone terminal project."
     ),
 }
 
@@ -112,9 +116,33 @@ def save_processed_games(games: pd.DataFrame) -> pd.DataFrame:
     return processed
 
 
+def _predictor_dataset_is_valid(games: pd.DataFrame) -> bool:
+    # Reject obviously broken cached predictor datasets before the model uses them.
+    if games.empty or "date" not in games.columns or "season" not in games.columns:
+        return False
+
+    dates = pd.to_datetime(games["date"], errors = "coerce").dropna()
+    seasons = pd.to_numeric(games["season"], errors = "coerce").dropna()
+    if dates.empty or seasons.empty:
+        return False
+
+    if len(games) < 4000:
+        return False
+
+    if dates.nunique() < 100:
+        return False
+
+    return (
+        int(seasons.min()) <= PREDICTOR_START_SEASON
+        and int(seasons.max()) >= PREDICTOR_END_SEASON
+    )
+
+
 def load_predictor_games() -> pd.DataFrame:
     if PREDICTOR_PROCESSED_FILE.exists():
-        return pd.read_csv(PREDICTOR_PROCESSED_FILE, parse_dates=["date"])
+        processed = pd.read_csv(PREDICTOR_PROCESSED_FILE, parse_dates=["date"])
+        if _predictor_dataset_is_valid(processed):
+            return processed
 
     if not PREDICTOR_RAW_FILE.exists():
         raise FileNotFoundError(
@@ -122,6 +150,10 @@ def load_predictor_games() -> pd.DataFrame:
         )
 
     raw_games = pd.read_csv(PREDICTOR_RAW_FILE, parse_dates=["date"])
+    if not _predictor_dataset_is_valid(raw_games):
+        raise ValueError(
+            "Predictor game data looks stale or corrupted. Use Refresh predictor data to rebuild the full seasons."
+        )
     processed = normalize_team_names(clean_games(raw_games))
     processed.to_csv(PREDICTOR_PROCESSED_FILE, index=False)
     return processed
@@ -131,6 +163,18 @@ def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool, dict[str, object]]:
     existing_processed = None
     if PREDICTOR_PROCESSED_FILE.exists():
         existing_processed = pd.read_csv(PREDICTOR_PROCESSED_FILE, parse_dates=["date"])
+        if _predictor_dataset_is_valid(existing_processed):
+            cached_injury_path = get_exact_injury_dataset_path(existing_processed)
+            if cached_injury_path is not None:
+                return existing_processed, True, {
+                    "status": "cached",
+                    "message": (
+                        f"Using stored backend injury CSV {cached_injury_path.name} "
+                        "for the predictor window."
+                    ),
+                    "rows": 0,
+                    "file": str(cached_injury_path),
+                }
 
     fresh_games = scrape_multiple_seasons(
         PREDICTOR_START_SEASON, PREDICTOR_END_SEASON, sleep=2
@@ -191,6 +235,136 @@ def save_scraped_games(start_season: int, end_season: int) -> tuple[pd.DataFrame
     export_path = SCRAPE_EXPORTS_DIR / export_name
     games.to_csv(export_path, index=False)
     return games, export_name
+
+
+def _sanitize_injury_slug(value: str) -> str:
+    return (
+        value.replace(":", "-")
+        .replace(" ", "_")
+        .replace("/", "-")
+    )
+
+
+def _load_game_dates_for_injury_seasons(start_season: int, end_season: int) -> pd.Series:
+    exact_path = RAW_DIR / f"bref_games_{start_season}_{end_season}.csv"
+    source_path = exact_path if exact_path.exists() else PREDICTOR_RAW_FILE
+    if not source_path.exists():
+        raise FileNotFoundError(
+            "No game CSV was found for that season range. Scrape the game data first."
+        )
+
+    games = pd.read_csv(source_path, parse_dates = ["date"])
+    season_games = games[
+        (games["season"] >= start_season) & (games["season"] <= end_season)
+    ].copy()
+    if season_games.empty:
+        raise ValueError(f"No games were found for seasons {start_season}-{end_season}.")
+
+    return pd.to_datetime(season_games["date"]).dt.normalize()
+
+
+def save_latest_injury_report() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, str]]:
+    latest_timestamp = get_latest_available_report_timestamp()
+    if latest_timestamp is None:
+        raise ValueError("No recent official NBA injury reports were found.")
+
+    detail_df = fetch_report_with_retries(latest_timestamp)
+    if detail_df is None or detail_df.empty:
+        raise ValueError(
+            f"The latest available injury report for {latest_timestamp.date()} could not be loaded."
+        )
+
+    detail_df = detail_df.copy().rename(
+        columns = {
+            "Game Date": "game_date",
+            "Game Time": "game_time",
+            "Matchup": "matchup",
+            "Team": "team",
+            "Player Name": "player_name",
+            "Current Status": "status",
+            "Reason": "reason",
+        }
+    )
+    detail_df["game_date"] = pd.to_datetime(detail_df["game_date"]).dt.normalize()
+    detail_df["report_datetime"] = pd.Timestamp(latest_timestamp)
+    team_df = aggregate_team_injuries(detail_df)
+
+    slug = _sanitize_injury_slug(latest_timestamp.strftime("%Y-%m-%d_%H-%M"))
+    detail_name = f"official_nba_injuries_detailed_latest_{slug}.csv"
+    team_name = f"official_nba_injuries_by_team_latest_{slug}.csv"
+    detail_path = SCRAPE_EXPORTS_DIR / detail_name
+    team_path = SCRAPE_EXPORTS_DIR / team_name
+    detail_df.to_csv(detail_path, index = False)
+    team_df.to_csv(team_path, index = False)
+
+    return detail_df, team_df, {
+        "detail_name": detail_name,
+        "team_name": team_name,
+        "report_date": latest_timestamp.strftime("%Y-%m-%d"),
+    }
+
+
+def save_injury_reports_for_date_range(
+    start_date: str,
+    end_date: str,
+) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, str]]:
+    start_ts = pd.Timestamp(start_date).normalize()
+    end_ts = pd.Timestamp(end_date).normalize()
+    if start_ts > end_ts:
+        raise ValueError("Injury start date cannot be after the end date.")
+
+    game_dates = list(pd.date_range(start_ts, end_ts, freq = "D"))
+    detail_df, missing_dates = scrape_injury_reports_for_dates(game_dates)
+    if detail_df.empty:
+        if start_ts == end_ts:
+            raise ValueError(f"No official NBA injury report was found for {start_ts.date()}.")
+        raise ValueError(
+            f"No official NBA injury reports were found between {start_ts.date()} and {end_ts.date()}."
+        )
+
+    team_df = aggregate_team_injuries(detail_df)
+    slug = f"{start_ts.strftime('%Y-%m-%d')}_{end_ts.strftime('%Y-%m-%d')}"
+    detail_name = f"official_nba_injuries_detailed_{slug}.csv"
+    team_name = f"official_nba_injuries_by_team_{slug}.csv"
+    detail_path = SCRAPE_EXPORTS_DIR / detail_name
+    team_path = SCRAPE_EXPORTS_DIR / team_name
+    detail_df.to_csv(detail_path, index = False)
+    team_df.to_csv(team_path, index = False)
+
+    return detail_df, team_df, {
+        "detail_name": detail_name,
+        "team_name": team_name,
+        "missing_dates": ", ".join(missing_dates[:10]) if missing_dates else "",
+    }
+
+
+def save_injury_reports_for_season_range(
+    start_season: int,
+    end_season: int,
+) -> tuple[pd.DataFrame, pd.DataFrame, dict[str, str]]:
+    if start_season > end_season:
+        raise ValueError("Injury start season cannot be after the end season.")
+    if start_season < 2022:
+        raise ValueError("The nbainjuries-backed injury history in this app only starts in 2022.")
+
+    game_dates = _load_game_dates_for_injury_seasons(start_season, end_season)
+    detail_df, missing_dates = scrape_injury_reports_for_dates(list(game_dates))
+    if detail_df.empty:
+        raise ValueError(f"No official NBA injury reports were found for seasons {start_season}-{end_season}.")
+
+    team_df = aggregate_team_injuries(detail_df)
+    detail_name = f"official_nba_injuries_detailed_{start_season}_{end_season}.csv"
+    team_name = f"official_nba_injuries_by_team_{start_season}_{end_season}.csv"
+    detail_path = SCRAPE_EXPORTS_DIR / detail_name
+    team_path = SCRAPE_EXPORTS_DIR / team_name
+    detail_df.to_csv(detail_path, index = False)
+    team_df.to_csv(team_path, index = False)
+
+    return detail_df, team_df, {
+        "detail_name": detail_name,
+        "team_name": team_name,
+        "missing_dates": ", ".join(missing_dates[:10]) if missing_dates else "",
+    }
 
 
 def build_leaderboard_frame(games: pd.DataFrame) -> pd.DataFrame:
@@ -378,10 +552,26 @@ def create_app() -> Flask:
         end_season = DEFAULT_END_SEASON
         preview_limit = 10
         download_name = None
+        injury_message = None
+        injury_error = None
+        injury_preview = []
+        injury_detail_name = None
+        injury_team_name = None
+        injury_detail_url = None
+        injury_team_url = None
+        injury_mode = "latest"
+        injury_start_date = ""
+        injury_end_date = ""
+        injury_start_season = 2022
+        injury_end_season = PREDICTOR_END_SEASON
         current_season_note = (
             "If you scrape the current season, the import includes only games that have "
             "already been played. The leaderboard always reflects the live Elo state of "
             "the current season, or the most recent season if the current one has not started."
+        )
+        injury_note = (
+            "Official injury report scraping on this page is powered by nbainjuries. "
+            "In practice, the usable historical coverage here starts in the 2021-22 season."
         )
         download_url = None
 
@@ -394,26 +584,80 @@ def create_app() -> Flask:
 
         if request.method == "POST":
             try:
-                start_season = int(request.form.get("start_season", DEFAULT_START_SEASON))
-                end_season = int(request.form.get("end_season", DEFAULT_END_SEASON))
+                action = request.form.get("scrape_action", "games")
                 preview_limit = parse_preview_limit(request.form.get("preview_limit"))
-                if start_season > end_season:
-                    raise ValueError("Start season cannot be after end season.")
 
-                games, download_name = save_scraped_games(start_season, end_season)
-                preview_frame = games.head(preview_limit).copy()
-                if not preview_frame.empty and "date" in preview_frame.columns:
-                    preview_frame["date"] = pd.to_datetime(preview_frame["date"]).dt.strftime(
-                        "%Y-%m-%d"
+                if action == "games":
+                    start_season = int(request.form.get("start_season", DEFAULT_START_SEASON))
+                    end_season = int(request.form.get("end_season", DEFAULT_END_SEASON))
+                    if start_season > end_season:
+                        raise ValueError("Start season cannot be after end season.")
+
+                    games, download_name = save_scraped_games(start_season, end_season)
+                    preview_frame = games.head(preview_limit).copy()
+                    if not preview_frame.empty and "date" in preview_frame.columns:
+                        preview_frame["date"] = pd.to_datetime(preview_frame["date"]).dt.strftime(
+                            "%Y-%m-%d"
+                        )
+                    preview = preview_frame.to_dict(orient="records")
+                    download_url = url_for("download_scrape_export", filename=download_name)
+                    message = (
+                        f"Scraped seasons {start_season}-{end_season}. "
+                        "You can preview the CSV or download the full range export."
                     )
-                preview = preview_frame.to_dict(orient="records")
-                download_url = url_for("download_scrape_export", filename=download_name)
-                message = (
-                    f"Scraped seasons {start_season}-{end_season}. "
-                    "You can preview the CSV or download the full range export."
-                )
+                else:
+                    injury_mode = request.form.get("injury_mode", "latest")
+                    injury_start_date = request.form.get("injury_start_date", "")
+                    injury_end_date = request.form.get("injury_end_date", "")
+                    injury_start_season = int(request.form.get("injury_start_season", 2022))
+                    injury_end_season = int(request.form.get("injury_end_season", PREDICTOR_END_SEASON))
+
+                    if injury_mode == "latest":
+                        detail_df, team_df, meta = save_latest_injury_report()
+                        injury_message = (
+                            f"Saved the latest available official injury report "
+                            f"for {meta['report_date']}."
+                        )
+                    elif injury_mode == "date_range":
+                        detail_df, team_df, meta = save_injury_reports_for_date_range(
+                            injury_start_date,
+                            injury_end_date,
+                        )
+                        injury_message = (
+                            f"Saved official injury reports from {injury_start_date} to "
+                            f"{injury_end_date}."
+                        )
+                        if meta["missing_dates"]:
+                            injury_message += f" Missing dates skipped: {meta['missing_dates']}."
+                    elif injury_mode == "season_range":
+                        detail_df, team_df, meta = save_injury_reports_for_season_range(
+                            injury_start_season,
+                            injury_end_season,
+                        )
+                        injury_message = (
+                            f"Saved official injury reports for seasons "
+                            f"{injury_start_season}-{injury_end_season}."
+                        )
+                        if meta["missing_dates"]:
+                            injury_message += f" Missing dates skipped: {meta['missing_dates']}."
+                    else:
+                        raise ValueError("Unknown injury scrape mode.")
+
+                    preview_frame = team_df.head(preview_limit).copy()
+                    if not preview_frame.empty and "game_date" in preview_frame.columns:
+                        preview_frame["game_date"] = pd.to_datetime(
+                            preview_frame["game_date"]
+                        ).dt.strftime("%Y-%m-%d")
+                    injury_preview = preview_frame.to_dict(orient = "records")
+                    injury_detail_name = meta["detail_name"]
+                    injury_team_name = meta["team_name"]
+                    injury_detail_url = url_for("download_scrape_export", filename = injury_detail_name)
+                    injury_team_url = url_for("download_scrape_export", filename = injury_team_name)
             except Exception as exc:  # noqa: BLE001 - user-facing page feedback
-                error = str(exc)
+                if request.form.get("scrape_action", "games") == "games":
+                    error = str(exc)
+                else:
+                    injury_error = str(exc)
 
         return render_template(
             "scrape.html",
@@ -426,6 +670,19 @@ def create_app() -> Flask:
             download_name=download_name,
             download_url=download_url,
             current_season_note=current_season_note,
+            injury_note=injury_note,
+            injury_message=injury_message,
+            injury_error=injury_error,
+            injury_preview=injury_preview,
+            injury_detail_name=injury_detail_name,
+            injury_team_name=injury_team_name,
+            injury_detail_url=injury_detail_url,
+            injury_team_url=injury_team_url,
+            injury_mode=injury_mode,
+            injury_start_date=injury_start_date,
+            injury_end_date=injury_end_date,
+            injury_start_season=injury_start_season,
+            injury_end_season=injury_end_season,
             preview_options=PREVIEW_OPTIONS,
         )
 
@@ -516,6 +773,8 @@ def create_app() -> Flask:
 
         if injury_status["status"] == "refreshed":
             flash(injury_status["message"], "success")
+        elif injury_status["status"] == "cached":
+            flash(injury_status["message"], "info")
         elif injury_status["status"] in {"missing_dependency", "no_overlap"}:
             flash(injury_status["message"], "info")
         elif injury_status["status"] == "no_games":

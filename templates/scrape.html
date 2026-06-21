@@ -4,11 +4,10 @@
 <section class="page-heading">
   <div>
     <p class="eyebrow">Data import</p>
-    <h1>Scrape NBA games</h1>
+    <h1>Scrape NBA data</h1>
     <p class="lede">
-      Import regular-season games for a season range, preview the exported CSV, and download the
-      range file when the scrape finishes. The export stays separate from the live leaderboard
-      dataset.
+      Import regular-season games or official injury reports, preview the exported CSVs, and
+      download the saved files when each scrape finishes.
     </p>
   </div>
 </section>
@@ -22,7 +21,12 @@
 
 <section class="grid scrape-grid">
   <article class="card">
+    <div class="section-header">
+      <h2>Game scraper</h2>
+      <p>Basketball-Reference season-range import.</p>
+    </div>
     <form method="post" class="form" data-show-loading="true" id="scrape-form">
+      <input type="hidden" name="scrape_action" value="games" />
       <label>
         <span>Start season end year</span>
         <input name="start_season" type="number" value="{{ start_season }}" min="1947" step="1" />
@@ -69,7 +73,7 @@
 
   <article class="card">
     <div class="section-header">
-      <h2>CSV preview</h2>
+      <h2>Game CSV preview</h2>
       <p>Showing the first {{ preview_limit }} rows from the exported range.</p>
     </div>
     {% if preview %}
@@ -100,7 +104,136 @@
         </table>
       </div>
     {% else %}
-      <p class="muted">No scrape has been run in this session yet.</p>
+      <p class="muted">No game scrape has been run in this session yet.</p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="card note-card">
+  <div class="section-header">
+    <h2>Injury scraper</h2>
+  </div>
+  <p class="callout">{{ injury_note }}</p>
+</section>
+
+<section class="grid scrape-grid">
+  <article class="card">
+    <div class="section-header">
+      <h2>Official injury reports</h2>
+      <p>Powered by nbainjuries with latest, date-range, and season-range modes.</p>
+    </div>
+    <form method="post" class="form" data-show-loading="true">
+      <input type="hidden" name="scrape_action" value="injuries" />
+      <label>
+        <span>Mode</span>
+        <select name="injury_mode">
+          <option value="latest" {% if injury_mode == "latest" %}selected{% endif %}>Latest report</option>
+          <option value="date_range" {% if injury_mode == "date_range" %}selected{% endif %}>Date range</option>
+          <option value="season_range" {% if injury_mode == "season_range" %}selected{% endif %}>Season range</option>
+        </select>
+      </label>
+      <label>
+        <span>Start date</span>
+        <input name="injury_start_date" type="date" value="{{ injury_start_date }}" />
+      </label>
+      <label>
+        <span>End date</span>
+        <input name="injury_end_date" type="date" value="{{ injury_end_date }}" />
+      </label>
+      <label>
+        <span>Start season end year</span>
+        <input name="injury_start_season" type="number" value="{{ injury_start_season }}" min="2022" step="1" />
+      </label>
+      <label>
+        <span>End season end year</span>
+        <input name="injury_end_season" type="number" value="{{ injury_end_season }}" min="2022" step="1" />
+      </label>
+      <label>
+        <span>Preview rows</span>
+        <select name="preview_limit">
+          {% for option in preview_options %}
+            <option value="{{ option }}" {% if option == preview_limit %}selected{% endif %}>
+              {{ option }} rows
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="button-primary">Scrape injury reports</button>
+    </form>
+
+    <div class="inline-loader" aria-hidden="true">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+
+    {% if injury_message %}
+      <div class="notice success">{{ injury_message }}</div>
+    {% endif %}
+    {% if injury_error %}
+      <div class="notice error">{{ injury_error }}</div>
+    {% endif %}
+
+    {% if injury_detail_url or injury_team_url %}
+      <div class="download-row">
+        {% if injury_detail_url %}
+          <a class="button-secondary" href="{{ injury_detail_url }}" download>
+            Download detailed CSV
+          </a>
+        {% endif %}
+        {% if injury_team_url %}
+          <a class="button-secondary" href="{{ injury_team_url }}" download>
+            Download team-level CSV
+          </a>
+        {% endif %}
+      </div>
+      <div class="download-row">
+        {% if injury_detail_name %}
+          <span class="muted">{{ injury_detail_name }}</span>
+        {% endif %}
+        {% if injury_team_name %}
+          <span class="muted">{{ injury_team_name }}</span>
+        {% endif %}
+      </div>
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <div class="section-header">
+      <h2>Injury CSV preview</h2>
+      <p>Showing the first {{ preview_limit }} rows from the team-level export.</p>
+    </div>
+    {% if injury_preview %}
+      <div class="table-wrap">
+        <table class="leaderboard">
+          <thead>
+            <tr>
+              <th>Game Date</th>
+              <th>Team</th>
+              <th>Out</th>
+              <th>Doubtful</th>
+              <th>Questionable</th>
+              <th>Probable</th>
+              <th>Impact</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in injury_preview %}
+              <tr>
+                <td>{{ row.game_date }}</td>
+                <td>{{ row.team }}</td>
+                <td>{{ row.out_count }}</td>
+                <td>{{ row.doubtful_count }}</td>
+                <td>{{ row.questionable_count }}</td>
+                <td>{{ row.probable_count }}</td>
+                <td>{{ row.injury_impact_score }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="muted">No injury scrape has been run in this session yet.</p>
     {% endif %}
   </article>
 </section>

@@ -3,3 +3,8 @@ __pycache__/
 .pytest_cache/
 .venv/
 .DS_Store
+.vscode/
+data/exports/
+data/processed/
+data/results/
+data/raw/bref_games_2020_2025.csv

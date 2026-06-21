@@ -144,13 +144,12 @@ def test_predictor_page_renders(monkeypatch):
     assert "Generate prediction" in body
     assert "BOS" in body
     assert "Refresh predictor data" in body
-    assert "Training range 2020-2025" in body
+    assert "Training range 2022-2025" in body
     assert "No official injury CSV detected yet." in body
     assert "Latest completed games through 2024-10-23" in body
-    assert "Engineered heuristics" in body
-    assert "Model comparison" in body
-    assert "Final project benchmark" in body
-    assert "Download predicted vs true CSV" in body
+    assert "Prediction output" in body
+    assert "team-strength features" in body
+    assert "Choose a matchup and submit the form to see the combined prediction." in body
 
 
 def test_predictor_page_accepts_post(monkeypatch):
@@ -266,7 +265,7 @@ def test_predictor_page_accepts_post(monkeypatch):
     assert "64.0%" in body
     assert "61.0%" in body
     assert "Latest saved injury report was folded into the matchup features" in body
-    assert "Random forest is running on the Elo-enhanced feature set" in body
+    assert "Tree model" in body
 
 
 def test_predictor_refresh_route(monkeypatch):
@@ -340,7 +339,7 @@ def test_predictor_refresh_route(monkeypatch):
     body = response.get_data(as_text = True)
 
     assert response.status_code == 200
-    assert "Predictor training data refreshed for 2020-2025." in body
+    assert "Predictor training data refreshed for 2022-2025." in body
     assert "Official injury data refreshed for seasons 2022-2025 across 10 game dates." in body
     assert "Updated predictor comparison on test season 2025 and exported latest-season predictions." in body
 
@@ -384,7 +383,7 @@ def test_scrape_page_accepts_post(monkeypatch):
     client = app.test_client()
     response = client.post(
         "/scrape",
-        data={"start_season": "2016", "end_season": "2016"},
+        data={"scrape_action": "games", "start_season": "2016", "end_season": "2016"},
     )
     body = response.get_data(as_text=True)
 
@@ -394,6 +393,57 @@ def test_scrape_page_accepts_post(monkeypatch):
     assert "Current-season behavior" in body
     assert "Preview rows" in body
     assert "Download CSV" in body
+
+
+def test_scrape_page_accepts_injury_post(monkeypatch):
+    import app as app_module
+
+    def fake_save_latest_injury_report():
+        detail_df = app_module.pd.DataFrame(
+            [
+                {
+                    "game_date": "2025-04-12",
+                    "team": "BOS",
+                    "player_name": "Test Player",
+                    "status": "Out",
+                }
+            ]
+        )
+        team_df = app_module.pd.DataFrame(
+            [
+                {
+                    "game_date": "2025-04-12",
+                    "team": "BOS",
+                    "out_count": 1,
+                    "doubtful_count": 0,
+                    "questionable_count": 0,
+                    "probable_count": 0,
+                    "injury_impact_score": 3.0,
+                }
+            ]
+        )
+        meta = {
+            "detail_name": "official_nba_injuries_detailed_latest_test.csv",
+            "team_name": "official_nba_injuries_by_team_latest_test.csv",
+            "report_date": "2025-04-12",
+        }
+        return detail_df, team_df, meta
+
+    monkeypatch.setattr(app_module, "save_latest_injury_report", fake_save_latest_injury_report)
+
+    app = create_app()
+    client = app.test_client()
+    response = client.post(
+        "/scrape",
+        data={"scrape_action": "injuries", "injury_mode": "latest", "preview_limit": "5"},
+    )
+    body = response.get_data(as_text = True)
+
+    assert response.status_code == 200
+    assert "Saved the latest available official injury report for 2025-04-12." in body
+    assert "official_nba_injuries_detailed_latest_test.csv" in body
+    assert "official_nba_injuries_by_team_latest_test.csv" in body
+    assert "Injury CSV preview" in body
 
 
 def test_refresh_and_reset_routes(monkeypatch):
