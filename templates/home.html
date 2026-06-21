@@ -6,12 +6,20 @@
     <p class="eyebrow">NBA scraper and rating dashboard</p>
     <h1>NBA Odds Predictor</h1>
     <p class="lede">
-      A Basketball-Reference scraper plus an Elo model that turns completed
-      NBA games into a live, browser-based leaderboard.
+      Scrape Basketball-Reference, run an Elo model over the results, and get a live
+      leaderboard plus a matchup predictor in the browser.
     </p>
     <p class="lede">
-      The project stays intentionally narrow: pull games, normalize them, update ratings, and
-      present the current state of the model with enough detail to explain what is happening.
+      The app does one thing end to end: pull games, clean them, update ratings, and show
+      you the current state of the model. There's no database to stand up and no opaque
+      scoring layer. Every file the app writes lives under <code>data/</code>, and the
+      leaderboard is just the sorted output of the most recent Elo pass over a CSV.
+    </p>
+    <p class="lede">
+      On the prediction side, a second model trains over the same normalized games, folds in
+      official injury reports, and compares logistic regression against a random forest on
+      identical features. The Inner-Workings page walks through the math and the feature set
+      in detail.
     </p>
   </div>
 
@@ -56,66 +64,94 @@
 <section class="grid pipeline-grid">
   <article class="card pipeline-card">
     <h2>Scraping</h2>
+    <p>The scraper walks every month page of each requested season, so the raw CSV gets full regular-season coverage instead of just the opening month. It parses Basketball-Reference's box-score tables directly, not a third-party feed.</p>
     <ul class="feature-list">
-      <li>Basketball-Reference regular-season pages are parsed season by season.</li>
-      <li>Only finished games are written to the raw CSV output.</li>
-      <li>Current-season scrapes only include games that have already been played.</li>
+      <li>Only games with a final score are written. Postponed, suspended, or not-yet-played rows are dropped at parse time.</li>
+      <li>For the current season, the import stops at the most recent completed game, so a scheduled result never gets fed to the model as a played one.</li>
+      <li>Each scrape writes one CSV per season range under <code>data/raw/</code>, and a copy is downloadable straight from the Scrape page.</li>
+      <li>Season-range input lets you pull 2016 through 2025 in a single run; the scraper fans out across years and merges the results.</li>
     </ul>
   </article>
 
   <article class="card pipeline-card">
     <h2>Cleaning</h2>
+    <p>Raw Basketball-Reference rows don't all use the same team labels, and they don't carry the win/margin signal the model needs. The cleaner closes that gap before any rating is touched.</p>
     <ul class="feature-list">
-      <li>Team names are normalized into NBA abbreviations such as BOS, GSW, and DEN.</li>
-      <li>Game rows are stamped with `home_win` and `margin` for model input.</li>
-      <li>Processed data is saved so the leaderboard can be rebuilt on demand.</li>
+      <li>Team strings like "Boston Celtics" or "Golden State Warriors" collapse to NBA three-letter abbreviations (BOS, GSW, DEN) using a lookup table covering every team the scraper has seen since 2016.</li>
+      <li>Each row gets a <code>home_win</code> flag and a <code>margin</code> integer (home pts minus away pts), which is what the Elo updater and the predictor both key off of.</li>
+      <li>Processed games land in <code>data/processed/</code> as one normalized CSV per season range, so the leaderboard can be rebuilt without re-scraping.</li>
+      <li>Malformed rows, missing scores, and unparseable dates are filtered out and counted, not silently absorbed.</li>
     </ul>
   </article>
 
   <article class="card pipeline-card">
     <h2>Elo updates</h2>
+    <p>Ratings update one game at a time, in the order the games were played. The model is a standard margin-of-victory Elo with home court folded into the expected-win formula.</p>
     <ul class="feature-list">
-      <li>Every team starts from a 1500-point prior rating.</li>
-      <li>Home-court advantage shifts the expected win probability upward for the home team.</li>
-      <li>Margin of victory scales the size of the update when results are more or less surprising.</li>
+      <li>Every team starts at 1500 at the start of the first season in the dataset, and is carried forward season to season with a mild regression toward that prior.</li>
+      <li>Home court shows up as a fixed additive term in the expected-win formula, so a home underdog can still be favored in the model.</li>
+      <li>Margin of victory multiplies the base K-factor update: a 30-point blowout moves ratings meaningfully more than a one-point win, while a narrow favorite win barely shifts anything.</li>
+      <li>Refresh the leaderboard from the latest scrape whenever you want; the updater reads the processed CSV and replays the full game history into the current ratings.</li>
     </ul>
   </article>
 
   <article class="card pipeline-card">
     <h2>Outputs</h2>
+    <p>The final state of the model surfaces as a leaderboard and, separately, as a per-matchup prediction. Both read from the same processed dataset, so they're always consistent with each other.</p>
     <ul class="feature-list">
-      <li>The leaderboard reflects the live current-season ratings, or the most recent season if the current one has not started yet.</li>
-      <li>Ratings can be refreshed from the latest scrape at any time.</li>
-      <li>Data files can be reset if a scrape gets messy or you want to start over cleanly.</li>
+      <li>The leaderboard reflects the live current-season ratings, or the most recent completed season if the current one hasn't tipped off yet.</li>
+      <li>The predictor takes a home/away matchup and returns a winner with a home-win probability from both the logistic and random forest models side by side.</li>
+      <li>A reset button wipes the raw, processed, and results files in one go, useful when a scrape goes sideways or you want to rebuild the model from scratch.</li>
+      <li>Every CSV the app produces is also available for direct download, so you can pull the data out and work on it elsewhere.</li>
     </ul>
   </article>
 </section>
 
 <section class="grid">
   <article class="card">
-    <h2>What 1500 means</h2>
+    <h2>Why 1500</h2>
     <p>
-      In this project, 1500 is the prior rating assigned to every team before the model sees any
-      games. It is not a points-scored stat, just a shared starting belief.
+      1500 is the rating every team gets before the model has seen a single game. It's a shared
+      starting point, not a points-scored stat, and it's the baseline every team's rating is
+      measured against.
+    </p>
+    <p>
+      The number itself is conventional in Elo systems (most chess implementations use it too),
+      which makes the math readable: a 100-point gap between two teams maps to an expected win
+      probability you can compute in your head.
+    </p>
+    <p>
+      The model also regresses ratings slightly toward 1500 between seasons, so a team that
+      fell to 1400 over a bad year doesn't carry that full deficit into opening night of the next.
     </p>
     <ul class="feature-list">
-      <li>Expected performance is measured as a difference relative to that baseline.</li>
-      <li>Ratings above 1500 indicate a team has outperformed the prior.</li>
-      <li>Ratings below 1500 indicate a team has underperformed the prior.</li>
+      <li>Differences are measured relative to that shared baseline, so "rating 1620" means "120 points above the average starter."</li>
+      <li>A rating meaningfully above 1500 means the team has beaten its prior; below 1500 means it has lost ground.</li>
+      <li>The scale is symmetric: a 30-point favorite is a 30-point favorite whether the matchup is 1650 vs 1620 or 1320 vs 1290.</li>
     </ul>
+    <p class="muted">
+      If every team starts at the same number, the ratings only describe what the games have
+      actually shown. There's no preseason polling or seed bias baked in.
+    </p>
   </article>
 
   <article class="card">
     <h2>Latest snapshot</h2>
+    <p class="muted">A quick read on what the model is currently sitting on.</p>
     {% if stats.latest_season %}
       <div class="featured-team">
         <strong>Season {{ stats.latest_season }}</strong>
-        <span>{{ stats.latest_season_games }} games in the live season dataset</span>
-        <span>Leaderboard reflects the live Elo state for that season.</span>
+        <span>{{ stats.latest_season_games }} games in the live season dataset.</span>
+        <span>The leaderboard reflects the live Elo state for that season, replayed from the processed CSV.</span>
+        <span>Last refreshed {{ stats.last_updated or "N/A" }}.</span>
       </div>
     {% else %}
-      <p class="muted">No processed data has been loaded yet. Use the Scrape page to import games.</p>
+      <p class="muted">No processed data has been loaded yet. Use the Scrape page to import games, then refresh the leaderboard.</p>
     {% endif %}
+    <p class="muted">
+      The "live season" is whichever season has the most recent completed games in the dataset.
+      If you scrape 2022-2025 in June 2025, the live season is 2024-25.
+    </p>
   </article>
 </section>
 {% endblock %}

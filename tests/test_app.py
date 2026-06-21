@@ -170,11 +170,11 @@ def test_predictor_page_renders(monkeypatch):
     assert "BOS" in body
     assert "Refresh predictor data" in body
     assert "Training range 2022-2025" in body
-    assert "No official injury CSV detected yet." in body
+    assert "No official injury CSV yet." in body
     assert "Latest completed games through 2024-10-23" in body
     assert "Prediction output" in body
-    assert "team-strength features" in body
-    assert "Choose a matchup and submit the form to see the combined prediction." in body
+    assert "recent form, team strength" in body
+    assert "Pick a home and away team on the left and submit the form to see the combined prediction here." in body
 
 
 def test_predictor_page_accepts_post(monkeypatch):
@@ -289,7 +289,7 @@ def test_predictor_page_accepts_post(monkeypatch):
     assert "NYK @ BOS" in body
     assert "64.0%" in body
     assert "61.0%" in body
-    assert "Latest saved injury report was folded into the matchup features" in body
+    assert "The latest saved injury report was folded into the matchup features" in body
     assert "Tree model" in body
 
 
@@ -379,7 +379,7 @@ def test_bayesian_page_renders():
     assert "Inner-Workings" in body
     assert "Elo leaderboard" in body
     assert "Home-win predictor" in body
-    assert "Official injury report scraping is powered by" in body
+    assert "Official injury reports come from the NBA's feed" in body
     assert "1500" in body
     assert "<math" in body
 

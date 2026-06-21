@@ -387,7 +387,14 @@ def build_leaderboard_frame(games: pd.DataFrame) -> pd.DataFrame:
         .reset_index(drop=True)
     )
     standings["rank"] = standings.index + 1
-    return standings[["rank", "team", "rating"]]
+    rating_span = float(standings["rating"].max() - standings["rating"].min())
+    spread = rating_span if rating_span > 1e-9 else 1.0
+    standings["rating_pct"] = (
+        ((standings["rating"] - standings["rating"].min()) / spread * 100)
+        .clip(0, 100)
+        .round(1)
+    )
+    return standings[["rank", "team", "rating", "rating_pct"]]
 
 
 def get_live_season_end_year(reference_date: datetime | None = None) -> int:
@@ -463,7 +470,7 @@ def load_home_stats() -> dict[str, object]:
     latest_season_games = int((games["season"] == latest_season).sum()) if latest_season else 0
     team_count = int(len(set(games["home_team"]).union(set(games["away_team"]))))
     last_updated = datetime.fromtimestamp(PROCESSED_FILE.stat().st_mtime).strftime(
-        "%Y-%m-%d %H:%M"
+        "%Y-%m-%d"
     )
 
     return {
@@ -517,7 +524,7 @@ def create_app() -> Flask:
             standings = build_leaderboard_frame(games)
             latest_season = int(games["season"].max()) if not games.empty else None
             last_updated = datetime.fromtimestamp(PROCESSED_FILE.stat().st_mtime).strftime(
-                "%Y-%m-%d %H:%M"
+                "%Y-%m-%d"
             )
         except FileNotFoundError:
             standings = pd.DataFrame(columns=["rank", "team", "rating"])
@@ -568,13 +575,17 @@ def create_app() -> Flask:
         injury_start_season = 2022
         injury_end_season = PREDICTOR_END_SEASON
         current_season_note = (
-            "If you scrape the current season, the import includes only games that have "
-            "already been played. The leaderboard always reflects the live Elo state of "
-            "the current season, or the most recent season if the current one has not started."
+            "Scraping the active season only pulls games that have already tipped off and "
+            "finished. Anything scheduled but not yet played is left out, so future results "
+            "never leak into the model. The leaderboard picks up the live Elo state of that "
+            "current season; if the season hasn't started yet, it falls back to the most "
+            "recent completed season's ratings."
         )
         injury_note = (
-            "Official injury report scraping on this page is powered by nbainjuries. "
-            "In practice, the usable historical coverage here starts in the 2021-22 season."
+            "Injury reports come from the official NBA injury feed, pulled through the "
+            "nbainjuries library. Historical coverage that lines up cleanly with the scraped "
+            "game calendar starts in the 2021-22 season; earlier reports aren't reliable "
+            "enough to feed the predictor, so the season-range importer floors out at 2022."
         )
         download_url = None
 
@@ -810,7 +821,7 @@ def create_app() -> Flask:
 
     @app.get("/bayesian-elo")
     def bayesian_elo():
-        return render_template("bayesian_elo.html")
+        return render_template("bayesian_elo.html", benchmark=PREDICTOR_BENCHMARK_SUMMARY)
 
     @app.get("/downloads/scrapes/<path:filename>")
     def download_scrape_export(filename: str):

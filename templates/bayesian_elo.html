@@ -6,8 +6,9 @@
     <p class="eyebrow">System guide</p>
     <h1>Inner-Workings</h1>
     <p class="lede">
-      This page explains how the app works behind the scenes: the Elo leaderboard, the home-win
-      predictor, and the data scraping pipeline that feeds both.
+      How the app actually works under the hood: the Elo formula behind the leaderboard, the
+      feature set and model pairing behind the predictor, and the two scrapers that feed both.
+      Numbers and code paths first, marketing language last.
     </p>
   </div>
 </section>
@@ -16,9 +17,19 @@
   <article class="card math-card">
     <h2>1. Elo leaderboard</h2>
     <p>
-      Every team starts at a rating of 1500. After each completed game, the winner gains rating
-      points and the loser gives them up. Bigger surprises move the ratings more than expected
-      outcomes.
+      Each team starts at 1500. After every completed game the winner takes points from the
+      loser. The size of the swap depends on how surprising the result was: a heavy favorite
+      winning by 2 barely moves the needle; a 20-point underdog blowout reshapes the ratings.
+    </p>
+    <p>
+      The expected-win term folds in home court as a fixed additive advantage, so the model
+      doesn't treat a home win by a 1480 team over a 1520 team the same way it treats that
+      matchup on a neutral floor.
+    </p>
+    <p>
+      Margin of victory multiplies the base <code>K</code>-factor update, which is the whole
+      point of using Elo here instead of a win/loss counter: a 30-point win carries more
+      signal than a 2-point win, and the formula should reflect that.
     </p>
     <div class="math-block">
       <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
@@ -69,32 +80,49 @@
         </mrow>
       </math>
     </div>
+    <p class="muted">
+      <code>P</code> is expected home-win probability, <code>r</code> are the two ratings,
+      <code>h</code> is the home-court advantage in rating points, and <code>s</code> is the
+      scale factor (typically 400). The update <code>&Delta;</code> multiplies the base
+      <code>K</code> by the margin multiplier <code>m</code> and the actual-vs-expected gap
+      <code>y &minus; p</code>.
+    </p>
     <ul class="feature-list">
-      <li>Ratings are updated after every completed game.</li>
-      <li>Home court is built into the expected-win formula.</li>
-      <li>Margin of victory scales the update, so blowouts move ratings more than one-point wins.</li>
-      <li>Ratings are regressed between seasons so teams can reset over time.</li>
+      <li>Ratings update game by game, in chronological order, replaying the whole season each refresh.</li>
+      <li>Home court is baked into the expected-win formula, not applied as a post-hoc bump.</li>
+      <li>Margin of victory scales the <code>K</code>-factor, so a blowout moves ratings more than a one-point win regardless of who was favored.</li>
+      <li>Ratings regress toward 1500 between seasons, so a single bad year doesn't permanently sink a team in the model.</li>
     </ul>
   </article>
 
   <article class="card math-card">
     <h2>2. Home-win predictor</h2>
     <p>
-      The predictor trains on historical completed games and then builds one matchup row from the
-      selected home and away teams. It compares logistic regression and random forest on the same
-      engineered feature set.
+      The predictor trains on every completed game in the window before the target date, then
+      builds one matchup row for the home and away teams you pick. Two models train on the same
+      engineered feature set and run side by side: a logistic regression (linear, readable,
+      coefficients you can inspect) and a random forest (nonlinear, captures interactions the
+      linear model can't).
+    </p>
+    <p>
+      Keeping both visible isn't indecision. Linear and tree models weigh the same inputs
+      differently on a given matchup, and when they disagree the context table tells you why:
+      rest, injury load, and strength gap all show up as raw numbers beneath the winner call.
     </p>
     <ul class="feature-list">
-      <li>Season win percentage tracks overall team quality.</li>
-      <li>Team strength blends win rate with average scoring margin.</li>
-      <li>Recent form uses rolling results from the last few games.</li>
-      <li>Rest days measure time since each team last played.</li>
-      <li>Injury features count out, doubtful, questionable, and probable players.</li>
-      <li>Injury impact also weights status severity and estimated absence length.</li>
+      <li>Season win percentage tracks overall team quality over the full year so far.</li>
+      <li>Team strength blends win rate with average scoring margin, which is a better quality signal than either alone.</li>
+      <li>Recent form is a rolling window over the last few games, capturing whether a team is hot or cold right now.</li>
+      <li>Rest days count the gap since each team's last game, since a team on a back-to-back plays differently than one on three days' rest.</li>
+      <li>Injury features count out, doubtful, questionable, and probable players per team.</li>
+      <li>Injury impact goes a step further, weighting status severity and estimated absence length so a star out for a week reads differently than a role player out for a day.</li>
     </ul>
     <blockquote class="callout">
-      The app keeps both models visible because linear and tree-based models can value the same
-      features differently on a given matchup.
+      The benchmark for the current training window: home-court baseline accuracy
+      {{ "%.1f"|format(benchmark.home_baseline_accuracy * 100) }}%, logistic
+      {{ "%.1f"|format(benchmark.logistic_accuracy * 100) }}%, random forest
+      {{ "%.1f"|format(benchmark.random_forest_accuracy * 100) }}%. The linear model edges
+      the tree model by about one point on held-out 2025 games.
     </blockquote>
   </article>
 </section>
@@ -103,29 +131,33 @@
   <article class="card math-card">
     <h2>3. Game scraper</h2>
     <p>
-      The Basketball-Reference scraper pulls every month page for each requested season so the app
-      gets full regular-season coverage instead of just the opening month.
+      The Basketball-Reference scraper walks every month page in each requested season, so the
+      raw CSV gets full regular-season coverage rather than just October and November. It parses
+      the box-score tables directly and writes one row per game with date, season, away team,
+      away points, home team, and home points.
     </p>
     <ul class="feature-list">
-      <li>Season-range input lets the app scrape multiple years in one run.</li>
-      <li>Rows are normalized into a consistent game dataset used by the predictor and Elo model.</li>
-      <li>Current-season scrapes stop at the latest completed games so future results never leak in.</li>
+      <li>The season-range input fans out across multiple years in one run, so you can pull 2016 through 2025 in a single submit.</li>
+      <li>Raw rows are normalized into the consistent game dataset both the Elo model and the predictor consume, with team names mapped to NBA abbreviations and win/margin columns stamped on.</li>
+      <li>For the current season, the scraper stops at the latest completed game so a scheduled result never leaks into the ratings as a played one.</li>
+      <li>Re-running a season overwrites that season's slice of the raw CSV, so refreshing mid-season doesn't duplicate old games.</li>
     </ul>
   </article>
 
   <article class="card math-card">
     <h2>4. Injury scraper</h2>
     <p>
-      Official injury report scraping is powered by <code>nbainjuries</code>. The app can save the
-      latest report, a date range, or a season-based set of reports into CSV files that the
-      predictor can reuse.
+      Official injury reports come from the NBA's feed, pulled through the
+      <code>nbainjuries</code> library. Three modes cover the cases the predictor cares about:
+      grab the single latest report, walk a date range day by day, or pull a whole season range
+      keyed off the scraped game calendar.
     </p>
     <ul class="feature-list">
-      <li>Latest mode grabs the most recent valid official report.</li>
-      <li>Date-range mode walks day by day and saves whichever report exists for each date.</li>
-      <li>Season-range mode uses the game calendar so injury dates line up with the scraped games.</li>
-      <li>Missing report dates return a clear error or are skipped with a note when appropriate.</li>
-      <li>Cached backend CSVs keep later predictor refreshes much faster than the first full run.</li>
+      <li>Latest mode fetches the most recent valid official report and writes it to a CSV.</li>
+      <li>Date-range mode walks each date in the window and saves whatever report exists for that date, skipping days with nothing.</li>
+      <li>Season-range mode uses the scraped game calendar, so injury dates line up with the games the predictor already knows about.</li>
+      <li>Missing report dates either raise a clear error or are skipped with a note, depending on whether the gap is expected for that date.</li>
+      <li>Backend CSVs are cached after the first pull, so later predictor refreshes reuse them and finish much faster than the initial run.</li>
     </ul>
   </article>
 </section>
