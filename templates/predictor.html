@@ -6,8 +6,10 @@
     <p class="eyebrow">Model feature</p>
     <h1>Home-win predictor</h1>
     <p class="lede">
-      Pick a home team and away team, then let the app combine recent team form,
-      team-strength features, and the latest saved injury context into a game prediction.
+      Pick a home team and an away team, and the app turns recent form, team strength, rest, and the latest official injury report into a predicted winner and a home-win probability. It trains two models on the same engineered feature set and shows them side by side, because a linear model and a tree model can read the same features differently on a given matchup.
+    </p>
+    <p class="lede">
+      The training window is fixed to the {{ predictor_start_season }}-{{ predictor_end_season }} seasons automatically, so you don't tune it per request. The predictor trains on every completed game before the target date and then builds one matchup row from the home and away teams you pick.
     </p>
   </div>
 </section>
@@ -16,7 +18,7 @@
   <article class="card">
     <div class="section-header">
       <h2>Matchup inputs</h2>
-      <p>The app uses the predictor training window automatically.</p>
+      <p>Training window {{ predictor_start_season }}-{{ predictor_end_season }}, fixed.</p>
     </div>
 
     {% if error %}
@@ -30,9 +32,9 @@
       <span>Prediction target date {{ prediction_date or "N/A" }}</span>
       <span>
         {% if injury_file_present %}
-          Official injury CSV detected for the supported seasons
+          Official injury CSV present for the supported seasons
         {% else %}
-          No official injury CSV detected yet. Use Refresh predictor data after installing `nbainjuries`.
+          No official injury CSV yet. Install nbainjuries, then hit Refresh predictor data.
         {% endif %}
       </span>
     </div>
@@ -42,11 +44,11 @@
         <button type="submit" class="button-secondary">Refresh predictor data</button>
       </form>
     </div>
-    <p class="muted">The first full predictor refresh can take 20+ minutes because it rebuilds the game and injury training data.</p>
+    <p class="muted">The first full refresh can take 20+ minutes: it rebuilds the game and injury training data from scratch. Later refreshes reuse cached CSVs and finish much faster.</p>
 
     <form method="post" class="form" data-show-loading="true">
       <div class="form-columns">
-        <label>
+       <label>
           <span>Home team</span>
           <select name="home_team">
             {% for team in teams %}
@@ -63,8 +65,7 @@
             {% endfor %}
           </select>
         </label>
-      </div>
-
+     </div>
       <button type="submit" class="button-primary">Generate prediction</button>
     </form>
   </article>
@@ -72,7 +73,7 @@
   <article class="card">
     <div class="section-header">
       <h2>Prediction output</h2>
-      <p>The models are trained on all completed games before the target date.</p>
+          <p>Trained on all completed games before the target date, then asked to predict this one matchup.</p>
     </div>
 
     {% if prediction %}
@@ -81,9 +82,9 @@
         <span>Season {{ prediction.season }} | projected for {{ prediction.game_date }}</span>
         <span>
           {% if prediction.injury_data_used %}
-            Latest saved injury report was folded into the matchup features
+            The latest saved injury report was folded into the matchup features
           {% else %}
-            No recent injury report matched this prediction date, so this run used team-form and strength features only
+            No recent injury report matched this prediction date, so this run leaned on team form and strength only
           {% endif %}
         </span>
       </div>
@@ -125,7 +126,7 @@
       </div>
 
       <div class="table-wrap">
-        <table class="leaderboard">
+        <table class="leaderboard context">
           <thead>
             <tr>
               <th>Context</th>
@@ -167,7 +168,7 @@
         </table>
       </div>
     {% else %}
-      <p class="muted">Choose a matchup and submit the form to see the combined prediction.</p>
+      <p class="muted">Pick a home and away team on the left and submit the form to see the combined prediction here.</p>
     {% endif %}
   </article>
 </section>

@@ -1,8 +1,20 @@
 document.addEventListener("DOMContentLoaded", () => {
   const loadingBar = document.getElementById("loading-bar");
-  const forms = document.querySelectorAll("form[data-show-loading='true']");
+ const forms = document.querySelectorAll("form[data-show-loading='true']");
+ const themeToggle = document.getElementById("theme-toggle");
 
-  const showLoading = () => {
+ if (themeToggle) {
+   themeToggle.addEventListener("click", () => {
+     const current = document.documentElement.getAttribute("data-theme");
+     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+     const isDark = current === "dark" || (!current && prefersDark);
+     const next = isDark ? "light" : "dark";
+     document.documentElement.setAttribute("data-theme", next);
+     localStorage.setItem("theme", next);
+   });
+ }
+ 
+ const showLoading = () => {
     if (loadingBar) {
       loadingBar.classList.add("is-visible");
     }

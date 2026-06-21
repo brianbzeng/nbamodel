@@ -6,10 +6,12 @@
     <p class="eyebrow">Live Elo standings</p>
     <h1>Leaderboard</h1>
     <p class="lede">
-      Live team ratings from the current season, or the most recent season if the current one has
-      not started yet.
-      {% if latest_season %}Latest season included: {{ latest_season }}.{% endif %}
-      The board always reflects the current Elo state of the latest live dataset.
+      Ratings below come straight out of the Elo model run over the live dataset.
+      {% if latest_season %}The board is currently showing the <strong>{{ latest_season }}</strong> season.{% endif %}
+      If the current season hasn't tipped off yet, it falls back to the most recent completed season's ratings, so the board is never empty during the offseason.
+    </p>
+    <p class="lede">
+      Hit refresh to pull the latest games from Basketball-Reference, clean them, and replay the full game history into fresh ratings. The first refresh in a new session can take a few seconds because it re-scrapes the current season; subsequent ones are faster if nothing has changed.
     </p>
   </div>
 
@@ -22,9 +24,18 @@
 
 <section class="card info-card">
   <div class="info-row">
-    <span>Data snapshot</span>
+    <span>Last model refresh</span>
     <strong>{{ last_updated or "Not available yet" }}</strong>
   </div>
+  <div class="info-row">
+    <span>Teams ranked</span>
+    <strong>{{ standings|length if standings else 0 }}</strong>
+  </div>
+</section>
+
+<p class="muted">
+  The rating bar next to each team is scaled across the board's own min-to-max range, not against the 1500 prior. That makes the spread between the top and bottom of the league easy to read at a glance, but two teams with similar bar widths can still be a hundred rating points apart.
+</p>
 </section>
 
 <section class="card">
@@ -39,18 +50,23 @@
           </tr>
         </thead>
         <tbody>
-          {% for row in standings %}
+      {% for row in standings %}
             <tr>
               <td>{{ row.rank }}</td>
-              <td>{{ row.team }}</td>
-              <td>{{ "%.1f"|format(row.rating) }}</td>
+              <td class="team-cell">{{ row.team }}</td>
+              <td class="rating-cell">
+                <span class="rating-value">{{ "%.1f"|format(row.rating) }}</span>
+                <span class="rating-bar" aria-hidden="true">
+                  <span class="rating-bar-fill" style="width: {{ row.rating_pct }}%"></span>
+                </span>
+              </td>
             </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   {% else %}
-    <p class="muted">No leaderboard data yet. Use the Scrape page to import games first.</p>
+    <p class="muted">No leaderboard data yet. Head to the Scrape page, import a season range, then come back here and hit refresh.</p>
   {% endif %}
 </section>
 {% endblock %}

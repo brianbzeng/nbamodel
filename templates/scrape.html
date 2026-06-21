@@ -6,8 +6,7 @@
     <p class="eyebrow">Data import</p>
     <h1>Scrape NBA data</h1>
     <p class="lede">
-      Import regular-season games or official injury reports, preview the exported CSVs, and
-      download the saved files when each scrape finishes.
+      Pull regular-season games from Basketball-Reference or official injury reports from the NBA's feed, preview the resulting CSVs inline, and download the saved files as soon as each scrape finishes. Everything you produce here feeds the leaderboard and the predictor downstream.
     </p>
   </div>
 </section>
@@ -25,6 +24,7 @@
       <h2>Game scraper</h2>
       <p>Basketball-Reference season-range import.</p>
     </div>
+    <p class="muted">Seasons use the end-year convention: <code>2025</code> means the 2024-25 season. Pick a start and end year and the scraper fans out across every month page in that range.</p>
     <form method="post" class="form" data-show-loading="true" id="scrape-form">
       <input type="hidden" name="scrape_action" value="games" />
       <label>
@@ -104,7 +104,7 @@
         </table>
       </div>
     {% else %}
-      <p class="muted">No game scrape has been run in this session yet.</p>
+      <p class="muted">No game scrape has been run in this session yet. Pick a season range on the left and hit scrape to see the first rows here.</p>
     {% endif %}
   </article>
 </section>
@@ -122,6 +122,7 @@
       <h2>Official injury reports</h2>
       <p>Powered by nbainjuries with latest, date-range, and season-range modes.</p>
     </div>
+    <p class="muted">Latest grabs the most recent report on file. Date range walks day by day between two dates. Season range uses the scraped game calendar so injury dates line up with the games the predictor already knows about.</p>
     <form method="post" class="form" data-show-loading="true">
       <input type="hidden" name="scrape_action" value="injuries" />
       <label>
@@ -233,7 +234,7 @@
         </table>
       </div>
     {% else %}
-      <p class="muted">No injury scrape has been run in this session yet.</p>
+      <p class="muted">No injury scrape has been run in this session yet. Pick a mode on the left and the date or season range you want to cover.</p>
     {% endif %}
   </article>
 </section>
