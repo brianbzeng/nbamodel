@@ -11,7 +11,37 @@ def test_homepage_contains_project_sections():
     assert response.status_code == 200
     assert "NBA Odds Predictor" in body
     assert "Inner-Workings" in body
+    assert "About" in body
+    assert "Query" in body
     assert "Current-season behavior" not in body
+
+
+def test_about_page_renders():
+    app = create_app()
+    client = app.test_client()
+    response = client.get("/about")
+    body = response.get_data(as_text = True)
+
+    assert response.status_code == 200
+    assert "About the builder" in body
+    assert "bzeng0000@gmail.com" in body
+    assert "linkedin.com/in/brianbzeng" in body
+    assert "github.com/brianbzeng" in body
+
+
+def test_query_page_accepts_post():
+    app = create_app()
+    client = app.test_client()
+    response = client.post(
+        "/query",
+        data = {"question": "How does the predictor use injuries?"},
+    )
+    body = response.get_data(as_text = True)
+
+    assert response.status_code == 200
+    assert "Injury reports" in body
+    assert "Official injury reports are pulled through nbainjuries" in body
+    assert "Open predictor" in body
 
 
 def test_leaderboard_uses_live_season_only(monkeypatch):

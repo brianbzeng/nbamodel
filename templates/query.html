@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Query | {{ app_title or "NBA Odds Predictor" }}{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">App guide</p>
+    <h1>Query page</h1>
+    <p class="lede">
+      Ask a question about the app and this page will point you toward the right section.
+    </p>
+  </div>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <div class="section-header">
+      <h2>Ask a question</h2>
+      <p>Project-focused routing</p>
+    </div>
+    <form method="post" class="form" data-show-loading="true">
+      <label class="query-field">
+        <span>Your question</span>
+        <textarea name="question" rows="6" placeholder="Example: How does the predictor use injuries?">{{ question }}</textarea>
+      </label>
+      <button type="submit" class="button-primary">Run query</button>
+    </form>
+    <p class="muted">
+      Good topics: Elo, leaderboard, predictor features, scraping workflow, injury reports, and contact information.
+    </p>
+  </article>
+
+  <article class="card">
+    <div class="section-header">
+      <h2>Response</h2>
+      <p>Best page match</p>
+    </div>
+    {% if query_result %}
+      <div class="featured-team">
+        <strong>{{ query_result.title }}</strong>
+        <span>{{ query_result.answer }}</span>
+      </div>
+      <div class="page-actions">
+        <a class="button-secondary" href="{{ url_for(query_result.endpoint) }}">{{ query_result.link_label }}</a>
+      </div>
+      {% if query_result.related_topics %}
+        <div class="query-related">
+          <h3>Related topics</h3>
+          <ul class="feature-list">
+            {% for topic in query_result.related_topics %}
+              <li>
+                <strong>{{ topic.title }}</strong>: {{ topic.answer }}
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    {% else %}
+      <p class="muted">
+        Ask a question on the left to get a short answer and a suggested page inside the app.
+      </p>
+    {% endif %}
+  </article>
+</section>
+
+<section class="card note-card">
+  <div class="section-header">
+    <h2>Example queries</h2>
+  </div>
+  <ul class="feature-list">
+    {% for topic in query_topics %}
+      <li>How does the app handle {{ topic.title.lower() }}?</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}About | {{ app_title or "NBA Odds Predictor" }}{% endblock %}
+{% block content %}
+<section class="page-heading">
+  <div>
+    <p class="eyebrow">Project contact</p>
+    <h1>About the builder</h1>
+    <p class="lede">
+      A quick page with the project owner's contact information and public profiles.
+    </p>
+  </div>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <div class="section-header">
+      <h2>{{ author_name }}</h2>
+      <p>Project owner</p>
+    </div>
+    <div class="featured-team">
+      <strong>Email</strong>
+      <span><a href="mailto:{{ author_email }}">{{ author_email }}</a></span>
+    </div>
+    <div class="featured-team">
+      <strong>LinkedIn</strong>
+      <span><a href="{{ author_linkedin }}" target="_blank" rel="noreferrer">{{ author_linkedin }}</a></span>
+    </div>
+    <div class="featured-team">
+      <strong>GitHub</strong>
+      <span><a href="{{ author_github }}" target="_blank" rel="noreferrer">{{ author_github }}</a></span>
+    </div>
+  </article>
+
+  <article class="card">
+    <div class="section-header">
+      <h2>Project summary</h2>
+      <p>What this app pulls together</p>
+    </div>
+    <ul class="feature-list">
+      <li>Basketball-Reference scraping for full regular-season game coverage.</li>
+      <li>Elo ratings and a live leaderboard rebuilt from processed game history.</li>
+      <li>Official injury report scraping through <code>nbainjuries</code>.</li>
+      <li>A home-win predictor that compares logistic regression and random forest on the same feature set.</li>
+    </ul>
+    <p class="muted">
+      This page is mainly here as a clean project closeout and an easy place to find the owner's links.
+    </p>
+  </article>
+</section>
+{% endblock %}

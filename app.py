@@ -49,6 +49,10 @@ PREDICTOR_EVAL_SUMMARY_FILE = (
     RESULTS_DIR / f"predictor_eval_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.json"
 )
 APP_TITLE = "NBA Odds Predictor"
+AUTHOR_NAME = "Brian Zeng"
+AUTHOR_EMAIL = "bzeng0000@gmail.com"
+AUTHOR_LINKEDIN = "https://www.linkedin.com/in/brianbzeng"
+AUTHOR_GITHUB = "https://github.com/brianbzeng"
 
 DEFAULT_START_SEASON = 2016
 DEFAULT_END_SEASON = 2025
@@ -79,7 +83,74 @@ NAV_ITEMS = (
     {"endpoint": "leaderboard", "label": "Leaderboard"},
     {"endpoint": "predictor", "label": "Predictor"},
     {"endpoint": "scrape", "label": "Scrape"},
+    {"endpoint": "query", "label": "Query"},
+    {"endpoint": "about", "label": "About"},
     {"endpoint": "bayesian_elo", "label": "Inner-Workings"},
+)
+QUERY_TOPICS = (
+    {
+        "title": "Leaderboard and Elo ratings",
+        "keywords": ("elo", "leaderboard", "rating", "rank", "rankings", "standings"),
+        "answer": (
+            "The leaderboard page replays the processed game history into the Elo model and "
+            "shows the current ratings for the live season, or the most recent completed season "
+            "if the current one has not started yet."
+        ),
+        "endpoint": "leaderboard",
+        "link_label": "Open leaderboard",
+    },
+    {
+        "title": "Home-win predictor",
+        "keywords": ("predict", "prediction", "predictor", "matchup", "winner", "probability"),
+        "answer": (
+            "The predictor trains on completed games from 2022-2025, builds engineered matchup "
+            "features like team strength, recent form, rest, and injury context, and then shows "
+            "logistic regression and random forest side by side."
+        ),
+        "endpoint": "predictor",
+        "link_label": "Open predictor",
+    },
+    {
+        "title": "Game scraping",
+        "keywords": ("scrape", "scraper", "games", "basketball-reference", "season", "csv"),
+        "answer": (
+            "The game scraper walks every monthly Basketball-Reference page for the requested "
+            "season range so it captures full seasons rather than just the first month."
+        ),
+        "endpoint": "scrape",
+        "link_label": "Open scrape page",
+    },
+    {
+        "title": "Injury reports",
+        "keywords": ("injury", "injuries", "report", "nbainjuries", "questionable", "out"),
+        "answer": (
+            "Official injury reports are pulled through nbainjuries. The app can save the latest "
+            "report, a date range, or a season-aligned range, then fold the team-level injury "
+            "counts into the predictor."
+        ),
+        "endpoint": "scrape",
+        "link_label": "Open injury scraper",
+    },
+    {
+        "title": "Project background",
+        "keywords": ("how", "works", "formula", "features", "inner", "math", "workflow"),
+        "answer": (
+            "The Inner-Workings page explains the Elo formula, the predictor feature set, and "
+            "how the scraper pipeline feeds both parts of the app."
+        ),
+        "endpoint": "bayesian_elo",
+        "link_label": "Open Inner-Workings",
+    },
+    {
+        "title": "Project contact information",
+        "keywords": ("contact", "email", "linkedin", "github", "brian", "author"),
+        "answer": (
+            "The About page lists Brian Zeng's contact information along with LinkedIn and "
+            "GitHub links."
+        ),
+        "endpoint": "about",
+        "link_label": "Open About page",
+    },
 )
 
 
@@ -502,6 +573,41 @@ def clear_generated_data() -> dict[str, int]:
     return {"files": removed_files, "dirs": removed_dirs}
 
 
+def answer_app_query(question: str) -> dict[str, object]:
+    # Match a natural-language question to the most relevant page in the app.
+    normalized = question.strip().lower()
+    scored_topics = []
+
+    for topic in QUERY_TOPICS:
+        score = sum(1 for keyword in topic["keywords"] if keyword in normalized)
+        if score > 0:
+            scored_topics.append((score, topic))
+
+    if scored_topics:
+        scored_topics.sort(key = lambda item: item[0], reverse = True)
+        best_topic = scored_topics[0][1]
+        related_topics = [topic for _, topic in scored_topics[1:4]]
+        return {
+            "title": best_topic["title"],
+            "answer": best_topic["answer"],
+            "endpoint": best_topic["endpoint"],
+            "link_label": best_topic["link_label"],
+            "related_topics": related_topics,
+        }
+
+    return {
+        "title": "No exact match yet",
+        "answer": (
+            "That question does not line up with one keyword bucket yet, but the app can still "
+            "guide you. Try asking about Elo, the predictor, the scraper, injury reports, or "
+            "contact information."
+        ),
+        "endpoint": "bayesian_elo",
+        "link_label": "Open Inner-Workings",
+        "related_topics": list(QUERY_TOPICS[:4]),
+    }
+
+
 def create_app() -> Flask:
     ensure_data_dirs()
     app = Flask(__name__)
@@ -516,6 +622,35 @@ def create_app() -> Flask:
     def home():
         stats = load_home_stats()
         return render_template("home.html", stats=stats)
+
+    @app.get("/about")
+    def about():
+        return render_template(
+            "about.html",
+            author_name = AUTHOR_NAME,
+            author_email = AUTHOR_EMAIL,
+            author_linkedin = AUTHOR_LINKEDIN,
+            author_github = AUTHOR_GITHUB,
+        )
+
+    @app.route("/query", methods = ["GET", "POST"])
+    def query():
+        user_question = ""
+        query_result = None
+
+        if request.method == "POST":
+            user_question = request.form.get("question", "").strip()
+            if not user_question:
+                flash("Enter a question first so the app has something to route.", "error")
+            else:
+                query_result = answer_app_query(user_question)
+
+        return render_template(
+            "query.html",
+            question = user_question,
+            query_result = query_result,
+            query_topics = QUERY_TOPICS,
+        )
 
     @app.route("/leaderboard", methods=["GET"])
     def leaderboard():
