@@ -79,7 +79,7 @@ NAV_ITEMS = (
     {"endpoint": "leaderboard", "label": "Leaderboard"},
     {"endpoint": "predictor", "label": "Predictor"},
     {"endpoint": "scrape", "label": "Scrape"},
-    {"endpoint": "bayesian_elo", "label": "NBA Elo Model"},
+    {"endpoint": "bayesian_elo", "label": "Inner-Workings"},
 )
 
 

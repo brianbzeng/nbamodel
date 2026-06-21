@@ -1,282 +1,132 @@
 {% extends "base.html" %}
-{% block title %}NBA Elo Model - Inner Statistical Workings | {{ app_title or "NBA Odds Predictor" }}{% endblock %}
+{% block title %}Inner-Workings | {{ app_title or "NBA Odds Predictor" }}{% endblock %}
 {% block content %}
 <section class="page-heading">
   <div>
-    <p class="eyebrow">Model</p>
-    <h1>NBA Elo Model - Inner Statistical Workings</h1>
+    <p class="eyebrow">System guide</p>
+    <h1>Inner-Workings</h1>
     <p class="lede">
-      This page explains the actual update mechanics used by the app. It is inspired by Bayesian
-      thinking in the sense that ratings evolve by incorporating evidence, but it does not use a
-      conjugate prior or posterior in the code.
+      This page explains how the app works behind the scenes: the Elo leaderboard, the home-win
+      predictor, and the data scraping pipeline that feeds both.
     </p>
   </div>
-</section>
-
-<section class="card note-card">
-  <div class="section-header">
-    <h2>Biggest issue</h2>
-  </div>
-  <p class="callout">
-    The old title implied Bayesian posterior inference. The model actually uses Elo, logistic win
-    probability, margin-of-victory adjustment, and season regression. That is an update rule, not
-    a posterior calculation.
-  </p>
 </section>
 
 <section class="grid method-grid">
   <article class="card math-card">
-    <h2>1. A true conjugate benchmark</h2>
+    <h2>1. Elo leaderboard</h2>
     <p>
-      This section is included only as a comparison point. It shows what actual Bayesian updating
-      looks like for a single fixed win probability, which is not how the team-vs-team rating
-      system works.
+      Every team starts at a rating of 1500. After each completed game, the winner gains rating
+      points and the loser gives them up. Bigger surprises move the ratings more than expected
+      outcomes.
     </p>
     <div class="math-block">
       <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
         <mrow>
-          <mi>&theta;</mi>
-          <mo>&sim;</mo>
-          <mtext>Beta</mtext>
+          <mi>P</mi>
           <mo>(</mo>
-          <msub><mi>&alpha;</mi><mn>0</mn></msub>
-          <mo>,</mo>
-          <msub><mi>&beta;</mi><mn>0</mn></msub>
+          <mtext>home win</mtext>
           <mo>)</mo>
+          <mo>=</mo>
+          <mfrac>
+            <mn>1</mn>
+            <mrow>
+              <mn>1</mn>
+              <mo>+</mo>
+              <msup>
+                <mn>10</mn>
+                <mrow>
+                  <mo>&minus;</mo>
+                  <mfrac>
+                    <mrow>
+                      <msub><mi>r</mi><mtext>home</mtext></msub>
+                      <mo>&minus;</mo>
+                      <msub><mi>r</mi><mtext>away</mtext></msub>
+                      <mo>+</mo>
+                      <mi>h</mi>
+                    </mrow>
+                    <mi>s</mi>
+                  </mfrac>
+                </mrow>
+              </msup>
+            </mrow>
+          </mfrac>
         </mrow>
       </math>
       <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
         <mrow>
-          <mi>y</mi>
-          <mo>|</mo>
-          <mi>&theta;</mi>
-          <mo>&sim;</mo>
-          <mtext>Bernoulli</mtext>
+          <mi>&#x0394;</mi>
+          <mo>=</mo>
+          <mi>K</mi>
+          <mo>&#x2062;</mo>
+          <mi>m</mi>
+          <mo>&#x2062;</mo>
           <mo>(</mo>
-          <mi>&theta;</mi>
-          <mo>)</mo>
-        </mrow>
-      </math>
-      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-        <mrow>
+          <mi>y</mi>
+          <mo>&minus;</mo>
           <mi>p</mi>
-          <mo>(</mo>
-          <mi>&theta;</mi>
-          <mo>|</mo>
-          <mi>y</mi>
-          <mo>)</mo>
-          <mo>&propto;</mo>
-          <mi>p</mi>
-          <mo>(</mo>
-          <mi>y</mi>
-          <mo>|</mo>
-          <mi>&theta;</mi>
-          <mo>)</mo>
-          <mi>p</mi>
-          <mo>(</mo>
-          <mi>&theta;</mi>
-          <mo>)</mo>
-        </mrow>
-      </math>
-      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-        <mrow>
-          <mi>&theta;</mi>
-          <mo>|</mo>
-          <mi>y</mi>
-          <mo>&sim;</mo>
-          <mtext>Beta</mtext>
-          <mo>(</mo>
-          <mrow><msub><mi>&alpha;</mi><mn>0</mn></msub><mo>+</mo><mi>y</mi></mrow>
-          <mo>,</mo>
-          <mrow><msub><mi>&beta;</mi><mn>0</mn></msub><mo>+</mo><mn>1</mn><mo>&minus;</mo><mi>y</mi></mrow>
           <mo>)</mo>
         </mrow>
       </math>
     </div>
-    <blockquote class="callout">
-      This benchmark models a single team's underlying win probability and is shown for
-      comparison. It is not suitable for opponent-specific ratings, which is why Elo is used
-      instead.
-    </blockquote>
+    <ul class="feature-list">
+      <li>Ratings are updated after every completed game.</li>
+      <li>Home court is built into the expected-win formula.</li>
+      <li>Margin of victory scales the update, so blowouts move ratings more than one-point wins.</li>
+      <li>Ratings are regressed between seasons so teams can reset over time.</li>
+    </ul>
   </article>
 
   <article class="card math-card">
-    <h2>2. Initialization at 1500</h2>
+    <h2>2. Home-win predictor</h2>
     <p>
-      The app does not sample ratings from a distribution. Every team is initialized at the same
-      baseline rating before any game results are observed.
+      The predictor trains on historical completed games and then builds one matchup row from the
+      selected home and away teams. It compares logistic regression and random forest on the same
+      engineered feature set.
     </p>
-    <div class="math-block">
-      <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-        <mrow>
-          <msub><mi>r</mi><mi>i</mi></msub>
-          <mo>=</mo>
-          <mn>1500</mn>
-        </mrow>
-      </math>
-    </div>
+    <ul class="feature-list">
+      <li>Season win percentage tracks overall team quality.</li>
+      <li>Team strength blends win rate with average scoring margin.</li>
+      <li>Recent form uses rolling results from the last few games.</li>
+      <li>Rest days measure time since each team last played.</li>
+      <li>Injury features count out, doubtful, questionable, and probable players.</li>
+      <li>Injury impact also weights status severity and estimated absence length.</li>
+    </ul>
     <blockquote class="callout">
-      Each team is initialized at a common baseline rating of 1500 before any game results are
-      observed.
+      The app keeps both models visible because linear and tree-based models can value the same
+      features differently on a given matchup.
     </blockquote>
   </article>
 </section>
 
-<section class="card math-card">
-  <h2>3. Logistic win probability</h2>
-  <p>
-    The model converts rating differences into a home-win probability with a standard Elo logistic
-    curve.
-  </p>
-  <div class="math-block">
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-      <mrow>
-        <mi>P</mi>
-        <mo>(</mo>
-        <mtext>home win</mtext>
-        <mo>)</mo>
-        <mo>=</mo>
-        <mfrac>
-          <mn>1</mn>
-          <mrow>
-            <mn>1</mn>
-            <mo>+</mo>
-            <msup>
-              <mn>10</mn>
-              <mrow>
-                <mo>&minus;</mo>
-                <mfrac>
-                  <mrow>
-                    <msub><mi>r</mi><mtext>home</mtext></msub>
-                    <mo>&minus;</mo>
-                    <msub><mi>r</mi><mtext>away</mtext></msub>
-                    <mo>+</mo>
-                    <mi>h</mi>
-                  </mrow>
-                  <mi>s</mi>
-                </mfrac>
-              </mrow>
-            </msup>
-          </mrow>
-        </mfrac>
-      </mrow>
-    </math>
-  </div>
-  <p class="muted">
-    The code uses the same relationship through a sigmoid helper, so either notation is fine.
-  </p>
-</section>
+<section class="grid method-grid">
+  <article class="card math-card">
+    <h2>3. Game scraper</h2>
+    <p>
+      The Basketball-Reference scraper pulls every month page for each requested season so the app
+      gets full regular-season coverage instead of just the opening month.
+    </p>
+    <ul class="feature-list">
+      <li>Season-range input lets the app scrape multiple years in one run.</li>
+      <li>Rows are normalized into a consistent game dataset used by the predictor and Elo model.</li>
+      <li>Current-season scrapes stop at the latest completed games so future results never leak in.</li>
+    </ul>
+  </article>
 
-<section class="card math-card">
-  <h2>4. Rating update rule</h2>
-  <p>
-    This is the main update step. It is an Elo update, not a Bayesian posterior computation.
-  </p>
-  <div class="math-block">
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-      <mrow>
-        <mi>&#x0394;</mi>
-        <mo>=</mo>
-        <mi>K</mi>
-        <mo>&#x2062;</mo>
-        <mi>m</mi>
-        <mo>&#x2062;</mo>
-        <mo>(</mo>
-        <mi>y</mi>
-        <mo>&minus;</mo>
-        <mi>p</mi>
-        <mo>)</mo>
-      </mrow>
-    </math>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-      <mrow>
-        <msup><msub><mi>r</mi><mtext>home</mtext></msub><mtext>new</mtext></msup>
-        <mo>=</mo>
-        <msub><mi>r</mi><mtext>home</mtext></msub>
-        <mo>+</mo>
-        <mi>&#x0394;</mi>
-      </mrow>
-    </math>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-      <mrow>
-        <msup><msub><mi>r</mi><mtext>away</mtext></msub><mtext>new</mtext></msup>
-        <mo>=</mo>
-        <msub><mi>r</mi><mtext>away</mtext></msub>
-        <mo>&minus;</mo>
-        <mi>&#x0394;</mi>
-      </mrow>
-    </math>
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-      <mrow>
-        <mi>m</mi>
-        <mo>=</mo>
-        <mi>log</mi>
-        <mo>(</mo>
-        <mrow><mi>margin</mi><mo>+</mo><mn>1</mn></mrow>
-        <mo>)</mo>
-      </mrow>
-    </math>
-  </div>
-  <p>
-    The surprise term <code>y - p</code> drives the update. Winning as expected changes ratings a
-    little. Winning or losing in a surprising way changes them more.
-  </p>
-</section>
-
-<section class="card math-card">
-  <h2>5. Season regression</h2>
-  <p>
-    Between seasons, ratings are pulled back toward the baseline so they do not stay locked to
-    one historical run forever.
-  </p>
-  <div class="math-block">
-    <math xmlns="http://www.w3.org/1998/Math/MathML" display="block">
-      <mrow>
-        <msub>
-          <mi>r</mi>
-          <mrow><mi>i</mi><mo>,</mo><mtext>next season</mtext></mrow>
-        </msub>
-        <mo>=</mo>
-        <mi>&lambda;</mi>
-        <mo>&#x2062;</mo>
-        <msub>
-          <mi>r</mi>
-          <mrow><mi>i</mi><mo>,</mo><mtext>end of season</mtext></mrow>
-        </msub>
-        <mo>+</mo>
-        <mrow>
-          <mo>(</mo><mn>1</mn><mo>&minus;</mo><mi>&lambda;</mi><mo>)</mo>
-          <mo>&#x2062;</mo>
-          <mn>1500</mn>
-        </mrow>
-      </mrow>
-    </math>
-  </div>
-  <blockquote class="callout">
-    This prevents ratings from becoming permanently anchored to historical performance and allows
-    teams to change over time.
-  </blockquote>
-</section>
-
-<section class="card">
-  <h2>Current parameters</h2>
-  <div class="grid method-grid parameter-grid">
-    <article class="card parameter-card">
-      <h3><code>K</code></h3>
-      <p>Base update strength. Higher values make ratings move faster after each game.</p>
-    </article>
-    <article class="card parameter-card">
-      <h3><code>h</code></h3>
-      <p>Home-court adjustment added to the home team's rating gap before computing win probability.</p>
-    </article>
-    <article class="card parameter-card">
-      <h3><code>s</code></h3>
-      <p>Scale factor in the logistic win probability. It controls how quickly probabilities change as ratings separate.</p>
-    </article>
-    <article class="card parameter-card">
-      <h3><code>&lambda;</code></h3>
-      <p>Season regression factor. Values closer to 1 preserve more of last season's rating; lower values pull harder toward 1500.</p>
-    </article>
-  </div>
+  <article class="card math-card">
+    <h2>4. Injury scraper</h2>
+    <p>
+      Official injury report scraping is powered by <code>nbainjuries</code>. The app can save the
+      latest report, a date range, or a season-based set of reports into CSV files that the
+      predictor can reuse.
+    </p>
+    <ul class="feature-list">
+      <li>Latest mode grabs the most recent valid official report.</li>
+      <li>Date-range mode walks day by day and saves whichever report exists for each date.</li>
+      <li>Season-range mode uses the game calendar so injury dates line up with the scraped games.</li>
+      <li>Missing report dates return a clear error or are skipped with a note when appropriate.</li>
+      <li>Cached backend CSVs keep later predictor refreshes much faster than the first full run.</li>
+    </ul>
+  </article>
 </section>
 {% endblock %}
