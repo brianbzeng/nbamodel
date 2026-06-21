@@ -6,3 +6,5 @@ Flask
 scikit-learn
 pytest
 pylatex
+httpx
+lxml

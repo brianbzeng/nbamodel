@@ -70,19 +70,47 @@ def run_elo(
     if games.empty:
         raise ValueError("run_elo requires at least one game.")
 
-    df = games.copy()
+    # Copy only the columns we need, in sorted order. Sorting a narrow frame is
+    # cheaper than sorting the full DataFrame the caller hands us.
+    needed = ["date", "season", "home_team", "away_team", "home_pts", "away_pts", "home_win", "margin"]
+    missing = [c for c in needed if c not in games.columns]
+    if missing:
+        raise ValueError(f"run_elo is missing required columns: {missing}")
+
+    df = games[needed].copy()
     df["date"] = pd.to_datetime(df["date"])
     df = df.sort_values("date").reset_index(drop=True)
 
-    # Initialize ratings for all teams
-    teams = sorted(set(df["home_team"]).union(df["away_team"]))
+    # Pre-extract columns as numpy arrays for fast per-row access.
+    seasons = df["season"].to_numpy()
+    home_teams = df["home_team"].to_numpy()
+    away_teams = df["away_team"].to_numpy()
+    home_pts = df["home_pts"].to_numpy()
+    away_pts = df["away_pts"].to_numpy()
+    home_wins = df["home_win"].to_numpy()
+    margins = df["margin"].to_numpy()
+    dates = df["date"].to_numpy()
+
+    # Initialize ratings for all teams.
+    teams = sorted(set(home_teams.tolist()).union(away_teams.tolist()))
     ratings = {team: base_rating for team in teams}
 
-    records = []
+    # Pre-allocate record arrays to avoid per-row dict allocation and list
+    # growth during the hot loop. Building a DataFrame from aligned arrays at
+    # the end is much faster than from a list of dicts.
+    n = len(df)
+    record_r_home = np.empty(n)
+    record_r_away = np.empty(n)
+    record_p_home = np.empty(n)
+    record_delta = np.empty(n)
+    record_logloss = np.empty(n)
+    record_brier = np.empty(n)
+    record_margin = np.empty(n, dtype=int)
+
     current_season = None
 
-    for _, row in df.iterrows():
-        season = int(row["season"])
+    for i in range(n):
+        season = int(seasons[i])
 
         # At the start of a new season, regress ratings toward the mean
         if current_season is None:
@@ -90,16 +118,16 @@ def run_elo(
         elif season != current_season:
             if season_regress:
                 for t in ratings:
-                    ratings[t] = reg_factor * ratings[t] + (1 - reg_factor) * base_rating
+                    ratings[t] = reg_factor * ratings[t] + (1.0 - reg_factor) * base_rating
             current_season = season
 
-        home = row["home_team"]
-        away = row["away_team"]
-        y = int(row["home_win"])
-        margin_value = row.get("margin", 0)
+        home = home_teams[i]
+        away = away_teams[i]
+        y = int(home_wins[i])
+        margin_value = margins[i]
         margin = 0 if pd.isna(margin_value) else int(margin_value)
 
-        # Ratings before this game
+        # Ratings before this game.
         r_home_pre = ratings[home]
         r_away_pre = ratings[away]
 
@@ -119,26 +147,32 @@ def run_elo(
         ll = logloss(y, p_home)
         br = brier(y, p_home)
 
-        records.append(
-            {
-                "date": row["date"],
-                "season": season,
-                "home_team": home,
-                "away_team": away,
-                "home_pts": row["home_pts"],
-                "away_pts": row["away_pts"],
-                "home_win": y,
-                "margin": margin,
-                "r_home_pre": r_home_pre,
-                "r_away_pre": r_away_pre,
-                "p_home_win": p_home,
-                "delta": delta,
-                "logloss": ll,
-                "brier": br,
-            }
-        )
+        record_r_home[i] = r_home_pre
+        record_r_away[i] = r_away_pre
+        record_p_home[i] = p_home
+        record_delta[i] = delta
+        record_logloss[i] = ll
+        record_brier[i] = br
+        record_margin[i] = margin
 
-    results_df = pd.DataFrame(records)
+    results_df = pd.DataFrame(
+        {
+            "date": dates,
+            "season": seasons,
+            "home_team": home_teams,
+            "away_team": away_teams,
+            "home_pts": home_pts,
+            "away_pts": away_pts,
+            "home_win": home_wins,
+            "margin": record_margin,
+            "r_home_pre": record_r_home,
+            "r_away_pre": record_r_away,
+            "p_home_win": record_p_home,
+            "delta": record_delta,
+            "logloss": record_logloss,
+            "brier": record_brier,
+        }
+    )
     final_ratings = dict(ratings)  # copy
 
     return results_df, final_ratings

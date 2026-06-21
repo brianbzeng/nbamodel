@@ -177,7 +177,7 @@ def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool, dict[str, object]]:
                 }
 
     fresh_games = scrape_multiple_seasons(
-        PREDICTOR_START_SEASON, PREDICTOR_END_SEASON, sleep=2
+        PREDICTOR_START_SEASON, PREDICTOR_END_SEASON
     )
     if fresh_games.empty:
         if PREDICTOR_PROCESSED_FILE.exists():
@@ -230,7 +230,7 @@ def load_predictor_artifacts() -> dict[str, object] | None:
 
 
 def save_scraped_games(start_season: int, end_season: int) -> tuple[pd.DataFrame, str]:
-    games = scrape_multiple_seasons(start_season, end_season, sleep=2)
+    games = scrape_multiple_seasons(start_season, end_season)
     export_name = f"games_{start_season}_{end_season}_{uuid4().hex[:8]}.csv"
     export_path = SCRAPE_EXPORTS_DIR / export_name
     games.to_csv(export_path, index=False)
@@ -399,18 +399,21 @@ def get_live_season_end_year(reference_date: datetime | None = None) -> int:
 
 def refresh_live_leaderboard() -> tuple[pd.DataFrame, int, bool]:
     season = get_live_season_end_year()
-    fresh_games = scrape_bref_season_games(season, sleep=2)
+    fresh_games = scrape_bref_season_games(season)
 
     if fresh_games.empty:
         if PROCESSED_FILE.exists():
             return build_leaderboard_frame(get_latest_live_games()), season, True
         return pd.DataFrame(columns=["rank", "team", "rating"]), season, True
 
+    # Read existing processed games before overwriting, so the up-to-date
+    # check compares old vs new instead of the file against itself.
+    existing_all = load_processed_games() if PROCESSED_FILE.exists() else None
+
     fresh_processed = save_processed_games(fresh_games)
 
-    if PROCESSED_FILE.exists():
-        existing = load_processed_games()
-        existing_current = existing[existing["season"] == season].copy()
+    if existing_all is not None:
+        existing_current = existing_all[existing_all["season"] == season].copy()
         fresh_current = fresh_processed[fresh_processed["season"] == season].copy()
 
         if not existing_current.empty:
@@ -423,7 +426,7 @@ def refresh_live_leaderboard() -> tuple[pd.DataFrame, int, bool]:
             ).reset_index(drop=True)
 
         if not fresh_current.empty and existing_current.equals(fresh_current):
-            return build_leaderboard_frame(existing), season, True
+            return build_leaderboard_frame(existing_all), season, True
 
     return build_leaderboard_frame(fresh_processed), season, False
 
