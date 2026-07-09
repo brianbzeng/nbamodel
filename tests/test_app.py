@@ -1,6 +1,8 @@
 from app import create_app
 from pathlib import Path
 
+import pandas as pd
+
 
 def test_homepage_contains_project_sections():
     app = create_app()
@@ -22,6 +24,28 @@ def test_health_endpoint():
 
     assert response.status_code == 200
     assert response.get_json() == {"status": "ok"}
+
+
+def test_injury_aggregation_accepts_non_string_status_values():
+    from predictor import aggregate_team_injuries
+
+    injuries = pd.DataFrame(
+        [
+            {
+                "game_date": "2025-04-12",
+                "team": "BOS",
+                "player_name": "Example Player",
+                "status": 1.0,
+                "reason": None,
+                "report_datetime": "2025-04-12 17:00:00",
+            }
+        ]
+    )
+
+    aggregated = aggregate_team_injuries(injuries)
+
+    assert len(aggregated) == 1
+    assert aggregated.iloc[0]["reported_player_count"] == 1
 
 
 def test_about_page_renders():

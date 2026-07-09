@@ -301,7 +301,16 @@ def aggregate_team_injuries(injury_df: pd.DataFrame) -> pd.DataFrame:
         .copy()
     )
 
-    status_series = latest_player_status["status"].str.upper()
+    status_series = (
+        latest_player_status["status"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .str.upper()
+    )
+    latest_player_status["player_name"] = (
+        latest_player_status["player_name"].fillna("").astype(str).str.strip()
+    )
     latest_player_status["out_flag"] = status_series.eq("OUT").astype(int)
     latest_player_status["doubtful_flag"] = status_series.eq("DOUBTFUL").astype(int)
     latest_player_status["questionable_flag"] = status_series.eq("QUESTIONABLE").astype(int)
@@ -391,9 +400,9 @@ def fetch_report_with_retries(timestamp: datetime) -> Optional[pd.DataFrame]:
 
 def get_latest_available_report_timestamp(
     reference_timestamp: Optional[datetime] = None,
-    lookback_days: int = 30,
+    lookback_days: int = 180,
 ) -> Optional[datetime]:
-    # Walk backward from the reference time to find the latest report that actually exists.
+    # Walk through the offseason when necessary to find the last report the NBA posted.
     reference = reference_timestamp or datetime.now()
     for day_offset in range(lookback_days + 1):
         candidate_date = pd.Timestamp(reference.date()) - pd.Timedelta(days = day_offset)

@@ -123,32 +123,36 @@
       <p>Powered by nbainjuries with latest, date-range, and season-range modes.</p>
     </div>
     <p class="muted">Latest grabs the most recent report on file. Date range walks day by day between two dates. Season range uses the scraped game calendar so injury dates line up with the games the predictor already knows about.</p>
-    <form method="post" class="form" data-show-loading="true">
+    <form method="post" class="form" data-show-loading="true" id="injury-scrape-form">
       <input type="hidden" name="scrape_action" value="injuries" />
       <label>
         <span>Mode</span>
-        <select name="injury_mode">
+        <select name="injury_mode" id="injury-mode">
           <option value="latest" {% if injury_mode == "latest" %}selected{% endif %}>Latest report</option>
           <option value="date_range" {% if injury_mode == "date_range" %}selected{% endif %}>Date range</option>
           <option value="season_range" {% if injury_mode == "season_range" %}selected{% endif %}>Season range</option>
         </select>
       </label>
-      <label>
-        <span>Start date</span>
-        <input name="injury_start_date" type="date" value="{{ injury_start_date }}" />
-      </label>
-      <label>
-        <span>End date</span>
-        <input name="injury_end_date" type="date" value="{{ injury_end_date }}" />
-      </label>
-      <label>
-        <span>Start season end year</span>
-        <input name="injury_start_season" type="number" value="{{ injury_start_season }}" min="2022" step="1" />
-      </label>
-      <label>
-        <span>End season end year</span>
-        <input name="injury_end_season" type="number" value="{{ injury_end_season }}" min="2022" step="1" />
-      </label>
+      <div class="form mode-fields" data-injury-fields="date_range" {% if injury_mode != "date_range" %}hidden{% endif %}>
+        <label>
+          <span>Start date</span>
+          <input name="injury_start_date" type="date" value="{{ injury_start_date }}" />
+        </label>
+        <label>
+          <span>End date</span>
+          <input name="injury_end_date" type="date" value="{{ injury_end_date }}" />
+        </label>
+      </div>
+      <div class="form mode-fields" data-injury-fields="season_range" {% if injury_mode != "season_range" %}hidden{% endif %}>
+        <label>
+          <span>Start season end year</span>
+          <input name="injury_start_season" type="number" value="{{ injury_start_season }}" min="2022" step="1" />
+        </label>
+        <label>
+          <span>End season end year</span>
+          <input name="injury_end_season" type="number" value="{{ injury_end_season }}" min="2022" step="1" />
+        </label>
+      </div>
       <label>
         <span>Preview rows</span>
         <select name="preview_limit">
@@ -159,7 +163,15 @@
           {% endfor %}
         </select>
       </label>
-      <button type="submit" class="button-primary">Scrape injury reports</button>
+      <button type="submit" class="button-primary" id="injury-submit">
+        {% if injury_mode == "date_range" %}
+          Scrape date range
+        {% elif injury_mode == "season_range" %}
+          Scrape season range
+        {% else %}
+          Get latest report
+        {% endif %}
+      </button>
     </form>
 
     <div class="inline-loader" aria-hidden="true">

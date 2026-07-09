@@ -151,6 +151,8 @@ a:hover { text-decoration: underline; }
 .flash.error { border-left-color: var(--loss); }
 .flash.info { border-left-color: var(--accent); }
 
+[hidden] { display: none !important; }
+
 /* Typography */
 h1, h2, h3 { margin: 0; font-family: var(--serif); font-weight: 600; color: var(--ink); }
 

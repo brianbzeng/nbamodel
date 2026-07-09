@@ -2,6 +2,38 @@ document.addEventListener("DOMContentLoaded", () => {
   const loadingBar = document.getElementById("loading-bar");
  const forms = document.querySelectorAll("form[data-show-loading='true']");
  const themeToggle = document.getElementById("theme-toggle");
+ const injuryMode = document.getElementById("injury-mode");
+ const injurySubmit = document.getElementById("injury-submit");
+
+ const syncInjuryMode = () => {
+   if (!injuryMode) {
+     return;
+   }
+
+   const selectedMode = injuryMode.value;
+   document.querySelectorAll("[data-injury-fields]").forEach((group) => {
+     const isActive = group.dataset.injuryFields === selectedMode;
+     group.hidden = !isActive;
+     group.querySelectorAll("input").forEach((input) => {
+       input.disabled = !isActive;
+       input.required = isActive;
+     });
+   });
+
+   if (injurySubmit) {
+     const labels = {
+       latest: "Get latest report",
+       date_range: "Scrape date range",
+       season_range: "Scrape season range",
+     };
+     injurySubmit.textContent = labels[selectedMode] || "Scrape injury reports";
+   }
+ };
+
+ if (injuryMode) {
+   injuryMode.addEventListener("change", syncInjuryMode);
+   syncInjuryMode();
+ }
 
  if (themeToggle) {
    themeToggle.addEventListener("click", () => {
