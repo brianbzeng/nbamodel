@@ -4,9 +4,13 @@ services:
     runtime: docker
     plan: free
     region: oregon
-    dockerCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 1800 --access-logfile - --error-logfile - "app:create_app()"
+    dockerCommand: gunicorn --bind 0.0.0.0:$PORT --workers 1 --threads 8 --timeout 1800 --access-logfile - --error-logfile - "app:create_app()"
     autoDeployTrigger: commit
     healthCheckPath: /health
     envVars:
       - key: SECRET_KEY
         generateValue: true
+      - key: SCRAPER_MAX_CONCURRENCY
+        value: 4
+      - key: SCRAPER_PARSE_WORKERS
+        value: 2

@@ -16,6 +16,7 @@ modifications.
 from __future__ import annotations
 
 import asyncio
+import os
 import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -38,9 +39,9 @@ RAW_DIR = DATA_DIR / "raw"
 
 BASE_URL = "https://www.basketball-reference.com/leagues/"
 
-# Cap concurrent HTTP requests. Basketball-Reference doesn't rate-limit here,
-# but keeping this bounded avoids saturating local sockets.
-MAX_CONCURRENT_REQUESTS = 50
+# Keep scraping bounded so small hosted instances can still answer health checks.
+MAX_CONCURRENT_REQUESTS = int(os.environ.get("SCRAPER_MAX_CONCURRENCY", "8"))
+MAX_PARSE_WORKERS = int(os.environ.get("SCRAPER_PARSE_WORKERS", "4"))
 
 # For monthly schedule pages like NBA_2025_games-october.html
 MONTH_SLUGS = {
@@ -266,7 +267,7 @@ async def _scrape_multiple_seasons_async(
     limits = httpx.Limits(max_connections=MAX_CONCURRENT_REQUESTS)
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
 
-    with ThreadPoolExecutor(max_workers=16) as executor:
+    with ThreadPoolExecutor(max_workers=MAX_PARSE_WORKERS) as executor:
         async with httpx.AsyncClient(
             headers=REQUEST_HEADERS, timeout=30.0, limits=limits
         ) as client:
@@ -306,7 +307,7 @@ async def _scrape_multiple_seasons_async(
 async def _scrape_season_async(season: int) -> pd.DataFrame:
     limits = httpx.Limits(max_connections=MAX_CONCURRENT_REQUESTS)
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
-    with ThreadPoolExecutor(max_workers=16) as executor:
+    with ThreadPoolExecutor(max_workers=MAX_PARSE_WORKERS) as executor:
         async with httpx.AsyncClient(
             headers=REQUEST_HEADERS, timeout=30.0, limits=limits
         ) as client:

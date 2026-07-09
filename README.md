@@ -101,6 +101,8 @@ deploys new commits and generates the Flask secret key.
 - Cloudflare's normal proxy timeout is 120 seconds. Full historical scrapes
   should eventually run as background jobs instead of one browser request.
 - Use one Gunicorn worker because generated state is stored in CSV files.
+- Render limits the scraper to four concurrent downloads and two parsing
+  threads so refresh work does not starve the `/health` endpoint.
 
 The earlier `compose.yaml` setup remains available for local Docker testing or
 for running the app behind a Cloudflare Tunnel later.
