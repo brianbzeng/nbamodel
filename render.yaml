@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: nbamodel
+    runtime: docker
+    plan: free
+    region: oregon
+    autoDeployTrigger: commit
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true

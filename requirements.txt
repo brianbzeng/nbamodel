@@ -3,8 +3,10 @@ numpy
 requests
 beautifulsoup4
 Flask
+gunicorn
 scikit-learn
 pytest
 pylatex
 httpx
 lxml
+nbainjuries==1.1.1

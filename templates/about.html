@@ -3,10 +3,10 @@
 {% block content %}
 <section class="page-heading">
   <div>
-    <p class="eyebrow">Project contact</p>
-    <h1>About the builder</h1>
+    <p class="eyebrow">Contact</p>
+    <h1>About</h1>
     <p class="lede">
-      A quick page with the project owner's contact information and public profiles.
+      My contact information:
     </p>
   </div>
 </section>
@@ -30,21 +30,20 @@
       <span><a href="{{ author_github }}" target="_blank" rel="noreferrer">{{ author_github }}</a></span>
     </div>
   </article>
+</section>
 
-  <article class="card">
-    <div class="section-header">
-      <h2>Project summary</h2>
-      <p>What this app pulls together</p>
-    </div>
-    <ul class="feature-list">
-      <li>Basketball-Reference scraping for full regular-season game coverage.</li>
-      <li>Elo ratings and a live leaderboard rebuilt from processed game history.</li>
-      <li>Official injury report scraping through <code>nbainjuries</code>.</li>
-      <li>A home-win predictor that compares logistic regression and random forest on the same feature set.</li>
-    </ul>
-    <p class="muted">
-      This page is mainly here as a clean project closeout and an easy place to find the owner's links.
-    </p>
-  </article>
+<section class="card">
+  <div class="section-header">
+    <h2>Any questions?</h2>
+    <p>Send anything you want to ask directly to my email.</p>
+  </div>
+  <form method="get" action="mailto:{{ author_email }}" enctype="text/plain" class="form">
+    <input type="hidden" name="subject" value="NBA Odds Predictor question">
+    <label class="query-field">
+      <span>Your question</span>
+      <textarea name="body" rows="4" placeholder="Ask anything..."></textarea>
+    </label>
+    <button type="submit" class="button-primary">Email question</button>
+  </form>
 </section>
 {% endblock %}

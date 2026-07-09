@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from shutil import rmtree
@@ -10,6 +11,7 @@ from uuid import uuid4
 
 import pandas as pd
 from flask import Flask, flash, redirect, render_template, request, send_from_directory, url_for
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from cleaner import clean_games, normalize_team_names
 from model import run_elo
@@ -83,74 +85,8 @@ NAV_ITEMS = (
     {"endpoint": "leaderboard", "label": "Leaderboard"},
     {"endpoint": "predictor", "label": "Predictor"},
     {"endpoint": "scrape", "label": "Scrape"},
-    {"endpoint": "query", "label": "Query"},
     {"endpoint": "about", "label": "About"},
     {"endpoint": "bayesian_elo", "label": "Inner-Workings"},
-)
-QUERY_TOPICS = (
-    {
-        "title": "Leaderboard and Elo ratings",
-        "keywords": ("elo", "leaderboard", "rating", "rank", "rankings", "standings"),
-        "answer": (
-            "The leaderboard page replays the processed game history into the Elo model and "
-            "shows the current ratings for the live season, or the most recent completed season "
-            "if the current one has not started yet."
-        ),
-        "endpoint": "leaderboard",
-        "link_label": "Open leaderboard",
-    },
-    {
-        "title": "Home-win predictor",
-        "keywords": ("predict", "prediction", "predictor", "matchup", "winner", "probability"),
-        "answer": (
-            "The predictor trains on completed games from 2022-2025, builds engineered matchup "
-            "features like team strength, recent form, rest, and injury context, and then shows "
-            "logistic regression and random forest side by side."
-        ),
-        "endpoint": "predictor",
-        "link_label": "Open predictor",
-    },
-    {
-        "title": "Game scraping",
-        "keywords": ("scrape", "scraper", "games", "basketball-reference", "season", "csv"),
-        "answer": (
-            "The game scraper walks every monthly Basketball-Reference page for the requested "
-            "season range so it captures full seasons rather than just the first month."
-        ),
-        "endpoint": "scrape",
-        "link_label": "Open scrape page",
-    },
-    {
-        "title": "Injury reports",
-        "keywords": ("injury", "injuries", "report", "nbainjuries", "questionable", "out"),
-        "answer": (
-            "Official injury reports are pulled through nbainjuries. The app can save the latest "
-            "report, a date range, or a season-aligned range, then fold the team-level injury "
-            "counts into the predictor."
-        ),
-        "endpoint": "scrape",
-        "link_label": "Open injury scraper",
-    },
-    {
-        "title": "Project background",
-        "keywords": ("how", "works", "formula", "features", "inner", "math", "workflow"),
-        "answer": (
-            "The Inner-Workings page explains the Elo formula, the predictor feature set, and "
-            "how the scraper pipeline feeds both parts of the app."
-        ),
-        "endpoint": "bayesian_elo",
-        "link_label": "Open Inner-Workings",
-    },
-    {
-        "title": "Project contact information",
-        "keywords": ("contact", "email", "linkedin", "github", "brian", "author"),
-        "answer": (
-            "The About page lists Brian Zeng's contact information along with LinkedIn and "
-            "GitHub links."
-        ),
-        "endpoint": "about",
-        "link_label": "Open About page",
-    },
 )
 
 
@@ -175,7 +111,13 @@ def load_processed_games() -> pd.DataFrame:
     if PROCESSED_FILE.exists():
         return pd.read_csv(PROCESSED_FILE, parse_dates=["date"])
 
-    raw_games = load_raw_games()
+    source_path = RAW_FILE if RAW_FILE.exists() else PREDICTOR_RAW_FILE
+    if not source_path.exists():
+        raise FileNotFoundError(
+            "No bundled game data was found. Use the Scrape page first."
+        )
+
+    raw_games = pd.read_csv(source_path, parse_dates = ["date"])
     processed = normalize_team_names(clean_games(raw_games))
     processed.to_csv(PROCESSED_FILE, index=False)
     return processed
@@ -511,8 +453,12 @@ def refresh_live_leaderboard() -> tuple[pd.DataFrame, int, bool]:
 
 def get_latest_live_games() -> pd.DataFrame:
     if not PROCESSED_FILE.exists():
-        return pd.DataFrame(columns=["date", "season", "home_team", "away_team", "home_pts", "away_pts", "home_win", "margin"])
-    games = load_processed_games()
+        try:
+            games = load_processed_games()
+        except FileNotFoundError:
+            return pd.DataFrame(columns=["date", "season", "home_team", "away_team", "home_pts", "away_pts", "home_win", "margin"])
+    else:
+        games = load_processed_games()
     if games.empty:
         return pd.DataFrame(
             columns=["date", "season", "home_team", "away_team", "home_pts", "away_pts", "home_win", "margin"]
@@ -526,7 +472,9 @@ def get_latest_live_games() -> pd.DataFrame:
 
 
 def load_home_stats() -> dict[str, object]:
-    if not PROCESSED_FILE.exists():
+    try:
+        games = get_latest_live_games()
+    except FileNotFoundError:
         return {
             "game_count": 0,
             "team_count": 0,
@@ -536,12 +484,13 @@ def load_home_stats() -> dict[str, object]:
             "last_updated": None,
         }
 
-    games = get_latest_live_games()
     latest_season = int(games["season"].max()) if not games.empty else None
     latest_season_games = int((games["season"] == latest_season).sum()) if latest_season else 0
     team_count = int(len(set(games["home_team"]).union(set(games["away_team"]))))
-    last_updated = datetime.fromtimestamp(PROCESSED_FILE.stat().st_mtime).strftime(
-        "%Y-%m-%d"
+    last_updated = (
+        datetime.fromtimestamp(PROCESSED_FILE.stat().st_mtime).strftime("%Y-%m-%d")
+        if PROCESSED_FILE.exists()
+        else None
     )
 
     return {
@@ -572,47 +521,18 @@ def clear_generated_data() -> dict[str, int]:
 
     return {"files": removed_files, "dirs": removed_dirs}
 
-
-def answer_app_query(question: str) -> dict[str, object]:
-    # Match a natural-language question to the most relevant page in the app.
-    normalized = question.strip().lower()
-    scored_topics = []
-
-    for topic in QUERY_TOPICS:
-        score = sum(1 for keyword in topic["keywords"] if keyword in normalized)
-        if score > 0:
-            scored_topics.append((score, topic))
-
-    if scored_topics:
-        scored_topics.sort(key = lambda item: item[0], reverse = True)
-        best_topic = scored_topics[0][1]
-        related_topics = [topic for _, topic in scored_topics[1:4]]
-        return {
-            "title": best_topic["title"],
-            "answer": best_topic["answer"],
-            "endpoint": best_topic["endpoint"],
-            "link_label": best_topic["link_label"],
-            "related_topics": related_topics,
-        }
-
-    return {
-        "title": "No exact match yet",
-        "answer": (
-            "That question does not line up with one keyword bucket yet, but the app can still "
-            "guide you. Try asking about Elo, the predictor, the scraper, injury reports, or "
-            "contact information."
-        ),
-        "endpoint": "bayesian_elo",
-        "link_label": "Open Inner-Workings",
-        "related_topics": list(QUERY_TOPICS[:4]),
-    }
-
-
 def create_app() -> Flask:
     ensure_data_dirs()
     app = Flask(__name__)
-    app.secret_key = "nbamodel-local-dev"
-    app.config["TEMPLATES_AUTO_RELOAD"] = True
+    app.secret_key = os.environ.get("SECRET_KEY", "nbamodel-local-dev")
+    app.config["TEMPLATES_AUTO_RELOAD"] = os.environ.get("FLASK_DEBUG") == "1"
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app,
+        x_for = 1,
+        x_proto = 1,
+        x_host = 1,
+        x_prefix = 1,
+    )
 
     @app.context_processor
     def inject_nav():
@@ -623,6 +543,10 @@ def create_app() -> Flask:
         stats = load_home_stats()
         return render_template("home.html", stats=stats)
 
+    @app.get("/health")
+    def health():
+        return {"status": "ok"}
+
     @app.get("/about")
     def about():
         return render_template(
@@ -631,25 +555,6 @@ def create_app() -> Flask:
             author_email = AUTHOR_EMAIL,
             author_linkedin = AUTHOR_LINKEDIN,
             author_github = AUTHOR_GITHUB,
-        )
-
-    @app.route("/query", methods = ["GET", "POST"])
-    def query():
-        user_question = ""
-        query_result = None
-
-        if request.method == "POST":
-            user_question = request.form.get("question", "").strip()
-            if not user_question:
-                flash("Enter a question first so the app has something to route.", "error")
-            else:
-                query_result = answer_app_query(user_question)
-
-        return render_template(
-            "query.html",
-            question = user_question,
-            query_result = query_result,
-            query_topics = QUERY_TOPICS,
         )
 
     @app.route("/leaderboard", methods=["GET"])
@@ -970,4 +875,8 @@ def create_app() -> Flask:
 
 
 if __name__ == "__main__":
-    create_app().run(debug=True)
+    create_app().run(
+        host = os.environ.get("HOST", "127.0.0.1"),
+        port = int(os.environ.get("PORT", "5000")),
+        debug = os.environ.get("FLASK_DEBUG") == "1",
+    )

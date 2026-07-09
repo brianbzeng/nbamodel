@@ -1,0 +1,13 @@
+.git
+.github
+.venv
+.vscode
+__pycache__
+*.pyc
+.pytest_cache
+.DS_Store
+.env
+data/exports
+data/processed
+data/results
+data/raw/* 2.csv
