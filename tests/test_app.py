@@ -474,6 +474,14 @@ def test_scrape_page_accepts_post(monkeypatch):
 def test_scrape_page_accepts_injury_post(monkeypatch):
     import app as app_module
 
+    class ImmediateThread:
+        def __init__(self, target, args, daemon):
+            self.target = target
+            self.args = args
+
+        def start(self):
+            self.target(*self.args)
+
     def fake_save_latest_injury_report():
         detail_df = app_module.pd.DataFrame(
             [
@@ -506,12 +514,15 @@ def test_scrape_page_accepts_injury_post(monkeypatch):
         return detail_df, team_df, meta
 
     monkeypatch.setattr(app_module, "save_latest_injury_report", fake_save_latest_injury_report)
+    monkeypatch.setattr(app_module, "Thread", ImmediateThread)
+    app_module.INJURY_JOBS.clear()
 
     app = create_app()
     client = app.test_client()
     response = client.post(
         "/scrape",
-        data={"scrape_action": "injuries", "injury_mode": "latest", "preview_limit": "5"},
+        data={"scrape_action": "injuries", "injury_mode": "latest"},
+        follow_redirects = True,
     )
     body = response.get_data(as_text = True)
 

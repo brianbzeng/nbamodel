@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -958,7 +959,7 @@ def train_prediction_models(
                     n_estimators = 300,
                     min_samples_leaf = 3,
                     random_state = 100,
-                    n_jobs = -1,
+                    n_jobs = int(os.environ.get("MODEL_N_JOBS", "1")),
                 ),
             ),
         ]

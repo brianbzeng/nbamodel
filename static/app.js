@@ -4,6 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
  const themeToggle = document.getElementById("theme-toggle");
  const injuryMode = document.getElementById("injury-mode");
  const injurySubmit = document.getElementById("injury-submit");
+ const injuryJobStatus = document.getElementById("injury-job-status");
 
  const syncInjuryMode = () => {
    if (!injuryMode) {
@@ -33,6 +34,24 @@ document.addEventListener("DOMContentLoaded", () => {
  if (injuryMode) {
    injuryMode.addEventListener("change", syncInjuryMode);
    syncInjuryMode();
+ }
+
+ if (injuryJobStatus) {
+   const statusUrl = injuryJobStatus.dataset.statusUrl;
+   const pollJob = async () => {
+     try {
+       const response = await fetch(statusUrl, { cache: "no-store" });
+       const result = await response.json();
+       if (result.status === "complete" || result.status === "error") {
+         window.location.reload();
+         return;
+       }
+     } catch (error) {
+       console.warn("Unable to check injury scrape status.", error);
+     }
+     window.setTimeout(pollJob, 2500);
+   };
+   window.setTimeout(pollJob, 2500);
  }
 
  if (themeToggle) {

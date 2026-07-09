@@ -460,6 +460,7 @@ td, .metric strong, .info-row strong { font-variant-numeric: tabular-nums; }
 }
 .notice.success { border-left: 3px solid var(--win); background: #f1f7f1; }
 .notice.error { border-left: 3px solid var(--loss); background: #fbf2f2; }
+.notice.info { border-left: 3px solid var(--accent); background: var(--surface-soft); }
 
 /* Math / inner-workings */
 .math-card { line-height: 1.7; }

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+from threading import Lock, Thread
 from datetime import datetime
 from pathlib import Path
 from shutil import rmtree
@@ -38,6 +39,9 @@ RESULTS_DIR = DATA_DIR / "results"
 EXPORTS_DIR = DATA_DIR / "exports"
 SCRAPE_EXPORTS_DIR = EXPORTS_DIR / "scrapes"
 PREDICTOR_EXPORTS_DIR = EXPORTS_DIR / "predictor"
+INJURY_JOBS: dict[str, dict[str, object]] = {}
+INJURY_JOBS_LOCK = Lock()
+MAX_INJURY_JOBS = 20
 
 RAW_FILE = RAW_DIR / "bref_games_2016_2025.csv"
 PROCESSED_FILE = PROCESSED_DIR / "games_2016_2025_normalized.csv"
@@ -380,6 +384,83 @@ def save_injury_reports_for_season_range(
     }
 
 
+def _run_injury_scrape_job(
+    job_id: str,
+    mode: str,
+    parameters: dict[str, object],
+) -> None:
+    try:
+        if mode == "latest":
+            _, team_df, meta = save_latest_injury_report()
+            message = (
+                f"Saved the latest available official injury report "
+                f"for {meta['report_date']}."
+            )
+        elif mode == "date_range":
+            start_date = str(parameters["start_date"])
+            end_date = str(parameters["end_date"])
+            _, team_df, meta = save_injury_reports_for_date_range(start_date, end_date)
+            message = f"Saved official injury reports from {start_date} to {end_date}."
+        elif mode == "season_range":
+            start_season = int(parameters["start_season"])
+            end_season = int(parameters["end_season"])
+            _, team_df, meta = save_injury_reports_for_season_range(
+                start_season,
+                end_season,
+            )
+            message = (
+                f"Saved official injury reports for seasons "
+                f"{start_season}-{end_season}."
+            )
+        else:
+            raise ValueError("Unknown injury scrape mode.")
+
+        missing_dates = meta.get("missing_dates", "")
+        if missing_dates:
+            message += f" Missing dates skipped: {missing_dates}."
+
+        preview_frame = team_df.head(10).copy()
+        if not preview_frame.empty and "game_date" in preview_frame.columns:
+            preview_frame["game_date"] = pd.to_datetime(
+                preview_frame["game_date"]
+            ).dt.strftime("%Y-%m-%d")
+
+        result = {
+            "status": "complete",
+            "message": message,
+            "preview": preview_frame.to_dict(orient = "records"),
+            "detail_name": meta["detail_name"],
+            "team_name": meta["team_name"],
+        }
+    except Exception as exc:  # noqa: BLE001 - surfaced through the job status
+        result = {"status": "error", "error": str(exc)}
+
+    with INJURY_JOBS_LOCK:
+        INJURY_JOBS[job_id].update(result)
+
+
+def start_injury_scrape_job(
+    mode: str,
+    parameters: dict[str, object],
+) -> str:
+    job_id = uuid4().hex
+    with INJURY_JOBS_LOCK:
+        while len(INJURY_JOBS) >= MAX_INJURY_JOBS:
+            INJURY_JOBS.pop(next(iter(INJURY_JOBS)))
+        INJURY_JOBS[job_id] = {
+            "status": "running",
+            "mode": mode,
+            "parameters": parameters,
+        }
+
+    Thread(
+        target = _run_injury_scrape_job,
+        args = (job_id, mode, parameters),
+        daemon = True,
+    ).start()
+    return job_id
+
+
 def build_leaderboard_frame(games: pd.DataFrame) -> pd.DataFrame:
     if games.empty:
         return pd.DataFrame(columns=["rank", "team", "rating"])
@@ -614,6 +695,8 @@ def create_app() -> Flask:
         injury_end_date = ""
         injury_start_season = 2022
         injury_end_season = PREDICTOR_END_SEASON
+        injury_job_id = request.args.get("injury_job", "")
+        injury_job_running = False
         current_season_note = (
             "Scraping the active season only pulls games that have already tipped off and "
             "finished. Anything scheduled but not yet played is left out, so future results "
@@ -661,57 +744,68 @@ def create_app() -> Flask:
                     )
                 else:
                     injury_mode = request.form.get("injury_mode", "latest")
-                    injury_start_date = request.form.get("injury_start_date", "")
-                    injury_end_date = request.form.get("injury_end_date", "")
-                    injury_start_season = int(request.form.get("injury_start_season", 2022))
-                    injury_end_season = int(request.form.get("injury_end_season", PREDICTOR_END_SEASON))
-
                     if injury_mode == "latest":
-                        detail_df, team_df, meta = save_latest_injury_report()
-                        injury_message = (
-                            f"Saved the latest available official injury report "
-                            f"for {meta['report_date']}."
-                        )
+                        parameters = {}
                     elif injury_mode == "date_range":
-                        detail_df, team_df, meta = save_injury_reports_for_date_range(
-                            injury_start_date,
-                            injury_end_date,
-                        )
-                        injury_message = (
-                            f"Saved official injury reports from {injury_start_date} to "
-                            f"{injury_end_date}."
-                        )
-                        if meta["missing_dates"]:
-                            injury_message += f" Missing dates skipped: {meta['missing_dates']}."
+                        injury_start_date = request.form.get("injury_start_date", "")
+                        injury_end_date = request.form.get("injury_end_date", "")
+                        if not injury_start_date or not injury_end_date:
+                            raise ValueError("Choose both a start date and an end date.")
+                        parameters = {
+                            "start_date": injury_start_date,
+                            "end_date": injury_end_date,
+                        }
                     elif injury_mode == "season_range":
-                        detail_df, team_df, meta = save_injury_reports_for_season_range(
-                            injury_start_season,
-                            injury_end_season,
+                        injury_start_season = int(request.form.get("injury_start_season", 2022))
+                        injury_end_season = int(
+                            request.form.get("injury_end_season", PREDICTOR_END_SEASON)
                         )
-                        injury_message = (
-                            f"Saved official injury reports for seasons "
-                            f"{injury_start_season}-{injury_end_season}."
-                        )
-                        if meta["missing_dates"]:
-                            injury_message += f" Missing dates skipped: {meta['missing_dates']}."
+                        parameters = {
+                            "start_season": injury_start_season,
+                            "end_season": injury_end_season,
+                        }
                     else:
                         raise ValueError("Unknown injury scrape mode.")
 
-                    preview_frame = team_df.head(preview_limit).copy()
-                    if not preview_frame.empty and "game_date" in preview_frame.columns:
-                        preview_frame["game_date"] = pd.to_datetime(
-                            preview_frame["game_date"]
-                        ).dt.strftime("%Y-%m-%d")
-                    injury_preview = preview_frame.to_dict(orient = "records")
-                    injury_detail_name = meta["detail_name"]
-                    injury_team_name = meta["team_name"]
-                    injury_detail_url = url_for("download_scrape_export", filename = injury_detail_name)
-                    injury_team_url = url_for("download_scrape_export", filename = injury_team_name)
+                    injury_job_id = start_injury_scrape_job(injury_mode, parameters)
+                    return redirect(url_for("scrape", injury_job = injury_job_id))
             except Exception as exc:  # noqa: BLE001 - user-facing page feedback
                 if request.form.get("scrape_action", "games") == "games":
                     error = str(exc)
                 else:
                     injury_error = str(exc)
+
+        if injury_job_id:
+            with INJURY_JOBS_LOCK:
+                injury_job = dict(INJURY_JOBS.get(injury_job_id, {}))
+            if injury_job:
+                injury_mode = str(injury_job.get("mode", injury_mode))
+                parameters = dict(injury_job.get("parameters", {}))
+                injury_start_date = str(parameters.get("start_date", ""))
+                injury_end_date = str(parameters.get("end_date", ""))
+                injury_start_season = int(parameters.get("start_season", 2022))
+                injury_end_season = int(
+                    parameters.get("end_season", PREDICTOR_END_SEASON)
+                )
+            if injury_job.get("status") == "running":
+                injury_job_running = True
+            elif injury_job.get("status") == "complete":
+                injury_message = str(injury_job["message"])
+                injury_preview = list(injury_job["preview"])
+                injury_detail_name = str(injury_job["detail_name"])
+                injury_team_name = str(injury_job["team_name"])
+                injury_detail_url = url_for(
+                    "download_scrape_export",
+                    filename = injury_detail_name,
+                )
+                injury_team_url = url_for(
+                    "download_scrape_export",
+                    filename = injury_team_name,
+                )
+            elif injury_job.get("status") == "error":
+                injury_error = str(injury_job["error"])
+            else:
+                injury_error = "That injury scrape job is no longer available."
 
         return render_template(
             "scrape.html",
@@ -737,8 +831,18 @@ def create_app() -> Flask:
             injury_end_date=injury_end_date,
             injury_start_season=injury_start_season,
             injury_end_season=injury_end_season,
+            injury_job_id=injury_job_id,
+            injury_job_running=injury_job_running,
             preview_options=PREVIEW_OPTIONS,
         )
+
+    @app.get("/scrape/injury-jobs/<job_id>")
+    def injury_job_status(job_id: str):
+        with INJURY_JOBS_LOCK:
+            job = INJURY_JOBS.get(job_id)
+            if job is None:
+                return {"status": "missing"}, 404
+            return {"status": job["status"]}
 
     @app.route("/predictor", methods=["GET", "POST"])
     def predictor():
@@ -754,11 +858,6 @@ def create_app() -> Flask:
             injury_df = load_optional_team_injuries(games)
             injury_file_present = injury_df is not None
             evaluation_summary = load_predictor_artifacts()
-            if evaluation_summary is None:
-                try:
-                    evaluation_summary = build_predictor_artifacts(games)
-                except Exception:  # noqa: BLE001 - keep the predictor page usable without cached evals
-                    evaluation_summary = None
             selected_season = int(context["season"])
             prediction_date = context["prediction_date"]
             latest_completed_date = context["latest_completed_date"]

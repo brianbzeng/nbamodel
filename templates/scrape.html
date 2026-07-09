@@ -153,16 +153,6 @@
           <input name="injury_end_season" type="number" value="{{ injury_end_season }}" min="2022" step="1" />
         </label>
       </div>
-      <label>
-        <span>Preview rows</span>
-        <select name="preview_limit">
-          {% for option in preview_options %}
-            <option value="{{ option }}" {% if option == preview_limit %}selected{% endif %}>
-              {{ option }} rows
-            </option>
-          {% endfor %}
-        </select>
-      </label>
       <button type="submit" class="button-primary" id="injury-submit">
         {% if injury_mode == "date_range" %}
           Scrape date range
@@ -182,6 +172,15 @@
 
     {% if injury_message %}
       <div class="notice success">{{ injury_message }}</div>
+    {% endif %}
+    {% if injury_job_running %}
+      <div
+        class="notice info"
+        id="injury-job-status"
+        data-status-url="{{ url_for('injury_job_status', job_id=injury_job_id) }}"
+      >
+        The injury scrape is running in the background. This page will update when it finishes.
+      </div>
     {% endif %}
     {% if injury_error %}
       <div class="notice error">{{ injury_error }}</div>
@@ -214,7 +213,7 @@
   <article class="card">
     <div class="section-header">
       <h2>Injury CSV preview</h2>
-      <p>Showing the first {{ preview_limit }} rows from the team-level export.</p>
+      <p>Showing the first 10 rows from the team-level export.</p>
     </div>
     {% if injury_preview %}
       <div class="table-wrap">

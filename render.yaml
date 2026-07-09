@@ -14,3 +14,5 @@ services:
         value: 4
       - key: SCRAPER_PARSE_WORKERS
         value: 2
+      - key: MODEL_N_JOBS
+        value: 1
