@@ -23,6 +23,9 @@ from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from cleaner import TEAM_MAP_BREF
 from elo_features import ELO_DIFF_COLUMN, build_elo_features, slate_elo_differences
 from game_updates import GAME_KEY
+from margin_model import SIGNED_MARGIN_COLUMN, MarginForest, fit_margin_forest
+from recent_form import build_recent_form_features
+from schedule_density import DENSITY_COLUMNS, build_schedule_density_features
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -36,6 +39,9 @@ RETRY_DELAY_SECONDS = 2
 MAX_REST_DAYS = 7
 ELO_RANDOM_FOREST_MODEL = "random_forest_elo"
 NO_REST_RANDOM_FOREST_MODEL = "random_forest_no_rest"
+MARGIN_RANDOM_FOREST_MODEL = "random_forest_margin"
+WEIGHTED_FORM_RANDOM_FOREST_MODEL = "random_forest_weighted_form"
+SCHEDULE_DENSITY_RANDOM_FOREST_MODEL = "random_forest_schedule_density"
 REST_NUMERIC_FEATURES = ("home_rest_days", "away_rest_days", "rest_diff")
 MAX_INJURY_LOOKBACK_DAYS = 3
 LONG_TERM_REASON_KEYWORDS = (
@@ -737,6 +743,7 @@ def build_pregame_features(df: pd.DataFrame) -> pd.DataFrame:
             away_state = away_state,
         )
         feature_row["home_win"] = row.home_win
+        feature_row[SIGNED_MARGIN_COLUMN] = row.home_pts - row.away_pts
         feature_rows.append(feature_row)
 
         _update_states_from_game(season_states[season], row)
@@ -980,6 +987,20 @@ def _fit_elo_random_forest(feature_df: pd.DataFrame) -> Pipeline:
 def _fit_no_rest_random_forest(feature_df: pd.DataFrame) -> Pipeline:
     numeric_features = [feature for feature in get_numeric_features() if feature not in REST_NUMERIC_FEATURES]
     return _fit_random_forest(feature_df, numeric_features=numeric_features)
+
+
+def _fit_margin_random_forest(feature_df: pd.DataFrame) -> MarginForest:
+    numeric_features = get_numeric_features()
+    return fit_margin_forest(
+        feature_df,
+        preprocessor=_build_preprocessor(numeric_features),
+        feature_columns=CATEGORICAL_FEATURES + numeric_features,
+        n_jobs=int(os.environ.get("MODEL_N_JOBS", "1")),
+    )
+
+
+def _fit_schedule_density_random_forest(feature_df: pd.DataFrame) -> Pipeline:
+    return _fit_random_forest(feature_df, numeric_features=[*get_numeric_features(), *DENSITY_COLUMNS])
 
 
 def train_prediction_models(
@@ -1292,6 +1313,13 @@ def predict_slate_models(
         "random_forest": _fit_random_forest,
         ELO_RANDOM_FOREST_MODEL: _fit_elo_random_forest,
         NO_REST_RANDOM_FOREST_MODEL: _fit_no_rest_random_forest,
+        MARGIN_RANDOM_FOREST_MODEL: _fit_margin_random_forest,
+        WEIGHTED_FORM_RANDOM_FOREST_MODEL: _fit_random_forest,
+        SCHEDULE_DENSITY_RANDOM_FOREST_MODEL: _fit_schedule_density_random_forest,
+    }
+    feature_builders = {
+        WEIGHTED_FORM_RANDOM_FOREST_MODEL: build_recent_form_features,
+        SCHEDULE_DENSITY_RANDOM_FOREST_MODEL: build_schedule_density_features,
     }
     for model in models:
         if model not in fitters:
@@ -1344,6 +1372,16 @@ def predict_slate_models(
                     raise ValueError("Missing Elo features for completed games.")
                 elo_gaps = slate_elo_differences(ratings, season, matchups)
                 model_slate = slate_features.assign(**{ELO_DIFF_COLUMN: elo_gaps})
+            elif model in feature_builders:
+                targets = [dict(matchup, game_date=game_date) for matchup in matchups]
+                historical, upcoming = feature_builders[model](completed, targets)
+                columns = upcoming.columns.tolist()
+                model_training = training.drop(columns=columns, errors="ignore").merge(
+                    historical, on=GAME_KEY, how="left", validate="one_to_one",
+                )
+                if model_training[columns].isna().any().any():
+                    raise ValueError(f"Missing {model} features for completed games.")
+                model_slate = slate_features.assign(**{column: upcoming[column].to_numpy() for column in columns})
             fitted_model = fitters[model](model_training)
             model_features = model_slate[list(fitted_model.feature_names_in_)]
             home_probabilities = fitted_model.predict_proba(model_features)[:, 1]

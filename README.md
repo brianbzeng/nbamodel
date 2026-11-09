@@ -84,12 +84,29 @@ The `rf_no_rest_v1` challenger uses the same games and random forest settings as
 the baseline and omits the three explicit rest inputs. The official model keeps
 its rest inputs while the scorecard tracks whether they improve predictions.
 
+Four more challengers run on the same pregame slate:
+
+- `rf_margin_v1` predicts the home team's signed score margin with a random
+  forest regressor. Its probability mapping was fit on 2024–25 forecasts from
+  a regressor trained on earlier seasons.
+- `rf_logistic_blend_v1` averages the baseline forest and logistic probabilities
+  with fixed 50/50 weights.
+- `rf_weighted_form_v1` replaces the last-five scoring margins with a weighted
+  average of prior signed margins in the same season. Half-lives of three,
+  seven, and fourteen team games were compared on 2024–25 calibration games,
+  with seven chosen by log loss before the two test seasons were scored.
+  Last-five win rates stay in the model.
+- `rf_schedule_density_v1` adds each team's completed games in the previous
+  four and seven calendar days, excluding the matchup date.
+
 Run `python evaluate_live_models.py` for the paired accuracy, Brier score, and
 log loss of saved pregame predictions against completed games. Each challenger
-is compared with the baseline on the same games, excluding replays. Use
-`--version rf_elo_v1` or `--version rf_no_rest_v1` to isolate a challenger. Run
-`python evaluate_elo.py` or `python evaluate_elo.py --challenger no-rest` for
-two forward season holdouts, each trained on all earlier saved seasons. Run
+is compared with the baseline on the same games, excluding replays. Use a
+`--version` value above to isolate a challenger. Run `python evaluate_elo.py`
+for Elo or `python evaluate_elo.py --challenger all-new` for the four new
+experiments on two forward season holdouts, each trained on all earlier saved
+seasons. `--challenger` also accepts `no-rest`, `margin`, `blend`, `recent-form`,
+and `schedule-density`. Run
 `python evaluate_player_impact.py` for the historical injury experiment. Both
 backtests accept `--through YYYY-MM-DD`.
 

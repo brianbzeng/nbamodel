@@ -38,6 +38,8 @@ def pick(probability, finals=0):
         "elo_experiment_version": daily_predictions.ELO_EXPERIMENT,
         "no_rest_home_win_probability": round(probability + 0.02, 2),
         "no_rest_experiment_version": daily_predictions.NO_REST_EXPERIMENT,
+        "weighted_form_home_win_probability": round(probability - 0.01, 2),
+        "weighted_form_experiment_version": "rf_weighted_form_v1",
         "model": daily_predictions.DEFAULT_PREDICTION_MODEL,
         "same_day_finals": finals,
     }
@@ -106,6 +108,7 @@ def test_unchanged_pregame_pick_does_not_republish_and_final_pick_is_frozen(tmp_
     assert final.iloc[0]["player_impact_home_win_probability"] == 0.68
     assert final.iloc[0]["elo_home_win_probability"] == 0.75
     assert final.iloc[0]["no_rest_home_win_probability"] == 0.74
+    assert final.iloc[0]["weighted_form_home_win_probability"] == 0.71
     assert final.iloc[0]["predicted_at_utc"] == updated.iloc[0]["predicted_at_utc"]
     assert fits == [["1"], ["1"], ["1"], ["1"]]
 
@@ -245,11 +248,16 @@ def test_daily_pick_keeps_the_baseline_and_records_player_impact_separately(monk
     }])
     monkeypatch.setattr("predictor.load_optional_team_injuries", lambda games, *, as_of: reports)
     def score(*args, models, optional_models, **kwargs):
-        assert models == ("random_forest", "logistic", "random_forest_elo", "random_forest_no_rest")
-        assert optional_models == ("random_forest_elo", "random_forest_no_rest")
+        assert optional_models == (
+            "random_forest_elo", "random_forest_no_rest", "random_forest_margin",
+            "random_forest_weighted_form", "random_forest_schedule_density",
+        )
+        assert models == ("random_forest", "logistic", *optional_models)
         return {
             "random_forest": {"1": 0.55}, "logistic": {"1": 0.42},
             "random_forest_elo": {"1": 0.53}, "random_forest_no_rest": {"1": 0.57},
+            "random_forest_margin": {"1": 0.54}, "random_forest_weighted_form": {"1": 0.56},
+            "random_forest_schedule_density": {"1": 0.58},
         }, {"1": (0, 2)}
 
     monkeypatch.setattr("predictor.predict_slate_models", score)
@@ -276,5 +284,9 @@ def test_daily_pick_keeps_the_baseline_and_records_player_impact_separately(monk
     assert pick["elo_experiment_version"] == "rf_elo_v1"
     assert pick["no_rest_home_win_probability"] == 0.57
     assert pick["no_rest_experiment_version"] == "rf_no_rest_v1"
+    assert pick["margin_home_win_probability"] == 0.54
+    assert pick["blend_home_win_probability"] == 0.485
+    assert pick["weighted_form_home_win_probability"] == 0.56
+    assert pick["schedule_density_home_win_probability"] == 0.58
     assert pick["home_injury_report_utc"] == pd.Timestamp("2026-11-09T00:00:00Z")
     assert (pick["home_rest_days"], pick["away_rest_days"]) == (0, 2)

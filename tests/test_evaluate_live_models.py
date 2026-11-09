@@ -1,5 +1,6 @@
 import pandas as pd
 
+from daily_predictions import SHADOW_EXPERIMENTS
 from evaluate_live_models import (
     ELO_EXPERIMENT_VERSION_COLUMN,
     ELO_PROBABILITY_COLUMN,
@@ -130,3 +131,42 @@ def test_scorecard_scores_each_challenger_on_its_own_pregame_cohort(capsys):
 
     report_experiments(predictions, finals, season=2026, version="rf_elo_v1")
     assert capsys.readouterr().out == "No completed games with paired pregame predictions yet.\n"
+
+
+def test_scorecard_scores_new_challengers_on_separate_cohorts(capsys):
+    variants = (
+        ("margin", "rf_margin_v1"),
+        ("blend", "rf_logistic_blend_v1"),
+        ("weighted_form", "rf_weighted_form_v1"),
+        ("schedule_density", "rf_schedule_density_v1"),
+    )
+    forecasts = []
+    completed = []
+    for day, (prefix, version) in enumerate(variants, start=14):
+        game_date = f"2026-11-{day}"
+        columns = {f"{prefix}_experiment_version": version, EXPERIMENT_VERSION_COLUMN: None}
+        probability_column = f"{prefix}_home_win_probability"
+        forecasts.extend([
+            forecast(version, game_date, **columns, **{probability_column: 0.65}),
+            forecast(f"late-{version}", game_date, **columns, **{probability_column: 0.25},
+                     predicted_at_utc=pd.Timestamp(f"{game_date}T23:00Z")),
+        ])
+        completed.append((pd.Timestamp(game_date), 2027, "Boston Celtics", "New York Knicks", 110, 109))
+
+    predictions = pd.DataFrame(forecasts)
+    finals = pd.DataFrame(completed, columns=GAME_COLUMNS)
+
+    report_experiments(predictions, finals)
+    output = capsys.readouterr().out
+    for _, version in variants:
+        assert f"{version} | 1 completed games | 1 changed odds | 1 changed picks" in output
+    assert "rf_player_impact_v1" not in output
+
+    for _, version in variants:
+        report_experiments(predictions, finals, version=version)
+        output = " ".join(capsys.readouterr().out.split())
+        label = next(experiment.label for experiment in SHADOW_EXPERIMENTS if experiment.version == version)
+        assert f"{version} | 1 completed games" in output
+        assert "Random forest baseline 0/1 correct" in output
+        assert f"{label} 1/1 correct" in output
+        assert all(other not in output for _, other in variants if other != version)

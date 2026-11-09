@@ -15,6 +15,7 @@ from daily_predictions import (
     NO_REST_EXPERIMENT_VERSION_COLUMN,
     NO_REST_PROBABILITY_COLUMN,
     PLAYER_IMPACT_PROBABILITY_COLUMN,
+    SHADOW_EXPERIMENTS,
     read_daily_predictions,
 )
 from game_updates import GAME_KEY, read_game_updates
@@ -24,14 +25,7 @@ BASELINE_PROBABILITY_COLUMN = "home_win_probability"
 FORECAST_KEY = ["game_date", *GAME_KEY[1:]]
 BASELINE_MODEL = ("Random forest baseline", BASELINE_PROBABILITY_COLUMN)
 PLAYER_IMPACT_MODEL = ("Random forest + player impact", PLAYER_IMPACT_PROBABILITY_COLUMN)
-ELO_MODEL = ("Random forest + Elo", ELO_PROBABILITY_COLUMN)
-NO_REST_MODEL = ("Random forest without rest", NO_REST_PROBABILITY_COLUMN)
 LOGISTIC_MODEL = ("Logistic regression", LOGISTIC_PROBABILITY_COLUMN)
-EXPERIMENTS = (
-    (EXPERIMENT_VERSION_COLUMN, PLAYER_IMPACT_MODEL),
-    (ELO_EXPERIMENT_VERSION_COLUMN, ELO_MODEL),
-    (NO_REST_EXPERIMENT_VERSION_COLUMN, NO_REST_MODEL),
-)
 
 
 def paired_results(
@@ -117,17 +111,20 @@ def report_experiments(
         predictions = predictions.loc[predictions["season"].eq(season)]
 
     found_results = False
-    for version_column, challenger in EXPERIMENTS:
-        _, probability_column = challenger
+    for experiment in SHADOW_EXPERIMENTS:
         results = paired_results(
-            predictions, finals, version_column=version_column, probability_column=probability_column,
+            predictions, finals, version_column=experiment.version_column,
+            probability_column=experiment.probability_column,
         )
         if results.empty:
             continue
         if version is not None:
-            results = results.loc[results[version_column].eq(version)]
+            results = results.loc[results[experiment.version_column].eq(version)]
         if not results.empty:
-            report(results, version_column=version_column, challenger=challenger)
+            report(
+                results, version_column=experiment.version_column,
+                challenger=(experiment.label, experiment.probability_column),
+            )
             found_results = True
 
     if not found_results:
