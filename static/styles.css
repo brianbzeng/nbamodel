@@ -400,7 +400,7 @@ td, .metric strong, .info-row strong { font-variant-numeric: tabular-nums; }
 
 .form span { color: var(--ink-mute); font-size: 0.84rem; font-weight: 500; }
 
-.form input, .form select, .form textarea {
+.form input, .form select, .form textarea, .prediction-history-controls input {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--rule-strong);
@@ -411,7 +411,7 @@ td, .metric strong, .info-row strong { font-variant-numeric: tabular-nums; }
   font-size: 0.95rem;
 }
 
-.form input:focus, .form select:focus, .form textarea:focus {
+.form input:focus, .form select:focus, .form textarea:focus, .prediction-history-controls input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
   border-color: var(--accent);
@@ -590,11 +590,17 @@ td, .metric strong, .info-row strong { font-variant-numeric: tabular-nums; }
 .prediction-inputs a { color: var(--accent-ink); text-decoration: underline; }
 .prediction-empty { margin: 0; padding: 16px 24px; color: var(--ink-soft); border-top: 1px solid var(--rule); }
 .prediction-history-note { margin: 0; padding: 0 24px 12px; color: var(--ink-soft); font-size: 0.82rem; }
+.prediction-history-search { padding: 0 24px 14px; }
+.prediction-history-search label { display: block; margin-bottom: 4px; color: var(--ink-soft); font-size: 0.88rem; font-weight: 600; }
+.prediction-history-controls { display: flex; gap: 8px; max-width: 26rem; }
+.prediction-history-controls input { min-width: 0; }
+.prediction-history-matches { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0 0; color: var(--ink-soft); font-size: 0.88rem; }
+.prediction-history-matches a { color: var(--accent-ink); text-decoration: underline; }
 .prediction-pagination { border-top: 1px solid var(--rule); justify-content: flex-end; }
 
 @media (max-width: 640px) {
   .prediction-columns { display: none; }
-  .prediction-heading, .prediction-empty, .prediction-pagination, .prediction-history-note { padding-inline: 16px; }
+  .prediction-heading, .prediction-empty, .prediction-pagination, .prediction-history-note, .prediction-history-search { padding-inline: 16px; }
   .prediction-game { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px 16px; }
   .prediction-game:first-child { border-top: 1px solid var(--rule); }
   .prediction-pick { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }

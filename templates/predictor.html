@@ -30,8 +30,24 @@
     {% endif %}
   </div>
 
-  {% if history and rows %}
-    <p class="prediction-history-note">Season accuracy includes saved pregame picks and replays. The live record counts picks saved before tipoff.</p>
+  {% if history %}
+    {% if total %}
+      <p class="prediction-history-note">Season accuracy includes saved pregame picks and replays. The live record counts picks saved before tipoff.</p>
+    {% endif %}
+    <form class="prediction-history-search" action="{{ url_for('predictor') }}" method="get" role="search" aria-label="Prediction history">
+      <input type="hidden" name="view" value="history">
+      <label for="prediction-history-query">Search by date or team</label>
+      <div class="prediction-history-controls">
+        <input id="prediction-history-query" type="search" name="q" value="{{ history_query }}" placeholder="Lakers or Nov 8">
+        <button type="submit" class="button-secondary">Search</button>
+      </div>
+      {% if history_query %}
+        <p class="prediction-history-matches">
+          <span>{{ filtered_total }} matching {{ 'game' if filtered_total == 1 else 'games' }}</span>
+          <a href="{{ url_for('predictor', view='history') }}">Clear search</a>
+        </p>
+      {% endif %}
+    </form>
   {% endif %}
 
   {% if rows %}
@@ -104,6 +120,8 @@
       </li>
       {% endfor %}
     </ul>
+  {% elif history and history_query %}
+    <p class="prediction-empty">No games match your search.</p>
   {% elif history %}
     <p class="prediction-empty">No completed games this season yet.</p>
   {% else %}
@@ -112,9 +130,9 @@
 
   {% if history and page_count > 1 %}
     <nav class="prediction-pagination" aria-label="Prediction history pages">
-      {% if page > 1 %}<a href="{{ url_for('predictor', view='history', page=page - 1) }}">Newer picks</a>{% endif %}
+      {% if page > 1 %}<a href="{{ url_for('predictor', view='history', q=history_query or none, page=page - 1) }}">Newer picks</a>{% endif %}
       <span>Page {{ page }} of {{ page_count }}</span>
-      {% if page < page_count %}<a href="{{ url_for('predictor', view='history', page=page + 1) }}">Older picks</a>{% endif %}
+      {% if page < page_count %}<a href="{{ url_for('predictor', view='history', q=history_query or none, page=page + 1) }}">Older picks</a>{% endif %}
     </nav>
   {% endif %}
 </section>

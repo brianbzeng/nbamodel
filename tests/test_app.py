@@ -250,6 +250,43 @@ def test_prediction_history_includes_every_current_season_final_newest_first(mon
     assert "Los Angeles Lakers" not in body  # An unfinished replay does not count toward accuracy.
 
 
+def test_prediction_history_searches_full_season_by_team_and_keeps_query_across_pages(monkeypatch):
+    import app as app_module
+
+    set_prediction_data(monkeypatch)
+    finals = app_module.read_game_updates()
+    extra = finals.iloc[[2]].assign(date=pd.Timestamp("2026-11-05"), away_team="Boston Celtics")
+    finals = pd.concat([finals, extra.astype(finals.dtypes)], ignore_index=True)
+    monkeypatch.setattr(app_module, "read_game_updates", lambda: finals)
+    monkeypatch.setattr(app_module, "PREDICTION_HISTORY_PAGE_SIZE", 1)
+    client = create_app().test_client()
+
+    first = client.get("/predictor", query_string={"view": "history", "q": "pIsToNs"}).get_data(as_text=True)
+    assert "2 matching games" in first and "2 / 4 correct" in first
+    assert "Utah Jazz" in first and "Boston Celtics" not in first and "Philadelphia 76ers" not in first
+    assert 'view=history&amp;q=pIsToNs&amp;page=2' in first
+
+    second = client.get("/predictor", query_string={"view": "history", "q": "pIsToNs", "page": 2}).get_data(as_text=True)
+    assert "Boston Celtics" in second and "Utah Jazz" not in second
+    assert 'value="pIsToNs"' in second and "Page 2 of 2" in second
+
+    by_code = client.get("/predictor", query_string={"view": "history", "q": "BKN"}).get_data(as_text=True)
+    assert "1 matching game" in by_code and "Brooklyn Nets" in by_code
+
+
+def test_prediction_history_searches_exact_dates_and_shows_no_match_state(monkeypatch):
+    set_prediction_data(monkeypatch)
+    client = create_app().test_client()
+
+    for date_query in ("Nov 8", "November 08, 2026", "2026-11-08", "11/08"):
+        body = client.get("/predictor", query_string={"view": "history", "q": date_query}).get_data(as_text=True)
+        assert "1 matching game" in body and "Philadelphia 76ers" in body and "Atlanta Hawks" not in body
+
+    empty = client.get("/predictor", query_string={"view": "history", "q": "Nov 8, 2025"}).get_data(as_text=True)
+    assert "0 matching games" in empty and "No games match your search." in empty
+    assert "2 / 3 correct" in empty and "Clear search" in empty
+
+
 def test_predictor_reports_the_injury_inputs_used_for_a_saved_pick(monkeypatch, tmp_path):
     import app as app_module
 

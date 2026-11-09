@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from threading import Lock, Thread
 from datetime import date, datetime
 from hashlib import sha256
@@ -268,11 +269,13 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
         display_date = local_tipoff if local_tipoff is not None else game_date
         rows.append({
             "day": display_date.strftime("%a, %b %d").replace(" 0", " "),
+            "display_date": display_date.date(),
             "tipoff": local_tipoff.strftime("%I:%M %p").lstrip("0") + " PT" if local_tipoff is not None else None,
             "tipoff_iso": game.tipoff_utc.isoformat() if game is not None else game_date.date().isoformat(),
             "pick_pending": not history and final is None and game.status == "scheduled" and local_tipoff > now,
             "away": PREDICTION_TEAM_NAMES.get(away, away),
             "home": PREDICTION_TEAM_NAMES.get(home, home),
+            "team_codes": (away, home),
             "away_chance": f"{1 - probability:.1%}" if has_pick else None,
             "home_chance": f"{probability:.1%}" if has_pick else None,
             "pick": PREDICTION_TEAM_NAMES.get(pick, pick),
@@ -286,6 +289,32 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
             "injuries": prediction_injury_details(game, saved_reports, has_inputs) if has_inputs or not history else [],
         })
     return rows
+
+
+def filter_prediction_history(rows: list[dict], query: str) -> list[dict]:
+    team_query = " ".join(query.casefold().split())
+    team_code = "BRK" if team_query == "bkn" else team_query.upper()
+    # Match whole dates while accepting commas and zero-padded months and days.
+    date_query = re.sub(r"\b0(?=\d)", "", " ".join(team_query.replace(",", " ").split()))
+    matches = []
+    for row in rows:
+        game_date = row["display_date"]
+        year, month, day = game_date.year, game_date.month, game_date.day
+        short_date = f"{game_date:%b} {day}"
+        long_date = f"{game_date:%B} {day}"
+        numeric_date = f"{month}/{day}"
+        date_terms = (
+            f"{year}-{month}-{day}", numeric_date, f"{numeric_date}/{year}", f"{numeric_date}/{year % 100}",
+            short_date, long_date, f"{short_date} {year}", f"{long_date} {year}", f"{game_date:%a} {short_date}",
+        )
+        if (
+            team_code in row["team_codes"]
+            or team_query in row["away"].casefold()
+            or team_query in row["home"].casefold()
+            or any(date_query == term.casefold() for term in date_terms)
+        ):
+            matches.append(row)
+    return matches
 
 
 def save_scraped_games(start_season: int, end_season: int) -> tuple[pd.DataFrame, str]:
@@ -886,7 +915,11 @@ def create_app() -> Flask:
         live_outcomes = [row["correct"] for row in rows if row["source"] == "live" and row["correct"] is not None]
         total = len(rows)
         season_correct = sum(row["correct"] is True for row in rows)
-        page_count = max(1, (total + PREDICTION_HISTORY_PAGE_SIZE - 1) // PREDICTION_HISTORY_PAGE_SIZE)
+        history_query = request.args.get("q", "").strip() if history else ""
+        if history_query:
+            rows = filter_prediction_history(rows, history_query)
+        filtered_total = len(rows)
+        page_count = max(1, (filtered_total + PREDICTION_HISTORY_PAGE_SIZE - 1) // PREDICTION_HISTORY_PAGE_SIZE)
         page = min(max(1, request.args.get("page", 1, type=int)), page_count) if history else 1
         if history:
             start = (page - 1) * PREDICTION_HISTORY_PAGE_SIZE
@@ -898,6 +931,8 @@ def create_app() -> Flask:
             today=today.strftime("%A, %B %d").replace(" 0", " "),
             rows=rows,
             total=total,
+            history_query=history_query,
+            filtered_total=filtered_total,
             live_total=len(live_outcomes),
             live_correct=sum(live_outcomes),
             season_correct=season_correct,
