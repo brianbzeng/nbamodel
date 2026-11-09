@@ -215,7 +215,8 @@ def test_predictor_shows_the_pacific_slate_and_saved_picks(monkeypatch):
     assert "New Orleans Pelicans" in body
     assert "54.0%" in body and "46.0%" in body
     assert "<strong>New Orleans Pelicans</strong>" in body
-    assert body.count("Replay · Random forest") == 2
+    assert body.count('prediction-pick-label">Random forest</span>') == 2
+    assert "Replay" not in body and "Saved pregame" not in body
     assert "76.0%" in body
     assert body.index("Philadelphia 76ers") < body.index("Los Angeles Lakers") < body.index("New Orleans Pelicans")
     assert "In progress" not in body and "Time / status" not in body
@@ -240,7 +241,8 @@ def test_prediction_history_includes_every_current_season_final_newest_first(mon
     assert "65.0%" in body
     assert "70.0%" not in body  # Live pick takes precedence over replay for Atlanta.
     assert "Replay · Random forest" in body
-    assert "Saved pregame · Logistic regression" in body
+    assert 'prediction-pick-label">Logistic regression</span>' in body
+    assert "Saved pregame" not in body
     assert "Detroit Pistons won" in body and "No pick saved before tipoff" in body
     assert body.index("Philadelphia 76ers") < body.index("Atlanta Hawks") < body.index("Detroit Pistons")
     assert "New York Knicks" not in body
@@ -273,7 +275,7 @@ def test_predictor_reports_the_injury_inputs_used_for_a_saved_pick(monkeypatch, 
     assert response.status_code == 200
     assert "Inputs for this pick" in body
     assert "with 1 earlier final" in body
-    assert "Saved pregame · Random forest + player impact" in body
+    assert 'prediction-pick-label">Random forest + player impact</span>' in body
     assert "moved the home win chance by -2.1 percentage points" in body
     assert "Injury-Report_2026-11-08_08_15PM.pdf" in body
     assert "LAC · 2 out" in body

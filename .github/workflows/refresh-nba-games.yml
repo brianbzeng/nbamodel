@@ -55,17 +55,12 @@ jobs:
         id: predictions
         if: ${{ !cancelled() && steps.games.outcome == 'success' }}
         run: python daily_predictions.py
-      - name: Fill gaps in season prediction history
-        id: replay
-        if: ${{ !cancelled() && steps.games.outcome == 'success' }}
-        run: python prediction_replay.py
       - name: Publish updated NBA data
         if: ${{ !cancelled() && steps.games.outcome == 'success' }}
         env:
           INJURY_REFRESH_OUTCOME: ${{ steps.injuries.outcome }}
           PLAYER_REFRESH_OUTCOME: ${{ steps.players.outcome }}
           PREDICTION_REFRESH_OUTCOME: ${{ steps.predictions.outcome }}
-          REPLAY_REFRESH_OUTCOME: ${{ steps.replay.outcome }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -86,14 +81,9 @@ jobs:
           if [[ "$PREDICTION_REFRESH_OUTCOME" == success && -f "$prediction_snapshot" ]]; then
             git add -- "$prediction_snapshot"
           fi
-          replay_snapshot=data/raw/nba_prediction_replay.csv
-          if [[ "$REPLAY_REFRESH_OUTCOME" == success && -f "$replay_snapshot" ]]; then
-            git add -- "$replay_snapshot"
-          fi
-
           if git diff --cached --quiet; then
             last_commit=$(git show -s --format=%ct HEAD)
-            if [[ "$INJURY_REFRESH_OUTCOME" == success && "$PLAYER_REFRESH_OUTCOME" == success && "$PREDICTION_REFRESH_OUTCOME" == success && "$REPLAY_REFRESH_OUTCOME" == success ]] && (( $(date +%s) - last_commit > 45 * 86400 )); then
+            if [[ "$INJURY_REFRESH_OUTCOME" == success && "$PLAYER_REFRESH_OUTCOME" == success && "$PREDICTION_REFRESH_OUTCOME" == success ]] && (( $(date +%s) - last_commit > 45 * 86400 )); then
               git commit --allow-empty -m 'Verify NBA data snapshots [skip render]'
             else
               echo 'No NBA data changes to publish.'

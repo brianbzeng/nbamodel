@@ -60,7 +60,11 @@
           {% if game.pick %}
             <span class="prediction-pick-label prediction-mobile-label">Model pick</span>
             <strong>{{ game.pick }}</strong>
-            <span class="prediction-pick-label">{{ 'Replay' if game.source == 'replay' else 'Saved pregame' }}{% if game.model %} · {{ game.model }}{% endif %}</span>
+            {% if history and game.source == 'replay' %}
+              <span class="prediction-pick-label">Replay{% if game.model %} · {{ game.model }}{% endif %}</span>
+            {% elif game.model %}
+              <span class="prediction-pick-label">{{ game.model }}</span>
+            {% endif %}
           {% elif game.pick_pending %}
             <span class="prediction-pick-label">Pick due in the final hour</span>
           {% else %}

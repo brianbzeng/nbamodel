@@ -50,9 +50,9 @@ The workflow saves the schedule and picks in `data/raw/nba_daily_predictions.csv
 It adds pregame checks between hourly runs when a game tips within 60 minutes.
 Those checks pull new finals and official injury reports before fitting the random
 forest, including completed games already observed that day. Picks start in the hour
-before tipoff, update as inputs change, and freeze at tipoff. History prefers each
-saved pregame pick and labels replays separately. Replays train only on games from
-earlier dates and live accuracy counts only saved pregame picks.
+before tipoff, update as inputs change, and freeze at tipoff. Games that miss the
+pregame window have no new pick. History labels archived replays separately and
+counts only picks saved before tipoff in the live record.
 
 The player adjustment uses the same pregame report as the team features. Ratings
 use only earlier game dates. Missing reports or players without box-score history
@@ -64,8 +64,8 @@ Render deploys changes to the snapshots. If injury retrieval fails, the workflow
 can still publish finals and retry injuries on the next run. A verification commit
 after 45 idle days keeps the offseason schedule active without redeploying Render.
 
-Run `python game_updates.py`, `python injury_updates.py`, `python player_stats.py`, `python daily_predictions.py`,
-and `python prediction_replay.py` in order to refresh a local checkout, or run
+Run `python game_updates.py`, `python injury_updates.py`, `python player_stats.py`,
+and `python daily_predictions.py` in order to refresh a local checkout, or run
 **Refresh NBA games** from the repository’s Actions tab. Use
 `python injury_updates.py --since YYYY-MM-DD` to backfill older reports and
 `python player_stats.py --backfill` to load historical player box scores.
