@@ -40,10 +40,14 @@ PLAYER_IMPACT_EXPERIMENT = "rf_player_impact_v1"
 ELO_PROBABILITY_COLUMN = "elo_home_win_probability"
 ELO_EXPERIMENT_VERSION_COLUMN = "elo_experiment_version"
 ELO_EXPERIMENT = "rf_elo_v1"
+NO_REST_PROBABILITY_COLUMN = "no_rest_home_win_probability"
+NO_REST_EXPERIMENT_VERSION_COLUMN = "no_rest_experiment_version"
+NO_REST_EXPERIMENT = "rf_no_rest_v1"
 PICK_VALUES = [
     "home_win_probability", "model", *PROVENANCE_COUNTS, *PROVENANCE_TIMES,
     PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN, PLAYER_IMPACT_PROBABILITY_COLUMN, EXPERIMENT_VERSION_COLUMN,
     ELO_PROBABILITY_COLUMN, ELO_EXPERIMENT_VERSION_COLUMN,
+    NO_REST_PROBABILITY_COLUMN, NO_REST_EXPERIMENT_VERSION_COLUMN,
 ]
 PICK_COLUMNS = [*PICK_VALUES, "predicted_at_utc"]
 PREDICTION_COLUMNS = [
@@ -53,6 +57,7 @@ PREDICTION_COLUMNS = [
     PLAYER_IMPACT_COLUMN, *REST_DAY_COLUMNS, LOGISTIC_PROBABILITY_COLUMN,
     PLAYER_IMPACT_PROBABILITY_COLUMN, EXPERIMENT_VERSION_COLUMN,
     ELO_PROBABILITY_COLUMN, ELO_EXPERIMENT_VERSION_COLUMN,
+    NO_REST_PROBABILITY_COLUMN, NO_REST_EXPERIMENT_VERSION_COLUMN,
 ]
 STATUS_NAMES = {
     "STATUS_SCHEDULED": "scheduled",
@@ -74,10 +79,10 @@ def _typed_predictions(frame: pd.DataFrame) -> pd.DataFrame:
         frame[column] = frame[column].astype("Int64")
     for column in (
         "home_win_probability", PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN, PLAYER_IMPACT_PROBABILITY_COLUMN,
-        ELO_PROBABILITY_COLUMN,
+        ELO_PROBABILITY_COLUMN, NO_REST_PROBABILITY_COLUMN,
     ):
         frame[column] = frame[column].astype(float)
-    for column in (EXPERIMENT_VERSION_COLUMN, ELO_EXPERIMENT_VERSION_COLUMN):
+    for column in (EXPERIMENT_VERSION_COLUMN, ELO_EXPERIMENT_VERSION_COLUMN, NO_REST_EXPERIMENT_VERSION_COLUMN):
         frame[column] = frame[column].astype("string")
     # Saved picks from before the model switch were all logistic regression.
     frame["model"] = frame["model"].astype("string").fillna("logistic").where(frame["home_win_probability"].notna())
@@ -200,7 +205,9 @@ def _final_games(events: list[dict], slate: list[dict], as_of: datetime) -> pd.D
 
 def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) -> dict[str, dict]:
     from player_impact import player_adjusted_picks
-    from predictor import ELO_RANDOM_FOREST_MODEL, load_optional_team_injuries, predict_slate_models
+    from predictor import (
+        ELO_RANDOM_FOREST_MODEL, NO_REST_RANDOM_FOREST_MODEL, load_optional_team_injuries, predict_slate_models,
+    )
 
     history = normalize_team_names(clean_games(pd.read_csv(BASELINE_GAMES_FILE)))
     updates = finals.rename(columns={"game_date": "date"})
@@ -212,20 +219,27 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
     for matchup in matchups:
         slates.setdefault(matchup["game_date"], []).append(matchup)
     predictions = {}
+    shadow_models = (ELO_RANDOM_FOREST_MODEL, NO_REST_RANDOM_FOREST_MODEL)
     for game_date, slate in sorted(slates.items()):
         same_day_finals = updates[updates["date"] == game_date]
         model_probabilities, rest_days = predict_slate_models(
             games, slate, injuries, game_date, same_day_finals=same_day_finals,
-            models=(DEFAULT_PREDICTION_MODEL, COMPARISON_MODEL, ELO_RANDOM_FOREST_MODEL),
-            optional_models=(ELO_RANDOM_FOREST_MODEL,),
+            models=(DEFAULT_PREDICTION_MODEL, COMPARISON_MODEL, *shadow_models),
+            optional_models=shadow_models,
         )
         probabilities = model_probabilities[DEFAULT_PREDICTION_MODEL]
-        elo_picks = model_probabilities.get(ELO_RANDOM_FOREST_MODEL, {})
         try:
             experimental_picks = player_adjusted_picks(slate, probabilities, injuries)
         except (KeyError, OSError, ValueError):
             logging.getLogger(__name__).exception("Could not score player impact for %s", game_date.date())
             experimental_picks = {}
+        experiments = (
+            (experimental_picks, PLAYER_IMPACT_PROBABILITY_COLUMN, EXPERIMENT_VERSION_COLUMN, PLAYER_IMPACT_EXPERIMENT),
+            (model_probabilities.get(ELO_RANDOM_FOREST_MODEL, {}), ELO_PROBABILITY_COLUMN,
+             ELO_EXPERIMENT_VERSION_COLUMN, ELO_EXPERIMENT),
+            (model_probabilities.get(NO_REST_RANDOM_FOREST_MODEL, {}), NO_REST_PROBABILITY_COLUMN,
+             NO_REST_EXPERIMENT_VERSION_COLUMN, NO_REST_EXPERIMENT),
+        )
         reports = {}
         if injuries is not None:
             day_reports = injuries.loc[
@@ -236,7 +250,6 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
             game_id = matchup["game_id"]
             probability = probabilities[game_id]
             logistic_probability = model_probabilities[COMPARISON_MODEL][game_id]
-            experiment_probability = experimental_picks.get(game_id)
             if not (0 <= probability <= 1 and 0 <= logistic_probability <= 1):
                 raise ValueError(f"Invalid home win probability for ESPN game {game_id}.")
             values = {
@@ -247,13 +260,11 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
                 "same_day_finals": len(same_day_finals),
                 **dict(zip(REST_DAY_COLUMNS, rest_days[game_id])),
             }
-            if experiment_probability is not None and 0 <= experiment_probability <= 1:
-                values[PLAYER_IMPACT_PROBABILITY_COLUMN] = round(experiment_probability, 6)
-                values[EXPERIMENT_VERSION_COLUMN] = PLAYER_IMPACT_EXPERIMENT
-            elo_probability = elo_picks.get(game_id)
-            if elo_probability is not None and 0 <= elo_probability <= 1:
-                values[ELO_PROBABILITY_COLUMN] = round(elo_probability, 6)
-                values[ELO_EXPERIMENT_VERSION_COLUMN] = ELO_EXPERIMENT
+            for picks, probability_column, version_column, version in experiments:
+                experiment_probability = picks.get(game_id)
+                if experiment_probability is not None and 0 <= experiment_probability <= 1:
+                    values[probability_column] = round(experiment_probability, 6)
+                    values[version_column] = version
             for side in ("home", "away"):
                 report = reports.get(matchup[f"{side}_team"])
                 if report is not None:

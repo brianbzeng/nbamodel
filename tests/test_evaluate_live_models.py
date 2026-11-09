@@ -5,6 +5,8 @@ from evaluate_live_models import (
     ELO_PROBABILITY_COLUMN,
     EXPERIMENT_VERSION_COLUMN,
     LOGISTIC_PROBABILITY_COLUMN,
+    NO_REST_EXPERIMENT_VERSION_COLUMN,
+    NO_REST_PROBABILITY_COLUMN,
     PLAYER_IMPACT_PROBABILITY_COLUMN,
     paired_results,
     report,
@@ -86,33 +88,45 @@ def test_scorecard_explains_empty_results(capsys):
 
 def test_scorecard_scores_each_challenger_on_its_own_pregame_cohort(capsys):
     elo = {ELO_EXPERIMENT_VERSION_COLUMN: "rf_elo_v1", ELO_PROBABILITY_COLUMN: 0.4}
+    no_rest = {NO_REST_EXPERIMENT_VERSION_COLUMN: "rf_no_rest_v1", NO_REST_PROBABILITY_COLUMN: 0.6}
     predictions = pd.DataFrame([
         forecast("player-impact"),
         forecast("elo", "2026-11-10", **elo, **{EXPERIMENT_VERSION_COLUMN: None}),
-        forecast("both", "2026-11-11", **elo),
-        forecast("elo-late", "2026-11-12", **elo, predicted_at_utc=pd.Timestamp("2026-11-12T23:01Z")),
+        forecast("all", "2026-11-11", **elo, **no_rest),
+        forecast("late", "2026-11-12", **elo, **no_rest, predicted_at_utc=pd.Timestamp("2026-11-12T23:01Z")),
+        forecast("no-rest", "2026-11-13", **no_rest, **{EXPERIMENT_VERSION_COLUMN: None}),
     ])
     finals = pd.DataFrame([
         (pd.Timestamp("2026-11-09"), 2027, "Boston Celtics", "New York Knicks", 110, 109),
         (pd.Timestamp("2026-11-10"), 2027, "Boston Celtics", "New York Knicks", 108, 109),
         (pd.Timestamp("2026-11-11"), 2027, "Boston Celtics", "New York Knicks", 110, 109),
         (pd.Timestamp("2026-11-12"), 2027, "Boston Celtics", "New York Knicks", 110, 109),
+        (pd.Timestamp("2026-11-13"), 2027, "Boston Celtics", "New York Knicks", 110, 109),
     ], columns=GAME_COLUMNS)
 
     report_experiments(predictions, finals)
     output = capsys.readouterr().out
-    impact, elo_report = output.split("rf_elo_v1 | 2 completed games")
-    impact, elo_report = (" ".join(section.split()) for section in (impact, elo_report))
+    impact, remaining = output.split("rf_elo_v1 | 2 completed games")
+    elo_report, no_rest_report = remaining.split("rf_no_rest_v1 | 2 completed games")
+    impact, elo_report, no_rest_report = (" ".join(section.split()) for section in (impact, elo_report, no_rest_report))
     assert "rf_player_impact_v1 | 2 completed games" in impact
     assert "Random forest baseline 0/2 correct" in impact
     assert "Random forest + player impact 2/2 correct" in impact
     assert "Random forest baseline 1/2 correct" in elo_report
     assert "Random forest + Elo 1/2 correct" in elo_report
+    assert "Random forest baseline 0/2 correct" in no_rest_report
+    assert "Random forest without rest 2/2 correct" in no_rest_report
 
     report_experiments(predictions, finals, season=2027, version="rf_elo_v1")
     output = capsys.readouterr().out
     assert "rf_elo_v1 | 2 completed games" in output
     assert "rf_player_impact_v1" not in output
+    assert "rf_no_rest_v1" not in output
+
+    report_experiments(predictions, finals, season=2027, version="rf_no_rest_v1")
+    output = capsys.readouterr().out
+    assert "rf_no_rest_v1 | 2 completed games" in output
+    assert "rf_elo_v1" not in output
 
     report_experiments(predictions, finals, season=2026, version="rf_elo_v1")
     assert capsys.readouterr().out == "No completed games with paired pregame predictions yet.\n"

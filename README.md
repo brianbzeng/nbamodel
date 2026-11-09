@@ -80,11 +80,16 @@ random forest. It uses the Leaderboard's rating updates and offseason regression
 Historical features use results from earlier dates. Live forecasts can also use
 same-day finals already verified when the slate is scored.
 
+The `rf_no_rest_v1` challenger uses the same games and random forest settings as
+the baseline and omits the three explicit rest inputs. The official model keeps
+its rest inputs while the scorecard tracks whether they improve predictions.
+
 Run `python evaluate_live_models.py` for the paired accuracy, Brier score, and
 log loss of saved pregame predictions against completed games. Each challenger
 is compared with the baseline on the same games, excluding replays. Use
-`--version rf_elo_v1` for Elo alone. Run `python evaluate_elo.py` for two forward
-season holdouts, each trained on all earlier saved seasons. Run
+`--version rf_elo_v1` or `--version rf_no_rest_v1` to isolate a challenger. Run
+`python evaluate_elo.py` or `python evaluate_elo.py --challenger no-rest` for
+two forward season holdouts, each trained on all earlier saved seasons. Run
 `python evaluate_player_impact.py` for the historical injury experiment. Both
 backtests accept `--through YYYY-MM-DD`.
 

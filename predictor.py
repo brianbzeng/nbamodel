@@ -35,6 +35,8 @@ MAX_REPORT_FETCH_ATTEMPTS = 3
 RETRY_DELAY_SECONDS = 2
 MAX_REST_DAYS = 7
 ELO_RANDOM_FOREST_MODEL = "random_forest_elo"
+NO_REST_RANDOM_FOREST_MODEL = "random_forest_no_rest"
+REST_NUMERIC_FEATURES = ("home_rest_days", "away_rest_days", "rest_diff")
 MAX_INJURY_LOOKBACK_DAYS = 3
 LONG_TERM_REASON_KEYWORDS = (
     "acl",
@@ -80,9 +82,7 @@ BASE_NUMERIC_FEATURES = [
     "home_recent_margin",
     "away_recent_margin",
     "recent_margin_diff",
-    "home_rest_days",
-    "away_rest_days",
-    "rest_diff",
+    *REST_NUMERIC_FEATURES,
 ]
 
 INJURY_NUMERIC_FEATURES = [
@@ -977,6 +977,11 @@ def _fit_elo_random_forest(feature_df: pd.DataFrame) -> Pipeline:
     return _fit_random_forest(feature_df, numeric_features=[*get_numeric_features(), ELO_DIFF_COLUMN])
 
 
+def _fit_no_rest_random_forest(feature_df: pd.DataFrame) -> Pipeline:
+    numeric_features = [feature for feature in get_numeric_features() if feature not in REST_NUMERIC_FEATURES]
+    return _fit_random_forest(feature_df, numeric_features=numeric_features)
+
+
 def train_prediction_models(
     games: pd.DataFrame,
     injury_df: Optional[pd.DataFrame] = None,
@@ -1286,6 +1291,7 @@ def predict_slate_models(
         "logistic": _fit_logistic_regression,
         "random_forest": _fit_random_forest,
         ELO_RANDOM_FOREST_MODEL: _fit_elo_random_forest,
+        NO_REST_RANDOM_FOREST_MODEL: _fit_no_rest_random_forest,
     }
     for model in models:
         if model not in fitters:

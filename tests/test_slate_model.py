@@ -6,6 +6,22 @@ from model import update_ratings
 import predictor
 
 
+def test_no_rest_challenger_drops_only_explicit_rest_features(monkeypatch):
+    training = pd.DataFrame()
+    baseline_features = predictor.get_numeric_features()
+
+    def fit(frame, *, numeric_features):
+        assert frame is training
+        assert numeric_features == [
+            feature for feature in baseline_features
+            if feature not in ("home_rest_days", "away_rest_days", "rest_diff")
+        ]
+
+    monkeypatch.setattr(predictor, "_fit_random_forest", fit)
+    predictor._fit_no_rest_random_forest(training)
+    assert predictor.get_numeric_features() == baseline_features
+
+
 def test_daily_slate_fits_each_model_once_on_shared_pregame_features(monkeypatch):
     games = pd.DataFrame(
         [
