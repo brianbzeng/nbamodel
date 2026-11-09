@@ -4,6 +4,10 @@ import numpy as np
 import pandas as pd
 
 
+ELO_BASE_RATING = 1500.0
+ELO_SEASON_RETENTION = 0.75
+
+
 def sigmoid(x):
     return 1 / (1 + np.exp(-x))
 
@@ -48,13 +52,13 @@ def logloss(y, p, eps=1e-15):
 
 def run_elo(
     games: pd.DataFrame,
-    base_rating: float = 1500.0,
+    base_rating: float = ELO_BASE_RATING,
     k: float = 20.0,
     hca: float = 50.0,
     scale: float = 400.0,
     use_margin: bool = True,
     season_regress: bool = True,
-    reg_factor: float = 0.75,
+    reg_factor: float = ELO_SEASON_RETENTION,
 ):
     """
     Run Elo-like updates over multiple seasons of games.

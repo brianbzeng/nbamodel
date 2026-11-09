@@ -75,10 +75,18 @@ weighted by official status and shrunk toward replacement-level production. The
 coefficient was calibrated on 2025–26 games. When the experiment changes, use a
 new version identifier so the scorecard keeps results separate.
 
+The separate `rf_elo_v1` challenger adds only the pregame Elo gap to the same
+random forest. It uses the Leaderboard's rating updates and offseason regression.
+Historical features use results from earlier dates. Live forecasts can also use
+same-day finals already verified when the slate is scored.
+
 Run `python evaluate_live_models.py` for the paired accuracy, Brier score, and
-log loss of saved pregame predictions against completed games. It compares both
-versions on the same games and excludes replays. For a separate historical
-backtest, run `python evaluate_player_impact.py` with optional `--through YYYY-MM-DD`.
+log loss of saved pregame predictions against completed games. Each challenger
+is compared with the baseline on the same games, excluding replays. Use
+`--version rf_elo_v1` for Elo alone. Run `python evaluate_elo.py` for two forward
+season holdouts, each trained on all earlier saved seasons. Run
+`python evaluate_player_impact.py` for the historical injury experiment. Both
+backtests accept `--through YYYY-MM-DD`.
 
 ## Run it
 

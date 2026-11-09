@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from model import update_ratings
 import predictor
 
 
@@ -56,7 +57,11 @@ def test_daily_slate_fits_each_model_once_on_shared_pregame_features(monkeypatch
 
 @pytest.mark.parametrize(
     ("model", "fitter"),
-    [("logistic", "_fit_logistic_regression"), ("random_forest", "_fit_random_forest")],
+    [
+        ("logistic", "_fit_logistic_regression"),
+        ("random_forest", "_fit_random_forest"),
+        ("random_forest_elo", "_fit_elo_random_forest"),
+    ],
 )
 def test_daily_slate_uses_verified_finals_and_latest_matchup_reports(monkeypatch, model, fitter):
     day = pd.Timestamp("2026-11-08")
@@ -89,20 +94,34 @@ def test_daily_slate_uses_verified_finals_and_latest_matchup_reports(monkeypatch
         columns=["game_date", "team", "player_name", "status", "reason", "report_datetime"],
     )
     injuries = predictor.aggregate_team_injuries(reports)
+    with_elo = model == "random_forest_elo"
+    ratings = dict.fromkeys(("BOS", "LAL", "DET"), 1500.0)
+    update_ratings(ratings, "BOS", "LAL", 1, margin=10)
+    bos_before_det = ratings["BOS"] - ratings["DET"]
+    update_ratings(ratings, "BOS", "DET", 0, margin=20)
 
     class Model:
         feature_names_in_ = [
             "home_games_played", "away_games_played", "home_win_pct",
             "home_injury_report_available", "away_injury_report_available", "home_out_count", "away_out_count",
         ]
+        if with_elo:
+            feature_names_in_.append("elo_diff")
 
         def predict_proba(self, features):
-            assert features.iloc[0].tolist() == [2, 1, 0.5, 0, 1, 0, 1]
+            expected = [2, 1, 0.5, 0, 1, 0, 1]
+            if with_elo:
+                expected.append(ratings["BOS"] - ratings["LAL"])
+            assert features.iloc[0].tolist() == pytest.approx(expected)
             return np.array([[0.25, 0.75]])
 
     def fit(training):
         assert training["date"].tolist() == [prior_day, prior_day, day]
         assert training.iloc[-1][["home_team", "away_team", "home_win"]].tolist() == ["BOS", "DET", 0]
+        if with_elo:
+            assert training["elo_diff"].tolist() == pytest.approx([0, 0, bos_before_det])
+        else:
+            assert "elo_diff" not in training
         return Model()
 
     monkeypatch.setattr(predictor, fitter, fit)

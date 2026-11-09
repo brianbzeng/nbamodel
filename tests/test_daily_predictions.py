@@ -34,6 +34,8 @@ def pick(probability, finals=0):
         "logistic_home_win_probability": 0.48,
         "player_impact_home_win_probability": round(probability - 0.04, 2),
         "experiment_version": daily_predictions.PLAYER_IMPACT_EXPERIMENT,
+        "elo_home_win_probability": round(probability + 0.03, 2),
+        "elo_experiment_version": daily_predictions.ELO_EXPERIMENT,
         "model": daily_predictions.DEFAULT_PREDICTION_MODEL,
         "same_day_finals": finals,
     }
@@ -67,6 +69,8 @@ def test_unchanged_pregame_pick_does_not_republish_and_final_pick_is_frozen(tmp_
     assert first.iloc[0]["logistic_home_win_probability"] == 0.48
     assert first.iloc[0]["player_impact_home_win_probability"] == 0.57
     assert first.iloc[0]["experiment_version"] == "rf_player_impact_v1"
+    assert first.iloc[0]["elo_home_win_probability"] == 0.64
+    assert first.iloc[0]["elo_experiment_version"] == "rf_elo_v1"
     assert first.iloc[0]["model"] == "random_forest"
     assert pd.isna(first.iloc[1]["home_win_probability"])
 
@@ -96,6 +100,7 @@ def test_unchanged_pregame_pick_does_not_republish_and_final_pick_is_frozen(tmp_
     assert final.iloc[0]["home_win_probability"] == 0.72
     assert final.iloc[0]["logistic_home_win_probability"] == 0.48
     assert final.iloc[0]["player_impact_home_win_probability"] == 0.68
+    assert final.iloc[0]["elo_home_win_probability"] == 0.75
     assert final.iloc[0]["predicted_at_utc"] == updated.iloc[0]["predicted_at_utc"]
     assert fits == [["1"], ["1"], ["1"], ["1"]]
 
@@ -234,9 +239,10 @@ def test_daily_pick_keeps_the_baseline_and_records_player_impact_separately(monk
         "out_count": 1,
     }])
     monkeypatch.setattr("predictor.load_optional_team_injuries", lambda games, *, as_of: reports)
-    def score(*args, models, **kwargs):
-        assert models == ("random_forest", "logistic")
-        return {"random_forest": {"1": 0.55}, "logistic": {"1": 0.42}}, {"1": (0, 2)}
+    def score(*args, models, optional_models, **kwargs):
+        assert models == ("random_forest", "logistic", "random_forest_elo")
+        assert optional_models == ("random_forest_elo",)
+        return {"random_forest": {"1": 0.55}, "logistic": {"1": 0.42}, "random_forest_elo": {"1": 0.53}}, {"1": (0, 2)}
 
     monkeypatch.setattr("predictor.predict_slate_models", score)
 
@@ -258,5 +264,7 @@ def test_daily_pick_keeps_the_baseline_and_records_player_impact_separately(monk
     assert pick["home_player_impact_pp"] is None
     assert pick["player_impact_home_win_probability"] == (0.51 if experiment_available else None)
     assert pick["experiment_version"] == ("rf_player_impact_v1" if experiment_available else None)
+    assert pick["elo_home_win_probability"] == 0.53
+    assert pick["elo_experiment_version"] == "rf_elo_v1"
     assert pick["home_injury_report_utc"] == pd.Timestamp("2026-11-09T00:00:00Z")
     assert (pick["home_rest_days"], pick["away_rest_days"]) == (0, 2)

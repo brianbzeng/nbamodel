@@ -37,9 +37,13 @@ LOGISTIC_PROBABILITY_COLUMN = "logistic_home_win_probability"
 PLAYER_IMPACT_PROBABILITY_COLUMN = "player_impact_home_win_probability"
 EXPERIMENT_VERSION_COLUMN = "experiment_version"
 PLAYER_IMPACT_EXPERIMENT = "rf_player_impact_v1"
+ELO_PROBABILITY_COLUMN = "elo_home_win_probability"
+ELO_EXPERIMENT_VERSION_COLUMN = "elo_experiment_version"
+ELO_EXPERIMENT = "rf_elo_v1"
 PICK_VALUES = [
     "home_win_probability", "model", *PROVENANCE_COUNTS, *PROVENANCE_TIMES,
     PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN, PLAYER_IMPACT_PROBABILITY_COLUMN, EXPERIMENT_VERSION_COLUMN,
+    ELO_PROBABILITY_COLUMN, ELO_EXPERIMENT_VERSION_COLUMN,
 ]
 PICK_COLUMNS = [*PICK_VALUES, "predicted_at_utc"]
 PREDICTION_COLUMNS = [
@@ -48,6 +52,7 @@ PREDICTION_COLUMNS = [
     "home_injury_report_utc", "away_injury_report_utc", "home_out_count", "away_out_count", "model",
     PLAYER_IMPACT_COLUMN, *REST_DAY_COLUMNS, LOGISTIC_PROBABILITY_COLUMN,
     PLAYER_IMPACT_PROBABILITY_COLUMN, EXPERIMENT_VERSION_COLUMN,
+    ELO_PROBABILITY_COLUMN, ELO_EXPERIMENT_VERSION_COLUMN,
 ]
 STATUS_NAMES = {
     "STATUS_SCHEDULED": "scheduled",
@@ -69,9 +74,11 @@ def _typed_predictions(frame: pd.DataFrame) -> pd.DataFrame:
         frame[column] = frame[column].astype("Int64")
     for column in (
         "home_win_probability", PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN, PLAYER_IMPACT_PROBABILITY_COLUMN,
+        ELO_PROBABILITY_COLUMN,
     ):
         frame[column] = frame[column].astype(float)
-    frame[EXPERIMENT_VERSION_COLUMN] = frame[EXPERIMENT_VERSION_COLUMN].astype("string")
+    for column in (EXPERIMENT_VERSION_COLUMN, ELO_EXPERIMENT_VERSION_COLUMN):
+        frame[column] = frame[column].astype("string")
     # Saved picks from before the model switch were all logistic regression.
     frame["model"] = frame["model"].astype("string").fillna("logistic").where(frame["home_win_probability"].notna())
     return frame
@@ -193,7 +200,7 @@ def _final_games(events: list[dict], slate: list[dict], as_of: datetime) -> pd.D
 
 def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) -> dict[str, dict]:
     from player_impact import player_adjusted_picks
-    from predictor import load_optional_team_injuries, predict_slate_models
+    from predictor import ELO_RANDOM_FOREST_MODEL, load_optional_team_injuries, predict_slate_models
 
     history = normalize_team_names(clean_games(pd.read_csv(BASELINE_GAMES_FILE)))
     updates = finals.rename(columns={"game_date": "date"})
@@ -209,9 +216,11 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
         same_day_finals = updates[updates["date"] == game_date]
         model_probabilities, rest_days = predict_slate_models(
             games, slate, injuries, game_date, same_day_finals=same_day_finals,
-            models=(DEFAULT_PREDICTION_MODEL, COMPARISON_MODEL),
+            models=(DEFAULT_PREDICTION_MODEL, COMPARISON_MODEL, ELO_RANDOM_FOREST_MODEL),
+            optional_models=(ELO_RANDOM_FOREST_MODEL,),
         )
         probabilities = model_probabilities[DEFAULT_PREDICTION_MODEL]
+        elo_picks = model_probabilities.get(ELO_RANDOM_FOREST_MODEL, {})
         try:
             experimental_picks = player_adjusted_picks(slate, probabilities, injuries)
         except (KeyError, OSError, ValueError):
@@ -241,6 +250,10 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
             if experiment_probability is not None and 0 <= experiment_probability <= 1:
                 values[PLAYER_IMPACT_PROBABILITY_COLUMN] = round(experiment_probability, 6)
                 values[EXPERIMENT_VERSION_COLUMN] = PLAYER_IMPACT_EXPERIMENT
+            elo_probability = elo_picks.get(game_id)
+            if elo_probability is not None and 0 <= elo_probability <= 1:
+                values[ELO_PROBABILITY_COLUMN] = round(elo_probability, 6)
+                values[ELO_EXPERIMENT_VERSION_COLUMN] = ELO_EXPERIMENT
             for side in ("home", "away"):
                 report = reports.get(matchup[f"{side}_team"])
                 if report is not None:

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import logging
 import os
 from pathlib import Path
 from typing import Optional
@@ -20,6 +21,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from cleaner import TEAM_MAP_BREF
+from elo_features import ELO_DIFF_COLUMN, build_elo_features, slate_elo_differences
 from game_updates import GAME_KEY
 
 
@@ -32,6 +34,7 @@ REPORT_HOURS = [17, 14, 13, 12, 11, 10, 9]
 MAX_REPORT_FETCH_ATTEMPTS = 3
 RETRY_DELAY_SECONDS = 2
 MAX_REST_DAYS = 7
+ELO_RANDOM_FOREST_MODEL = "random_forest_elo"
 MAX_INJURY_LOOKBACK_DAYS = 3
 LONG_TERM_REASON_KEYWORDS = (
     "acl",
@@ -949,8 +952,9 @@ def _fit_logistic_regression(feature_df: pd.DataFrame) -> Pipeline:
     return model.fit(feature_df[CATEGORICAL_FEATURES + numeric_features], feature_df["home_win"])
 
 
-def _fit_random_forest(feature_df: pd.DataFrame) -> Pipeline:
-    numeric_features = get_numeric_features()
+def _fit_random_forest(feature_df: pd.DataFrame, *, numeric_features: list[str] | None = None) -> Pipeline:
+    if numeric_features is None:
+        numeric_features = get_numeric_features()
     model = Pipeline(
         steps = [
             ("preprocessor", _build_preprocessor(numeric_features)),
@@ -967,6 +971,10 @@ def _fit_random_forest(feature_df: pd.DataFrame) -> Pipeline:
     )
 
     return model.fit(feature_df[CATEGORICAL_FEATURES + numeric_features], feature_df["home_win"])
+
+
+def _fit_elo_random_forest(feature_df: pd.DataFrame) -> Pipeline:
+    return _fit_random_forest(feature_df, numeric_features=[*get_numeric_features(), ELO_DIFF_COLUMN])
 
 
 def train_prediction_models(
@@ -1271,9 +1279,14 @@ def predict_slate_models(
     *,
     models: tuple[str, ...],
     same_day_finals: Optional[pd.DataFrame] = None,
+    optional_models: tuple[str, ...] = (),
 ) -> tuple[dict[str, dict[str, float]], dict[str, tuple[int | None, int | None]]]:
     """Fit and score each model using the same pregame feature snapshots."""
-    fitters = {"logistic": _fit_logistic_regression, "random_forest": _fit_random_forest}
+    fitters = {
+        "logistic": _fit_logistic_regression,
+        "random_forest": _fit_random_forest,
+        ELO_RANDOM_FOREST_MODEL: _fit_elo_random_forest,
+    }
     for model in models:
         if model not in fitters:
             raise ValueError(f"Unknown prediction model: {model}")
@@ -1316,10 +1329,23 @@ def predict_slate_models(
     game_ids = [str(matchup["game_id"]) for matchup in matchups]
     probabilities = {}
     for model in models:
-        fitted_model = fitters[model](training)
-        model_features = slate_features[list(fitted_model.feature_names_in_)]
-        home_probabilities = fitted_model.predict_proba(model_features)[:, 1]
-        probabilities[model] = dict(zip(game_ids, map(float, home_probabilities)))
+        try:
+            model_training, model_slate = training, slate_features
+            if model == ELO_RANDOM_FOREST_MODEL:
+                elo_features, ratings, season = build_elo_features(completed)
+                model_training = training.merge(elo_features, on=GAME_KEY, how="left", validate="one_to_one")
+                if model_training[ELO_DIFF_COLUMN].isna().any():
+                    raise ValueError("Missing Elo features for completed games.")
+                elo_gaps = slate_elo_differences(ratings, season, matchups)
+                model_slate = slate_features.assign(**{ELO_DIFF_COLUMN: elo_gaps})
+            fitted_model = fitters[model](model_training)
+            model_features = model_slate[list(fitted_model.feature_names_in_)]
+            home_probabilities = fitted_model.predict_proba(model_features)[:, 1]
+            probabilities[model] = dict(zip(game_ids, map(float, home_probabilities)))
+        except (KeyError, ValueError):
+            if model not in optional_models:
+                raise
+            logging.getLogger(__name__).exception("Could not score %s for %s", model, game_date.date())
     rest_days = {
         game_id: (
             int(row.home_rest_days) if row.home_games_played else None,
