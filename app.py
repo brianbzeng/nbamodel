@@ -277,7 +277,9 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
         logistic_probability = getattr(game, "logistic_home_win_probability", None)
         logistic_comparison = None
         if has_live_pick and pd.notna(logistic_probability):
-            logistic_pick = home if logistic_probability > 0.5 else away
+            logistic_pick = None
+            if logistic_probability != 0.5:
+                logistic_pick = home if logistic_probability > 0.5 else away
             logistic_comparison = {
                 "away_chance": f"{1 - logistic_probability:.1%}",
                 "home_chance": f"{logistic_probability:.1%}",

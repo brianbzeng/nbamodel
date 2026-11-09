@@ -347,6 +347,11 @@ def test_predictor_shows_logistic_odds_in_context_without_changing_the_official_
     assert "<span>ATL</span><span>42.0%</span>" in history
     assert "<strong>Models disagree.</strong> Logistic regression favors Brooklyn Nets." in history
 
+    slate.loc[2, "logistic_home_win_probability"] = 0.5
+    tied = client.get("/predictor?view=history").get_data(as_text=True)
+    assert "<span>BRK</span><span>50.0%</span>" in tied
+    assert "Models disagree." not in tied
+
 
 def test_predictor_rolls_the_slate_over_at_pacific_midnight(monkeypatch):
     import app as app_module
