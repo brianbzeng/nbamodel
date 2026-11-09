@@ -246,7 +246,8 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
         model = getattr(game, "model", "logistic") if has_live_pick else None
         if not has_live_pick:
             probability = None
-            if final is not None and key in replays:
+            replay_visible = final is not None or (local_tipoff is not None and local_tipoff <= now)
+            if replay_visible and key in replays:
                 probability, source, model = replays[key], "replay", "random_forest"
         has_pick = pd.notna(probability)
         pick = (home if probability > 0.5 else away) if has_pick else None
@@ -871,6 +872,7 @@ def create_app() -> Flask:
         rows = load_prediction_rows(now, history)
         live_outcomes = [row["correct"] for row in rows if row["source"] == "live" and row["correct"] is not None]
         total = len(rows)
+        season_correct = sum(row["correct"] is True for row in rows)
         page_count = max(1, (total + PREDICTION_HISTORY_PAGE_SIZE - 1) // PREDICTION_HISTORY_PAGE_SIZE)
         page = min(max(1, request.args.get("page", 1, type=int)), page_count) if history else 1
         if history:
@@ -884,7 +886,8 @@ def create_app() -> Flask:
             rows=rows,
             total=total,
             live_total=len(live_outcomes),
-            correct=sum(live_outcomes),
+            live_correct=sum(live_outcomes),
+            season_correct=season_correct,
             season=get_live_season_end_year(today),
             page=page,
             page_count=page_count,

@@ -187,7 +187,11 @@ def set_prediction_data(monkeypatch):
         columns=["date", "season", "home_team", "away_team", "home_pts", "away_pts"],
     )
     replay = pd.DataFrame(
-        [(pd.Timestamp("2026-11-08"), "CHI", "PHI", 0.40), (pd.Timestamp("2026-11-07"), "ATL", "BRK", 0.30)],
+        [
+            (pd.Timestamp("2026-11-08"), "CHI", "PHI", 0.40),
+            (pd.Timestamp("2026-11-08"), "DET", "LAL", 0.76),
+            (pd.Timestamp("2026-11-07"), "ATL", "BRK", 0.30),
+        ],
         columns=["game_date", "home_team", "away_team", "home_win_probability"],
     )
 
@@ -211,7 +215,8 @@ def test_predictor_shows_the_pacific_slate_and_saved_picks(monkeypatch):
     assert "New Orleans Pelicans" in body
     assert "54.0%" in body and "46.0%" in body
     assert "<strong>New Orleans Pelicans</strong>" in body
-    assert "Replay · Random forest" in body
+    assert body.count("Replay · Random forest") == 2
+    assert "76.0%" in body
     assert body.index("Philadelphia 76ers") < body.index("Los Angeles Lakers") < body.index("New Orleans Pelicans")
     assert "In progress" not in body and "Time / status" not in body
     assert "prediction-score" not in body and "Philadelphia 76ers won" not in body
@@ -227,6 +232,7 @@ def test_prediction_history_includes_every_current_season_final_newest_first(mon
 
     assert response.status_code == 200
     assert "Prediction history" in body
+    assert "2 / 3 correct" in body
     assert "3 completed games · 1 of 1 live picks correct" in body
     assert "Atlanta Hawks won" in body
     assert "Philadelphia 76ers won" in body
@@ -239,6 +245,7 @@ def test_prediction_history_includes_every_current_season_final_newest_first(mon
     assert body.index("Philadelphia 76ers") < body.index("Atlanta Hawks") < body.index("Detroit Pistons")
     assert "New York Knicks" not in body
     assert "New Orleans Pelicans" not in body
+    assert "Los Angeles Lakers" not in body  # An unfinished replay does not count toward accuracy.
 
 
 def test_predictor_reports_the_injury_inputs_used_for_a_saved_pick(monkeypatch, tmp_path):

@@ -17,9 +17,12 @@
 
   <div class="prediction-heading">
     {% if history %}
-      <h2 id="prediction-view">Prediction history · {{ season - 1 }}–{{ (season|string)[-2:] }}</h2>
+      <div class="prediction-heading-title">
+        <h2 id="prediction-view">Prediction history · {{ season - 1 }}–{{ (season|string)[-2:] }}</h2>
+        {% if total %}<span class="prediction-accuracy">{{ season_correct }} / {{ total }} correct</span>{% endif %}
+      </div>
       {% if total %}
-        <span>{{ total }} completed {{ 'game' if total == 1 else 'games' }}{% if live_total %} · {{ correct }} of {{ live_total }} live picks correct{% endif %}</span>
+        <span>{{ total }} completed {{ 'game' if total == 1 else 'games' }}{% if live_total %} · {{ live_correct }} of {{ live_total }} live picks correct{% endif %}</span>
       {% endif %}
     {% else %}
       <h2 id="prediction-view">{{ today }}</h2>
@@ -28,7 +31,7 @@
   </div>
 
   {% if history and rows %}
-    <p class="prediction-history-note">Replays use games from before the matchup date. Live accuracy counts picks saved before tipoff.</p>
+    <p class="prediction-history-note">Season accuracy includes saved pregame picks and replays. The live record counts picks saved before tipoff.</p>
   {% endif %}
 
   {% if rows %}
