@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from threading import Lock, Thread
 from datetime import datetime
@@ -16,17 +17,17 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from cleaner import clean_games, normalize_team_names
 from game_updates import LIVE_GAMES_FILE, read_game_updates, refresh_game_updates
+from injury_updates import refresh_injury_updates
 from model import run_elo
 from predictor import (
+    LIVE_INJURIES_FILE,
     evaluate_prediction_models,
     aggregate_team_injuries,
     fetch_report_with_retries,
-    get_exact_injury_dataset_path,
     get_latest_available_report_timestamp,
     get_latest_prediction_context,
     load_optional_team_injuries,
     predict_matchup_from_games,
-    refresh_official_injury_dataset,
     scrape_injury_reports_for_dates,
 )
 from scraper import scrape_multiple_seasons
@@ -179,17 +180,22 @@ def load_predictor_games() -> pd.DataFrame:
     return pd.concat([baseline, normalize_team_names(clean_games(updates))], ignore_index=True)
 
 
-def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool, dict[str, object]]:
+def refresh_live_datasets() -> tuple[bool, dict[str, object]]:
     _, changed = refresh_game_updates()
-    games = load_predictor_games()
-    baseline = games[games["season"] <= PREDICTOR_END_SEASON]
-    cached_injury_path = get_exact_injury_dataset_path(baseline)
-    if cached_injury_path is not None:
-        return games, not changed, {
-            "status": "cached",
-            "message": f"Using stored injury CSV {cached_injury_path.name} for the historical seasons.",
+    try:
+        injury_status = refresh_injury_updates()
+    except Exception:
+        logging.getLogger(__name__).exception("Official NBA injury refresh failed")
+        injury_status = {
+            "status": "error",
+            "message": "Could not refresh official NBA injury reports. Using the saved reports.",
         }
-    return games, not changed, refresh_official_injury_dataset(baseline)
+    return changed, injury_status
+
+
+def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool, dict[str, object]]:
+    changed, injury_status = refresh_live_datasets()
+    return load_predictor_games(), not changed, injury_status
 
 
 def build_predictor_artifacts(games: pd.DataFrame) -> dict[str, object]:
@@ -232,13 +238,7 @@ def _sanitize_injury_slug(value: str) -> str:
 
 def _load_game_dates_for_injury_seasons(start_season: int, end_season: int) -> pd.Series:
     exact_path = RAW_DIR / f"bref_games_{start_season}_{end_season}.csv"
-    source_path = exact_path if exact_path.exists() else PREDICTOR_RAW_FILE
-    if not source_path.exists():
-        raise FileNotFoundError(
-            "No game CSV was found for that season range. Scrape the game data first."
-        )
-
-    games = pd.read_csv(source_path, parse_dates = ["date"])
+    games = pd.read_csv(exact_path, parse_dates=["date"]) if exact_path.exists() else load_predictor_games()
     season_games = games[
         (games["season"] >= start_season) & (games["season"] <= end_season)
     ].copy()
@@ -467,7 +467,7 @@ def get_live_season_end_year(reference_date: datetime | None = None) -> int:
 
 
 def refresh_live_leaderboard() -> tuple[pd.DataFrame, int, bool]:
-    _, changed = refresh_game_updates()
+    changed, _ = refresh_live_datasets()
     games = get_latest_live_games()
     season = int(games["season"].max()) if not games.empty else get_live_season_end_year()
     return build_leaderboard_frame(games), season, not changed
@@ -521,6 +521,8 @@ def clear_generated_data() -> dict[str, int]:
     bundled_data = {
         LIVE_GAMES_FILE,
         LIVE_GAMES_FILE.with_suffix(".lock"),
+        LIVE_INJURIES_FILE,
+        LIVE_INJURIES_FILE.with_suffix(".lock"),
         PREDICTOR_RAW_FILE,
         RAW_DIR / f"official_nba_injuries_by_team_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.csv",
         RAW_DIR / f"official_nba_injuries_detailed_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.csv",
@@ -794,6 +796,7 @@ def create_app() -> Flask:
         prediction = None
         error = None
         injury_file_present = False
+        latest_injury_report = None
         evaluation_summary = None
         benchmark_summary = PREDICTOR_BENCHMARK_SUMMARY
 
@@ -802,6 +805,10 @@ def create_app() -> Flask:
             context = get_latest_prediction_context(games)
             injury_df = load_optional_team_injuries(games)
             injury_file_present = injury_df is not None
+            if injury_file_present and "latest_report_datetime" in injury_df:
+                latest = injury_df["latest_report_datetime"].max()
+                if pd.notna(latest):
+                    latest_injury_report = latest.strftime("%b %d, %Y %I:%M %p ET")
             evaluation_summary = load_predictor_artifacts()
             selected_season = int(context["season"])
             prediction_date = context["prediction_date"]
@@ -829,6 +836,7 @@ def create_app() -> Flask:
             home_team = ""
             away_team = ""
             injury_file_present = False
+            latest_injury_report = None
             evaluation_summary = None
             benchmark_summary = PREDICTOR_BENCHMARK_SUMMARY
 
@@ -845,6 +853,7 @@ def create_app() -> Flask:
             prediction_date = prediction_date,
             latest_completed_date = latest_completed_date,
             injury_file_present = injury_file_present,
+            latest_injury_report = latest_injury_report,
             evaluation_summary = evaluation_summary,
             benchmark_summary = benchmark_summary,
             engineered_heuristics = ENGINEERED_HEURISTICS,
@@ -882,7 +891,7 @@ def create_app() -> Flask:
             flash(injury_status["message"], "info")
         elif injury_status["status"] in {"missing_dependency", "no_overlap"}:
             flash(injury_status["message"], "info")
-        elif injury_status["status"] == "no_games":
+        elif injury_status["status"] in {"no_games", "error"}:
             flash(injury_status["message"], "error")
 
         if not games.empty:

@@ -146,17 +146,16 @@
   <article class="card math-card">
     <h2>4. Injury scraper</h2>
     <p>
-      Official injury reports come from the NBA's feed, pulled through the
-      <code>nbainjuries</code> library. Three modes cover the cases the predictor cares about:
-      grab the single latest report, walk a date range day by day, or pull a whole season range
-      keyed off the scraped game calendar.
+      The automatic refresh checks official NBA injury reports alongside the scoreboard.
+      It saves team features from reports published before each game's tipoff. The Scrape
+      page also offers exports by report, date range, or season.
     </p>
     <ul class="feature-list">
       <li>Latest mode fetches the most recent valid official report and writes it to a CSV.</li>
       <li>Date-range mode walks each date in the window and saves whatever report exists for that date, skipping days with nothing.</li>
       <li>Season-range mode uses the scraped game calendar, so injury dates line up with the games the predictor already knows about.</li>
       <li>Missing report dates either raise a clear error or are skipped with a note, depending on whether the gap is expected for that date.</li>
-      <li>Backend CSVs are cached after the first pull, so later predictor refreshes reuse them and finish much faster than the initial run.</li>
+      <li>The predictor joins the saved features by team and game date. Teams that have yet to submit a report have no injury features for that game.</li>
     </ul>
   </article>
 </section>

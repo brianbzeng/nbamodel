@@ -31,7 +31,9 @@
       <span>Latest completed games through {{ latest_completed_date or "N/A" }}</span>
       <span>Prediction target date {{ prediction_date or "N/A" }}</span>
       <span>
-        {% if injury_file_present %}
+        {% if latest_injury_report %}
+          Latest saved official injury report {{ latest_injury_report }}
+        {% elif injury_file_present %}
           Official injury CSV present for the supported seasons
         {% else %}
           No official injury CSV yet. Install nbainjuries, then hit Refresh predictor data.
@@ -44,7 +46,7 @@
         <button type="submit" class="button-secondary">Refresh predictor data</button>
       </form>
     </div>
-    <p class="muted">Completed games refresh automatically. A manual refresh also rebuilds the latest-season evaluation.</p>
+    <p class="muted">Completed games and official injury reports refresh together on game nights. A manual refresh also rebuilds the latest-season evaluation.</p>
 
     <form method="post" class="form" data-show-loading="true">
       <div class="form-columns">

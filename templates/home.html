@@ -7,7 +7,7 @@
     <h1>NBA Odds Predictor</h1>
     <p class="lede">
       Follow the NBA Elo leaderboard and predict matchups using completed games.
-      The game data refreshes automatically every three hours.
+      Final scores and official injury reports refresh automatically on game nights.
     </p>
     <p class="lede">
       The app does one thing end to end: pull games, clean them, update ratings, and show
@@ -64,7 +64,7 @@
 <section class="grid pipeline-grid">
   <article class="card pipeline-card">
     <h2>Scraping</h2>
-    <p>Live updates use ESPN’s NBA scoreboard. The Scrape page offers separate Basketball-Reference exports by season range.</p>
+    <p>Live updates combine final scores from ESPN’s NBA scoreboard with official NBA injury reports. The Scrape page offers separate Basketball-Reference exports by season range.</p>
     <ul class="feature-list">
       <li>Only games with a final score are written. Postponed, suspended, or not-yet-played rows are dropped at parse time.</li>
       <li>For the current season, the import stops at the most recent completed game, so a scheduled result never gets fed to the model as a played one.</li>

@@ -25,6 +25,7 @@ from cleaner import TEAM_MAP_BREF
 BASE_DIR = Path(__file__).resolve().parent
 RAW_DIR = BASE_DIR / "data" / "raw"
 REFERENCE_DIR = BASE_DIR / "data" / "reference"
+LIVE_INJURIES_FILE = RAW_DIR / "official_nba_injuries_by_team_live.csv"
 OFFICIAL_INJURY_FIRST_SEASON = 2022
 REPORT_HOURS = [17, 14, 13, 12, 11, 10, 9]
 MAX_REPORT_FETCH_ATTEMPTS = 3
@@ -187,13 +188,15 @@ def load_optional_team_injuries(games: pd.DataFrame) -> Optional[pd.DataFrame]:
 
     exact_path = get_exact_injury_dataset_path(games)
     injury_paths = [exact_path] if exact_path is not None else _injury_csv_candidates()
+    if exact_path is not None and LIVE_INJURIES_FILE.exists():
+        injury_paths.append(LIVE_INJURIES_FILE)
     if not injury_paths:
         return None
 
     frames = [pd.read_csv(path) for path in injury_paths]
     injury_df = pd.concat(frames, ignore_index = True)
     injury_df["game_date"] = pd.to_datetime(injury_df["game_date"]).dt.normalize()
-    injury_df["latest_report_datetime"] = pd.to_datetime(injury_df["latest_report_datetime"])
+    injury_df["latest_report_datetime"] = pd.to_datetime(injury_df["latest_report_datetime"], format="mixed")
     injury_df["team"] = injury_df["team"].map(TEAM_MAP_BREF).fillna(injury_df["team"])
     injury_df = injury_df.sort_values(
         ["game_date", "latest_report_datetime", "team"]

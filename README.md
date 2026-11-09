@@ -34,17 +34,23 @@ The predictor uses pre-game context only:
 - `Refresh predictor data` checks for new final scores and rebuilds the latest-season evaluation
 - `Reset data` clears generated exports, caches, and results while keeping the bundled datasets
 
-## Automatic game updates
+## Automatic game and injury updates
 
-GitHub Actions checks the ESPN NBA scoreboard every three hours at minute 17 and
-publishes score changes to `data/raw/nba_game_updates.csv`. Render deploys the
-updated snapshot from the default branch. The leaderboard rates the latest
-season in that file, and the predictor combines it with the bundled 2021–25
-history for training. The snapshot includes NBA Cup, play-in, and playoff
-results. Each refresh keeps saved games and merges new finals and score corrections.
+GitHub Actions checks every hour at :17 from noon through 3 a.m. Eastern, with a
+6:17 a.m. reconciliation. It saves ESPN finals and score corrections to
+`data/raw/nba_game_updates.csv` and official NBA team injury features to
+`data/raw/official_nba_injuries_by_team_live.csv`. The leaderboard rates the latest
+season. The predictor trains on the full game history and joins injury features
+by team and game date using reports published before tipoff. Reports for upcoming
+games can feed matchup predictions before the final score is available.
 
-Run `python game_updates.py` to refresh a local checkout, or run **Refresh NBA
-games** manually from the repository’s Actions tab.
+Render deploys changes to either snapshot. If injury retrieval fails, the workflow
+can still publish finals and retry injuries on the next run. A verification commit
+after 45 idle days keeps the offseason schedule active without redeploying Render.
+
+Run `python game_updates.py` and `python injury_updates.py` to refresh a local
+checkout, or run **Refresh NBA games** from the repository’s Actions tab. Use
+`python injury_updates.py --since YYYY-MM-DD` to backfill older reports.
 
 ## Run it
 

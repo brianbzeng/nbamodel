@@ -31,6 +31,17 @@ def read_game_updates(path: Path = LIVE_GAMES_FILE) -> pd.DataFrame:
         return pd.DataFrame(columns=GAME_COLUMNS)
 
 
+def write_snapshot(frame: pd.DataFrame, path: Path, date_format: str | None = None) -> None:
+    # Readers always see either the previous complete CSV or the new one.
+    with NamedTemporaryFile(dir=path.parent, suffix=".tmp", delete=False) as output:
+        temporary_path = Path(output.name)
+    try:
+        frame.to_csv(temporary_path, index=False, date_format=date_format, lineterminator="\n")
+        temporary_path.replace(path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
+
 def fetch_scoreboard(period: str) -> list[dict]:
     retries = Retry(total=2, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
     with requests.Session() as session:
@@ -45,13 +56,18 @@ def fetch_scoreboard(period: str) -> list[dict]:
     return events
 
 
+def nba_competition(event: dict) -> dict | None:
+    if event["season"]["type"] not in GAME_SEASON_TYPES:
+        return None
+    competition = event["competitions"][0]
+    return None if competition.get("type", {}).get("abbreviation") == "ALLSTAR" else competition
+
+
 def completed_games(events: list[dict], start: date, today: date) -> pd.DataFrame:
     games = []
     for event in events:
-        if event["season"]["type"] not in GAME_SEASON_TYPES:
-            continue
-        competition = event["competitions"][0]
-        if competition.get("type", {}).get("abbreviation") == "ALLSTAR":
+        competition = nba_competition(event)
+        if competition is None:
             continue
         if competition["status"]["type"]["name"] not in {"STATUS_FINAL", "STATUS_FINAL_OVERTIME"}:
             continue
@@ -105,14 +121,7 @@ def refresh_game_updates(path: Path = LIVE_GAMES_FILE) -> tuple[pd.DataFrame, bo
         if updated.equals(existing):
             return existing, False
 
-        # Readers always see either the previous complete CSV or the new one.
-        with NamedTemporaryFile(dir=path.parent, suffix=".tmp", delete=False) as output:
-            temporary_path = Path(output.name)
-        try:
-            updated.to_csv(temporary_path, index=False, date_format="%Y-%m-%d", lineterminator="\n")
-            temporary_path.replace(path)
-        finally:
-            temporary_path.unlink(missing_ok=True)
+        write_snapshot(updated, path, date_format="%Y-%m-%d")
         return updated, True
 
 

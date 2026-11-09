@@ -429,7 +429,7 @@ def test_bayesian_page_renders():
     assert "Inner-Workings" in body
     assert "Elo leaderboard" in body
     assert "Home-win predictor" in body
-    assert "Official injury reports come from the NBA's feed" in body
+    assert "reports published before each game's tipoff" in body
     assert "1500" in body
     assert "<math" in body
 
