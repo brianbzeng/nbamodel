@@ -948,20 +948,9 @@ def _fit_logistic_regression(feature_df: pd.DataFrame) -> Pipeline:
     return model.fit(feature_df[CATEGORICAL_FEATURES + numeric_features], feature_df["home_win"])
 
 
-def train_prediction_models(
-    games: pd.DataFrame,
-    injury_df: Optional[pd.DataFrame] = None,
-) -> tuple[Pipeline, Pipeline, pd.DataFrame]:
-    if games.empty:
-        raise ValueError("At least one completed game is required to train the predictor.")
-
-    feature_df = merge_injury_features(build_pregame_features(games), injury_df)
-    if feature_df.empty:
-        raise ValueError("Feature engineering produced no training rows.")
-
-    logistic_regression = _fit_logistic_regression(feature_df)
+def _fit_random_forest(feature_df: pd.DataFrame) -> Pipeline:
     numeric_features = get_numeric_features()
-    random_forest = Pipeline(
+    model = Pipeline(
         steps = [
             ("preprocessor", _build_preprocessor(numeric_features)),
             (
@@ -976,8 +965,21 @@ def train_prediction_models(
         ]
     )
 
-    random_forest.fit(feature_df[CATEGORICAL_FEATURES + numeric_features], feature_df["home_win"])
-    return logistic_regression, random_forest, feature_df
+    return model.fit(feature_df[CATEGORICAL_FEATURES + numeric_features], feature_df["home_win"])
+
+
+def train_prediction_models(
+    games: pd.DataFrame,
+    injury_df: Optional[pd.DataFrame] = None,
+) -> tuple[Pipeline, Pipeline, pd.DataFrame]:
+    if games.empty:
+        raise ValueError("At least one completed game is required to train the predictor.")
+
+    feature_df = merge_injury_features(build_pregame_features(games), injury_df)
+    if feature_df.empty:
+        raise ValueError("Feature engineering produced no training rows.")
+
+    return _fit_logistic_regression(feature_df), _fit_random_forest(feature_df), feature_df
 
 
 def evaluate_prediction_models(
@@ -1237,8 +1239,12 @@ def predict_slate(
     game_date: pd.Timestamp,
     *,
     same_day_finals: Optional[pd.DataFrame] = None,
+    model: str = "logistic",
 ) -> dict[str, float]:
     """Fit once per date, using same-day finals only when verified by the caller."""
+    fitters = {"logistic": _fit_logistic_regression, "random_forest": _fit_random_forest}
+    if model not in fitters:
+        raise ValueError(f"Unknown prediction model: {model}")
     if not matchups:
         return {}
 
@@ -1256,7 +1262,7 @@ def predict_slate(
         raise ValueError("No completed games exist before the requested game date.")
 
     training = merge_injury_features(build_pregame_features(completed), injury_df)
-    model = _fit_logistic_regression(training)
+    fitted_model = fitters[model](training)
     matchup_injuries = None
     if injury_df is not None and not injury_df.empty:
         matchup_injuries = injury_df.loc[
@@ -1274,7 +1280,7 @@ def predict_slate(
         )
         for matchup in matchups
     ], ignore_index=True)
-    probabilities = model.predict_proba(slate_features[list(model.feature_names_in_)])[:, 1]
+    probabilities = fitted_model.predict_proba(slate_features[list(fitted_model.feature_names_in_)])[:, 1]
     return {str(matchup["game_id"]): float(probability) for matchup, probability in zip(matchups, probabilities)}
 
 

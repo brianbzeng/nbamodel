@@ -173,17 +173,27 @@ def set_prediction_data(monkeypatch):
     )
     slate["game_date"] = pd.to_datetime(slate["game_date"])
     slate["tipoff_utc"] = pd.to_datetime(slate["tipoff_utc"], utc=True)
+    slate["predicted_at_utc"] = pd.to_datetime(
+        ["2026-11-09T01:00:00Z", None, "2026-11-08T00:00:00Z", "2026-11-09T23:45:00Z"], utc=True
+    )
     finals = pd.DataFrame(
         [
-            (pd.Timestamp("2026-11-07"), "Atlanta Hawks", "Brooklyn Nets", 110, 101),
-            (pd.Timestamp("2026-11-08"), "Chicago Bulls", "Philadelphia 76ers", 121, 127),
+            (pd.Timestamp("2026-11-07"), 2027, "Atlanta Hawks", "Brooklyn Nets", 110, 101),
+            (pd.Timestamp("2026-11-08"), 2027, "Chicago Bulls", "Philadelphia 76ers", 121, 127),
+            (pd.Timestamp("2026-11-06"), 2027, "Detroit Pistons", "Utah Jazz", 116, 115),
+            (pd.Timestamp("2026-06-13"), 2026, "New York Knicks", "San Antonio Spurs", 94, 90),
         ],
-        columns=["date", "home_team", "away_team", "home_pts", "away_pts"],
+        columns=["date", "season", "home_team", "away_team", "home_pts", "away_pts"],
+    )
+    replay = pd.DataFrame(
+        [(pd.Timestamp("2026-11-08"), "CHI", "PHI", 0.40), (pd.Timestamp("2026-11-07"), "ATL", "BRK", 0.30)],
+        columns=["game_date", "home_team", "away_team", "home_win_probability"],
     )
 
     monkeypatch.setattr(app_module, "datetime", FixedDateTime)
     monkeypatch.setattr(app_module, "read_daily_predictions", lambda: slate)
     monkeypatch.setattr(app_module, "read_game_updates", lambda: finals)
+    monkeypatch.setattr(app_module, "read_prediction_replay", lambda: replay)
     return slate
 
 
@@ -199,25 +209,31 @@ def test_predictor_shows_the_pacific_slate_and_saved_picks(monkeypatch):
     assert "New Orleans Pelicans" in body
     assert "54.0%" in body and "46.0%" in body
     assert "<strong>New Orleans Pelicans</strong>" in body
-    assert "127" in body and "No saved pregame pick" in body
+    assert "127" in body and "Replay · Random forest" in body
     assert body.index("New Orleans Pelicans") < body.index("Philadelphia 76ers")
     assert "Atlanta Hawks" not in body and "Cleveland Cavaliers" not in body
     assert "<form" not in body
     assert client.post("/predictor").status_code == 405
 
 
-def test_prediction_history_only_compares_saved_picks_with_finals(monkeypatch):
+def test_prediction_history_includes_every_current_season_final_newest_first(monkeypatch):
     set_prediction_data(monkeypatch)
     response = create_app().test_client().get("/predictor?view=history")
     body = response.get_data(as_text=True)
 
     assert response.status_code == 200
     assert "Prediction history" in body
-    assert "1 of 1 picks correct" in body
+    assert "3 finals · 1 of 1 live picks correct" in body
     assert "Atlanta Hawks won" in body
+    assert "Philadelphia 76ers won" in body
     assert "110" in body and "101" in body
     assert "65.0%" in body
-    assert "Philadelphia 76ers" not in body
+    assert "70.0%" not in body  # Live pick takes precedence over replay for Atlanta.
+    assert "Replay · Random forest" in body
+    assert "Saved pregame · Logistic regression" in body
+    assert "Detroit Pistons" in body and "No pick saved before tipoff" in body
+    assert body.index("Philadelphia 76ers") < body.index("Atlanta Hawks") < body.index("Detroit Pistons")
+    assert "New York Knicks" not in body
     assert "New Orleans Pelicans" not in body
 
 

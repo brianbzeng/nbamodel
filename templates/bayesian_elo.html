@@ -98,7 +98,7 @@
   <article class="card math-card">
     <h2>2. Home-win predictor</h2>
     <p>
-      The daily predictor trains logistic regression on completed games, including any finals
+      The daily predictor trains a random forest on completed games, including any finals
       already available that day. It scores each matchup in the hour before tipoff using the
       latest official reports for that game, then pairs the saved pick with the final score in History.
     </p>
@@ -116,10 +116,9 @@
     </ul>
     <blockquote class="callout">
       In the original benchmark, evaluated on held-out 2024–25 games, home-court baseline accuracy was
-      {{ "%.1f"|format(benchmark.home_baseline_accuracy * 100) }}%, logistic
-      {{ "%.1f"|format(benchmark.logistic_accuracy * 100) }}%, random forest
-      {{ "%.1f"|format(benchmark.random_forest_accuracy * 100) }}%. The linear model edges
-      the tree model by about one point on held-out 2025 games.
+      {{ "%.2f"|format(benchmark.home_baseline_accuracy * 100) }}%, logistic regression
+      {{ "%.2f"|format(benchmark.logistic_accuracy * 100) }}%, and random forest
+      {{ "%.2f"|format(benchmark.random_forest_accuracy * 100) }}%.
     </blockquote>
   </article>
 </section>

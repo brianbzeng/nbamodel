@@ -22,15 +22,16 @@ from game_updates import (
 DAILY_PREDICTIONS_FILE = LIVE_GAMES_FILE.with_name("nba_daily_predictions.csv")
 BASELINE_GAMES_FILE = LIVE_GAMES_FILE.with_name("bref_games_2022_2025.csv")
 PREGAME_WINDOW = timedelta(minutes=60)
+DEFAULT_PREDICTION_MODEL = "random_forest"
 MATCHUP_KEY = ["game_date", "home_team", "away_team"]
 PROVENANCE_TIMES = ["home_injury_report_utc", "away_injury_report_utc"]
 PROVENANCE_COUNTS = ["same_day_finals", "home_out_count", "away_out_count"]
-PICK_VALUES = ["home_win_probability", *PROVENANCE_COUNTS, *PROVENANCE_TIMES]
+PICK_VALUES = ["home_win_probability", "model", *PROVENANCE_COUNTS, *PROVENANCE_TIMES]
 PICK_COLUMNS = [*PICK_VALUES, "predicted_at_utc"]
 PREDICTION_COLUMNS = [
     "game_id", "game_date", "tipoff_utc", "season", "home_team", "away_team", "status",
     "home_win_probability", "predicted_at_utc", "same_day_finals",
-    "home_injury_report_utc", "away_injury_report_utc", "home_out_count", "away_out_count",
+    "home_injury_report_utc", "away_injury_report_utc", "home_out_count", "away_out_count", "model",
 ]
 STATUS_NAMES = {
     "STATUS_SCHEDULED": "scheduled",
@@ -51,6 +52,8 @@ def _typed_predictions(frame: pd.DataFrame) -> pd.DataFrame:
     for column in PROVENANCE_COUNTS:
         frame[column] = frame[column].astype("Int64")
     frame["home_win_probability"] = frame["home_win_probability"].astype(float)
+    # Saved picks from before the model switch were all logistic regression.
+    frame["model"] = frame["model"].astype("string").fillna("logistic").where(frame["home_win_probability"].notna())
     return frame
 
 
@@ -171,7 +174,9 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
     predictions = {}
     for game_date, slate in sorted(slates.items()):
         same_day_finals = updates[updates["date"] == game_date]
-        probabilities = predict_slate(games, slate, injuries, game_date, same_day_finals=same_day_finals)
+        probabilities = predict_slate(
+            games, slate, injuries, game_date, same_day_finals=same_day_finals, model=DEFAULT_PREDICTION_MODEL
+        )
         reports = {}
         if injuries is not None:
             day_reports = injuries.loc[
@@ -186,6 +191,7 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
             values = {
                 **dict.fromkeys(PICK_VALUES),
                 "home_win_probability": round(probability, 6),
+                "model": DEFAULT_PREDICTION_MODEL,
                 "same_day_finals": len(same_day_finals),
             }
             for side in ("home", "away"):

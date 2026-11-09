@@ -590,11 +590,12 @@ td, .metric strong, .info-row strong { font-variant-numeric: tabular-nums; }
 .prediction-inputs li { display: flex; flex-wrap: wrap; gap: 4px 10px; }
 .prediction-inputs a { color: var(--accent-ink); text-decoration: underline; }
 .prediction-empty { margin: 0; padding: 16px 24px; color: var(--ink-soft); border-top: 1px solid var(--rule); }
+.prediction-history-note { margin: 0; padding: 0 24px 12px; color: var(--ink-soft); font-size: 0.82rem; }
 .prediction-pagination { border-top: 1px solid var(--rule); justify-content: flex-end; }
 
 @media (max-width: 640px) {
   .prediction-columns { display: none; }
-  .prediction-heading, .prediction-empty, .prediction-pagination { padding-inline: 16px; }
+  .prediction-heading, .prediction-empty, .prediction-pagination, .prediction-history-note { padding-inline: 16px; }
   .prediction-game { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 12px 16px; }
   .prediction-game:first-child { border-top: 1px solid var(--rule); }
   .prediction-pick { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }

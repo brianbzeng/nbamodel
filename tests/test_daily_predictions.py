@@ -31,6 +31,7 @@ def pick(probability, finals=0):
     return {
         **dict.fromkeys(daily_predictions.PICK_VALUES),
         "home_win_probability": probability,
+        "model": daily_predictions.DEFAULT_PREDICTION_MODEL,
         "same_day_finals": finals,
     }
 
@@ -60,6 +61,7 @@ def test_unchanged_pregame_pick_does_not_republish_and_final_pick_is_frozen(tmp_
     assert first["game_date"].dt.strftime("%Y-%m-%d").tolist() == ["2026-11-08"] * 2
     assert fits == [["1"]]
     assert first.iloc[0]["home_win_probability"] == 0.61
+    assert first.iloc[0]["model"] == "random_forest"
     assert pd.isna(first.iloc[1]["home_win_probability"])
 
     now = datetime.fromisoformat("2026-11-09T00:20:00Z")
@@ -143,6 +145,7 @@ def test_legacy_early_picks_are_removed_for_scheduled_games_only(tmp_path, monke
     rows = snapshot.set_index("game_id")
     assert pd.isna(rows.loc["1", "home_win_probability"])
     assert rows.loc["2", "home_win_probability"] == 0.71
+    assert rows.loc["2", "model"] == "logistic"
     assert pd.isna(rows.loc["2", "same_day_finals"])
     assert pd.isna(rows.loc["3", "home_win_probability"])
 

@@ -22,6 +22,7 @@ from game_updates import LIVE_GAMES_FILE, NBA_TIMEZONE, read_game_updates, refre
 from injury_reports import report_pdf_url
 from injury_updates import refresh_injury_updates
 from model import run_elo
+from prediction_replay import REPLAY_FILE, read_prediction_replay
 from predictor import (
     LIVE_INJURIES_FILE,
     aggregate_team_injuries,
@@ -54,6 +55,7 @@ PREDICTOR_PROCESSED_FILE = (
 )
 PREDICTION_DISPLAY_TZ = ZoneInfo("America/Los_Angeles")
 PREDICTION_HISTORY_PAGE_SIZE = 25
+PREDICTION_MODEL_NAMES = {"random_forest": "Random forest", "logistic": "Logistic regression"}
 PREDICTION_TEAM_NAMES = {}
 for team_name, team_code in TEAM_MAP_BREF.items():
     PREDICTION_TEAM_NAMES.setdefault(team_code, team_name)
@@ -198,13 +200,28 @@ def prediction_injury_details(game, saved_reports: dict, used_reports: bool) -> 
 
 def load_prediction_rows(today: date, history: bool) -> list[dict]:
     slate = read_daily_predictions()
-    if slate.empty:
-        return []
-
     finals = {
         (game.date, TEAM_MAP_BREF[game.home_team], TEAM_MAP_BREF[game.away_team]): game
         for game in read_game_updates().itertuples(index=False)
     }
+    replays = {
+        (game.game_date, game.home_team, game.away_team): game.home_win_probability
+        for game in read_prediction_replay().itertuples(index=False)
+    }
+    scheduled = {
+        (game.game_date, game.home_team, game.away_team): game
+        for game in slate.sort_values("tipoff_utc").itertuples(index=False)
+    }
+    if history:
+        season = get_live_season_end_year(today)
+        keys = sorted(
+            (key for key, final in finals.items() if final.season == season),
+            key=lambda key: (key[0], scheduled[key].tipoff_utc.value if key in scheduled else 0),
+            reverse=True,
+        )
+    else:
+        keys = [key for key, game in scheduled.items() if game.tipoff_utc.tz_convert(PREDICTION_DISPLAY_TZ).date() == today]
+
     saved_reports = {}
     if not history and LIVE_INJURIES_FILE.exists():
         injuries = pd.read_csv(LIVE_INJURIES_FILE, parse_dates=["game_date", "latest_report_datetime"])
@@ -216,35 +233,43 @@ def load_prediction_rows(today: date, history: bool) -> list[dict]:
             for row in injuries.itertuples(index=False)
         }
     rows = []
-    for game in slate.sort_values("tipoff_utc", ascending=not history).itertuples(index=False):
-        local_tipoff = game.tipoff_utc.tz_convert(PREDICTION_DISPLAY_TZ)
-        if not history and local_tipoff.date() != today:
-            continue
-        final = finals.get((game.game_date, game.home_team, game.away_team))
-        has_pick = pd.notna(game.home_win_probability)
-        if history and (final is None or not has_pick):
-            continue
-
-        away, home = game.away_team, game.home_team
-        pick = (home if game.home_win_probability > 0.5 else away) if has_pick else None
+    for key in keys:
+        game_date, home, away = key
+        game = scheduled.get(key)
+        final = finals.get(key)
+        local_tipoff = game.tipoff_utc.tz_convert(PREDICTION_DISPLAY_TZ) if game is not None else None
+        probability = getattr(game, "home_win_probability", None)
+        predicted_at = getattr(game, "predicted_at_utc", None)
+        has_live_pick = pd.notna(probability) and pd.notna(predicted_at) and predicted_at < game.tipoff_utc
+        source = "live" if has_live_pick else None
+        model = getattr(game, "model", "logistic") if has_live_pick else None
+        if not has_live_pick:
+            probability = None
+            if final is not None and key in replays:
+                probability, source, model = replays[key], "replay", "random_forest"
+        has_pick = pd.notna(probability)
+        pick = (home if probability > 0.5 else away) if has_pick else None
         winner = (home if final.home_pts > final.away_pts else away) if final is not None else None
         same_day_finals = getattr(game, "same_day_finals", None)
-        has_inputs = has_pick and pd.notna(same_day_finals)
-        saved_at = game.predicted_at_utc.tz_convert(PREDICTION_DISPLAY_TZ) if has_inputs else None
+        has_inputs = has_live_pick and pd.notna(same_day_finals)
+        saved_at = predicted_at.tz_convert(PREDICTION_DISPLAY_TZ) if has_inputs else None
+        display_date = local_tipoff if local_tipoff is not None else game_date
         rows.append({
-            "day": local_tipoff.strftime("%a, %b %d").replace(" 0", " "),
-            "tipoff": local_tipoff.strftime("%I:%M %p").lstrip("0") + " PT",
-            "tipoff_iso": game.tipoff_utc.isoformat(),
+            "day": display_date.strftime("%a, %b %d").replace(" 0", " "),
+            "tipoff": local_tipoff.strftime("%I:%M %p").lstrip("0") + " PT" if local_tipoff is not None else None,
+            "tipoff_iso": game.tipoff_utc.isoformat() if game is not None else game_date.date().isoformat(),
             "status": "final" if final is not None else game.status,
             "away": PREDICTION_TEAM_NAMES.get(away, away),
             "home": PREDICTION_TEAM_NAMES.get(home, home),
-            "away_chance": f"{1 - game.home_win_probability:.1%}" if has_pick else None,
-            "home_chance": f"{game.home_win_probability:.1%}" if has_pick else None,
+            "away_chance": f"{1 - probability:.1%}" if has_pick else None,
+            "home_chance": f"{probability:.1%}" if has_pick else None,
             "away_score": final.away_pts if final is not None else None,
             "home_score": final.home_pts if final is not None else None,
             "pick": PREDICTION_TEAM_NAMES.get(pick, pick),
             "winner": PREDICTION_TEAM_NAMES.get(winner, winner),
             "correct": pick == winner if has_pick and winner is not None else None,
+            "source": source,
+            "model": PREDICTION_MODEL_NAMES.get(model),
             "same_day_finals": int(same_day_finals) if has_inputs else None,
             "saved_at": saved_at.strftime("%I:%M %p PT").lstrip("0") if saved_at is not None else None,
             "injuries": prediction_injury_details(game, saved_reports, has_inputs) if has_inputs or not history else [],
@@ -492,7 +517,7 @@ def build_leaderboard_frame(games: pd.DataFrame) -> pd.DataFrame:
     return standings[["rank", "team", "rating", "rating_pct"]]
 
 
-def get_live_season_end_year(reference_date: datetime | None = None) -> int:
+def get_live_season_end_year(reference_date: date | None = None) -> int:
     current = reference_date or datetime.now()
     if current.month >= 10:
         return current.year + 1
@@ -562,6 +587,8 @@ def clear_generated_data() -> dict[str, int]:
         LIVE_INJURIES_FILE.with_suffix(".lock"),
         DAILY_PREDICTIONS_FILE,
         DAILY_PREDICTIONS_FILE.with_suffix(".lock"),
+        REPLAY_FILE,
+        REPLAY_FILE.with_suffix(".lock"),
         PREDICTOR_RAW_FILE,
         RAW_DIR / f"official_nba_injuries_by_team_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.csv",
         RAW_DIR / f"official_nba_injuries_detailed_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.csv",
@@ -843,7 +870,7 @@ def create_app() -> Flask:
         today = datetime.now(PREDICTION_DISPLAY_TZ).date()
         history = request.args.get("view") == "history"
         rows = load_prediction_rows(today, history)
-        correct = sum(row["correct"] is True for row in rows)
+        live_outcomes = [row["correct"] for row in rows if row["source"] == "live" and row["correct"] is not None]
         total = len(rows)
         page_count = max(1, (total + PREDICTION_HISTORY_PAGE_SIZE - 1) // PREDICTION_HISTORY_PAGE_SIZE)
         page = min(max(1, request.args.get("page", 1, type=int)), page_count) if history else 1
@@ -857,7 +884,9 @@ def create_app() -> Flask:
             today=today.strftime("%A, %B %d").replace(" 0", " "),
             rows=rows,
             total=total,
-            correct=correct,
+            live_total=len(live_outcomes),
+            correct=sum(live_outcomes),
+            season=get_live_season_end_year(today),
             page=page,
             page_count=page_count,
         )

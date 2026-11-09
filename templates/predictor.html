@@ -5,7 +5,7 @@
   <div>
     <p class="eyebrow">NBA game predictions</p>
     <h1>Predictor</h1>
-    <p class="lede">Picks appear in the hour before tipoff and refresh as new finals and injury reports come in.</p>
+    <p class="lede">Random forest picks appear in the hour before tipoff and refresh as new finals and injury reports come in.</p>
   </div>
 </section>
 
@@ -17,13 +17,19 @@
 
   <div class="prediction-heading">
     {% if history %}
-      <h2 id="prediction-view">Prediction history</h2>
-      {% if total %}<span>{{ correct }} of {{ total }} picks correct</span>{% endif %}
+      <h2 id="prediction-view">Prediction history · {{ season - 1 }}–{{ (season|string)[-2:] }}</h2>
+      {% if total %}
+        <span>{{ total }} {{ 'final' if total == 1 else 'finals' }}{% if live_total %} · {{ correct }} of {{ live_total }} live picks correct{% endif %}</span>
+      {% endif %}
     {% else %}
       <h2 id="prediction-view">{{ today }}</h2>
       <span>{{ total }} {{ 'game' if total == 1 else 'games' }}</span>
     {% endif %}
   </div>
+
+  {% if history and rows %}
+    <p class="prediction-history-note">Replays use games from before the matchup date. Live accuracy counts picks saved before tipoff.</p>
+  {% endif %}
 
   {% if rows %}
     <div class="prediction-columns" aria-hidden="true">
@@ -60,6 +66,7 @@
           {% if game.pick %}
             <span class="prediction-pick-label prediction-mobile-label">Model pick</span>
             <strong>{{ game.pick }}</strong>
+            <span class="prediction-pick-label">{{ 'Replay' if game.source == 'replay' else 'Saved pregame' }}{% if game.model %} · {{ game.model }}{% endif %}</span>
             {% if history %}
               <span class="prediction-outcome">{{ game.winner }} won</span>
               <span class="{{ 'prediction-correct' if game.correct else 'prediction-missed' }}">{{ 'Correct' if game.correct else 'Missed' }}</span>
@@ -67,7 +74,7 @@
           {% elif game.status == 'scheduled' %}
             <span class="prediction-pick-label">Pick due in the final hour</span>
           {% else %}
-            <span class="prediction-pick-label">No saved pregame pick</span>
+            <span class="prediction-pick-label">No pick saved before tipoff</span>
           {% endif %}
         </div>
 
@@ -95,7 +102,7 @@
       {% endfor %}
     </ul>
   {% elif history %}
-    <p class="prediction-empty">Saved pregame picks appear here once their final scores are available.</p>
+    <p class="prediction-empty">No final scores for this season yet.</p>
   {% else %}
     <p class="prediction-empty">No games on today’s saved schedule.</p>
   {% endif %}

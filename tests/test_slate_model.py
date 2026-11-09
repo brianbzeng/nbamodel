@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 import predictor
 
@@ -43,7 +44,11 @@ def test_daily_slate_fits_and_scores_once_using_only_prior_games(monkeypatch):
     assert calls == ["fit", "score"]
 
 
-def test_daily_slate_uses_verified_finals_and_latest_matchup_reports(monkeypatch):
+@pytest.mark.parametrize(
+    ("model", "fitter"),
+    [("logistic", "_fit_logistic_regression"), ("random_forest", "_fit_random_forest")],
+)
+def test_daily_slate_uses_verified_finals_and_latest_matchup_reports(monkeypatch, model, fitter):
     day = pd.Timestamp("2026-11-08")
     prior_day = pd.Timestamp("2026-11-07")
     next_day = pd.Timestamp("2026-11-09")
@@ -90,10 +95,12 @@ def test_daily_slate_uses_verified_finals_and_latest_matchup_reports(monkeypatch
         assert training.iloc[-1][["home_team", "away_team", "home_win"]].tolist() == ["BOS", "DET", 0]
         return Model()
 
-    monkeypatch.setattr(predictor, "_fit_logistic_regression", fit)
+    monkeypatch.setattr(predictor, fitter, fit)
     matchups = [{"game_id": "target", "season": 2027, "home_team": "BOS", "away_team": "LAL"}]
 
-    assert predictor.predict_slate(games, matchups, injuries, day, same_day_finals=finals) == {"target": 0.75}
+    assert predictor.predict_slate(
+        games, matchups, injuries, day, same_day_finals=finals, model=model
+    ) == {"target": 0.75}
 
 
 def test_injury_loader_uses_latest_report_available_at_the_cutoff(tmp_path, monkeypatch):
