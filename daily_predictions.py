@@ -1,6 +1,7 @@
 """Build and save pregame probabilities for the upcoming NBA slate."""
 
 import argparse
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
@@ -33,9 +34,12 @@ REST_DAY_COLUMNS = ["home_rest_days", "away_rest_days"]
 PROVENANCE_COUNTS = ["same_day_finals", "home_out_count", "away_out_count", *REST_DAY_COLUMNS]
 PLAYER_IMPACT_COLUMN = "home_player_impact_pp"
 LOGISTIC_PROBABILITY_COLUMN = "logistic_home_win_probability"
+PLAYER_IMPACT_PROBABILITY_COLUMN = "player_impact_home_win_probability"
+EXPERIMENT_VERSION_COLUMN = "experiment_version"
+PLAYER_IMPACT_EXPERIMENT = "rf_player_impact_v1"
 PICK_VALUES = [
     "home_win_probability", "model", *PROVENANCE_COUNTS, *PROVENANCE_TIMES,
-    PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN,
+    PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN, PLAYER_IMPACT_PROBABILITY_COLUMN, EXPERIMENT_VERSION_COLUMN,
 ]
 PICK_COLUMNS = [*PICK_VALUES, "predicted_at_utc"]
 PREDICTION_COLUMNS = [
@@ -43,6 +47,7 @@ PREDICTION_COLUMNS = [
     "home_win_probability", "predicted_at_utc", "same_day_finals",
     "home_injury_report_utc", "away_injury_report_utc", "home_out_count", "away_out_count", "model",
     PLAYER_IMPACT_COLUMN, *REST_DAY_COLUMNS, LOGISTIC_PROBABILITY_COLUMN,
+    PLAYER_IMPACT_PROBABILITY_COLUMN, EXPERIMENT_VERSION_COLUMN,
 ]
 STATUS_NAMES = {
     "STATUS_SCHEDULED": "scheduled",
@@ -62,8 +67,11 @@ def _typed_predictions(frame: pd.DataFrame) -> pd.DataFrame:
         frame[column] = pd.to_datetime(frame[column], format="mixed", utc=True)
     for column in PROVENANCE_COUNTS:
         frame[column] = frame[column].astype("Int64")
-    for column in ("home_win_probability", PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN):
+    for column in (
+        "home_win_probability", PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN, PLAYER_IMPACT_PROBABILITY_COLUMN,
+    ):
         frame[column] = frame[column].astype(float)
+    frame[EXPERIMENT_VERSION_COLUMN] = frame[EXPERIMENT_VERSION_COLUMN].astype("string")
     # Saved picks from before the model switch were all logistic regression.
     frame["model"] = frame["model"].astype("string").fillna("logistic").where(frame["home_win_probability"].notna())
     return frame
@@ -184,7 +192,7 @@ def _final_games(events: list[dict], slate: list[dict], as_of: datetime) -> pd.D
 
 
 def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) -> dict[str, dict]:
-    from player_impact import PLAYER_IMPACT_MODEL, player_adjusted_picks
+    from player_impact import player_adjusted_picks
     from predictor import load_optional_team_injuries, predict_slate_models
 
     history = normalize_team_names(clean_games(pd.read_csv(BASELINE_GAMES_FILE)))
@@ -204,7 +212,11 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
             models=(DEFAULT_PREDICTION_MODEL, COMPARISON_MODEL),
         )
         probabilities = model_probabilities[DEFAULT_PREDICTION_MODEL]
-        adjusted_picks = player_adjusted_picks(slate, probabilities, injuries)
+        try:
+            experimental_picks = player_adjusted_picks(slate, probabilities, injuries)
+        except (KeyError, OSError, ValueError):
+            logging.getLogger(__name__).exception("Could not score player impact for %s", game_date.date())
+            experimental_picks = {}
         reports = {}
         if injuries is not None:
             day_reports = injuries.loc[
@@ -213,8 +225,9 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
             reports = day_reports.set_index("team").to_dict("index")
         for matchup in slate:
             game_id = matchup["game_id"]
-            probability = float(adjusted_picks[game_id])
+            probability = probabilities[game_id]
             logistic_probability = model_probabilities[COMPARISON_MODEL][game_id]
+            experiment_probability = experimental_picks.get(game_id)
             if not (0 <= probability <= 1 and 0 <= logistic_probability <= 1):
                 raise ValueError(f"Invalid home win probability for ESPN game {game_id}.")
             values = {
@@ -225,9 +238,9 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
                 "same_day_finals": len(same_day_finals),
                 **dict(zip(REST_DAY_COLUMNS, rest_days[game_id])),
             }
-            if probability != probabilities[game_id]:
-                values["model"] = PLAYER_IMPACT_MODEL
-                values[PLAYER_IMPACT_COLUMN] = round(100 * (probability - probabilities[game_id]), 2)
+            if experiment_probability is not None and 0 <= experiment_probability <= 1:
+                values[PLAYER_IMPACT_PROBABILITY_COLUMN] = round(experiment_probability, 6)
+                values[EXPERIMENT_VERSION_COLUMN] = PLAYER_IMPACT_EXPERIMENT
             for side in ("home", "away"):
                 report = reports.get(matchup[f"{side}_team"])
                 if report is not None:

@@ -53,7 +53,7 @@ def evaluate(through: pd.Timestamp | None) -> None:
     optimum = minimize_scalar(objective, bounds=(0, 1), method="bounded")
     fitted_weight = optimum.x if optimum.fun < objective(0) else 0.0
     print(f"Fitted weight on season ending {season - 1} = {fitted_weight:.5f}")
-    print(f"Evaluating the deployed weight of {PLAYER_IMPACT_WEIGHT:.5f} on season ending {season}.")
+    print(f"Evaluating the experimental weight of {PLAYER_IMPACT_WEIGHT:.5f} on season ending {season}.")
 
     for label, periods in (("Fixed", holdout["season"]), ("Daily refits", holdout["date"])):
         scored = score_periods(features, holdout, periods)

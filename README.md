@@ -27,7 +27,6 @@ The predictor uses pre-game context only:
 - recent form from rolling five-game performance
 - rest days between games
 - injury counts and estimated absence duration when official reports are available
-- a random forest adjustment for player availability, using up to 30 earlier box scores per player, shrunk toward replacement-level production and weighted by official status
 
 ## Controls
 
@@ -56,12 +55,6 @@ comparison, rest days, and links to official injury reports. Picks freeze at
 tipoff. History labels archived replays separately and counts only picks saved
 before tipoff in the live record.
 
-The player adjustment uses the same pregame report as the team features. Ratings
-use only earlier game dates. Missing reports or players without box-score history
-contribute no player adjustment. The coefficient was calibrated on 2025–26 games.
-Run `python evaluate_player_impact.py` to compare both versions of the forest
-on the latest held-out season. Use `--through YYYY-MM-DD` to limit game dates.
-
 Render deploys changes to the snapshots. If injury retrieval fails, the workflow
 can still publish finals and retry injuries on the next run. A verification commit
 after 45 idle days keeps the offseason schedule active without redeploying Render.
@@ -71,6 +64,21 @@ and `python daily_predictions.py` in order to refresh a local checkout, or run
 **Refresh NBA games** from the repository’s Actions tab. Use
 `python injury_updates.py --since YYYY-MM-DD` to backfill older reports and
 `python player_stats.py --backfill` to load historical player box scores.
+
+## Model experiments
+
+The official baseline is the random forest with team-level injury features. Each
+pregame run also records `rf_player_impact_v1` beside the baseline in the same
+snapshot. This version adds a player-availability adjustment using the same
+pregame report and up to 30 earlier box scores per player. The adjustment is
+weighted by official status and shrunk toward replacement-level production. The
+coefficient was calibrated on 2025–26 games. When the experiment changes, use a
+new version identifier so the scorecard keeps results separate.
+
+Run `python evaluate_live_models.py` for the paired accuracy, Brier score, and
+log loss of saved pregame predictions against completed games. It compares both
+versions on the same games and excludes replays. For a separate historical
+backtest, run `python evaluate_player_impact.py` with optional `--through YYYY-MM-DD`.
 
 ## Run it
 

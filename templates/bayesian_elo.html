@@ -101,8 +101,8 @@
       The daily predictor trains a random forest on completed games, including any finals
       already available that day. It prepares the next slate before midnight Pacific and
       refreshes the picks with the latest results and official injury reports until tipoff.
-      Context shows the logistic regression comparison for each new pick. History pairs
-      each official random forest pick with the actual winner.
+      The official random forest uses team-level injury features. Context shows the
+      logistic regression comparison, and History pairs each saved pick with the actual winner.
     </p>
     <p>
       The original benchmark compares logistic regression with random forest on the same
@@ -115,7 +115,6 @@
       <li>Rest days count the gap since each team's last game, since a team on a back-to-back plays differently than one on three days' rest.</li>
       <li>Injury features count out, doubtful, questionable, and probable players per team.</li>
       <li>Team injury features also account for status severity and estimated absence length.</li>
-      <li>The player adjustment estimates production lost from the latest official statuses and each player's earlier box scores. Losing a player with a higher rating has a larger effect on the team's win chance.</li>
     </ul>
     <blockquote class="callout">
       In the original benchmark, evaluated on held-out 2024–25 games, home-court baseline accuracy was

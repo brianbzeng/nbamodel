@@ -314,7 +314,11 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
             "model": PREDICTION_MODEL_NAMES.get(model),
             "same_day_finals": int(same_day_finals) if has_inputs else None,
             "saved_at": saved_label,
-            "player_impact": f"{player_impact:+.1f}" if has_live_pick and pd.notna(player_impact) and round(player_impact, 1) else None,
+            "player_impact": (
+                f"{player_impact:+.1f}"
+                if has_live_pick and model == PLAYER_IMPACT_MODEL and pd.notna(player_impact) and round(player_impact, 1)
+                else None
+            ),
             "logistic_comparison": logistic_comparison,
             "context": prediction_context(game, saved_reports, has_inputs, team_game_dates) if has_inputs or not history else [],
         })
