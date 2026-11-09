@@ -5,20 +5,21 @@ from __future__ import annotations
 import logging
 import os
 import re
-from threading import Lock, Thread
-from datetime import date, datetime
+from bisect import bisect_left
+from collections import defaultdict
+from datetime import date, datetime, time, timedelta
 from hashlib import sha256
 from pathlib import Path
 from shutil import rmtree
+from threading import Lock, Thread
 from uuid import uuid4
-from zoneinfo import ZoneInfo
 
 import pandas as pd
 from flask import Flask, flash, redirect, render_template, request, send_from_directory, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from cleaner import TEAM_MAP_BREF, clean_games, normalize_team_names
-from daily_predictions import DAILY_PREDICTIONS_FILE, read_daily_predictions
+from daily_predictions import DAILY_PREDICTIONS_FILE, PREDICTION_DISPLAY_TZ, read_daily_predictions
 from game_updates import LIVE_GAMES_FILE, NBA_TIMEZONE, read_game_updates, refresh_game_updates
 from injury_reports import report_pdf_url
 from injury_updates import refresh_injury_updates
@@ -29,6 +30,7 @@ from player_stats import PLAYER_STATS_FILE
 from prediction_replay import REPLAY_FILE, read_prediction_replay
 from predictor import (
     LIVE_INJURIES_FILE,
+    MAX_REST_DAYS,
     aggregate_team_injuries,
     fetch_report_with_retries,
     get_latest_available_report_timestamp,
@@ -57,7 +59,6 @@ PREDICTOR_RAW_FILE = RAW_DIR / f"bref_games_{PREDICTOR_START_SEASON}_{PREDICTOR_
 PREDICTOR_PROCESSED_FILE = (
     PROCESSED_DIR / f"games_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}_normalized.csv"
 )
-PREDICTION_DISPLAY_TZ = ZoneInfo("America/Los_Angeles")
 PREDICTION_HISTORY_PAGE_SIZE = 25
 PREDICTION_MODEL_NAMES = {
     "random_forest": "Random forest",
@@ -184,7 +185,7 @@ def load_predictor_games() -> pd.DataFrame:
     return pd.concat([baseline, normalize_team_names(clean_games(updates))], ignore_index=True)
 
 
-def prediction_injury_details(game, saved_reports: dict, used_reports: bool) -> list[dict]:
+def prediction_context(game, saved_reports: dict, used_reports: bool, team_game_dates: dict) -> list[dict]:
     details = []
     for side in ("away", "home"):
         team = getattr(game, f"{side}_team")
@@ -193,7 +194,13 @@ def prediction_injury_details(game, saved_reports: dict, used_reports: bool) -> 
             out_count = getattr(game, f"{side}_out_count")
         else:
             report, out_count = saved_reports.get((game.game_date, team), (None, None))
-        entry = {"team": team}
+        rest_days = getattr(game, f"{side}_rest_days", None)
+        if pd.isna(rest_days):
+            prior_dates = team_game_dates.get((game.season, team), ())
+            previous = bisect_left(prior_dates, game.game_date) - 1
+            if previous >= 0:
+                rest_days = min(MAX_REST_DAYS, (game.game_date - prior_dates[previous]).days - 1)
+        entry = {"team": team, "rest_days": int(rest_days) if pd.notna(rest_days) else None}
         if pd.notna(report):
             local = report.tz_convert(PREDICTION_DISPLAY_TZ)
             eastern = report.tz_convert(NBA_TIMEZONE).tz_localize(None)
@@ -213,6 +220,12 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
         (game.date, TEAM_MAP_BREF[game.home_team], TEAM_MAP_BREF[game.away_team]): game
         for game in read_game_updates().itertuples(index=False)
     }
+    team_game_dates = defaultdict(list)
+    for (game_date, home, away), game in finals.items():
+        team_game_dates[game.season, home].append(game_date)
+        team_game_dates[game.season, away].append(game_date)
+    for dates in team_game_dates.values():
+        dates.sort()
     replays = {
         (game.game_date, game.home_team, game.away_team): game
         for game in read_prediction_replay().itertuples(index=False)
@@ -267,6 +280,11 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
         player_impact = getattr(game, "home_player_impact_pp", None)
         saved_at = predicted_at.tz_convert(PREDICTION_DISPLAY_TZ) if has_inputs else None
         display_date = local_tipoff if local_tipoff is not None else game_date
+        saved_label = None
+        if saved_at is not None:
+            saved_label = saved_at.strftime("%I:%M %p PT").lstrip("0")
+            if saved_at.date() != display_date.date():
+                saved_label = f"{saved_at:%b} {saved_at.day} at {saved_label}"
         rows.append({
             "day": display_date.strftime("%a, %b %d").replace(" 0", " "),
             "display_date": display_date.date(),
@@ -284,9 +302,9 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
             "source": source,
             "model": PREDICTION_MODEL_NAMES.get(model),
             "same_day_finals": int(same_day_finals) if has_inputs else None,
-            "saved_at": saved_at.strftime("%I:%M %p PT").lstrip("0") if saved_at is not None else None,
+            "saved_at": saved_label,
             "player_impact": f"{player_impact:+.1f}" if has_live_pick and pd.notna(player_impact) and round(player_impact, 1) else None,
-            "injuries": prediction_injury_details(game, saved_reports, has_inputs) if has_inputs or not history else [],
+            "context": prediction_context(game, saved_reports, has_inputs, team_game_dates) if has_inputs or not history else [],
         })
     return rows
 
@@ -921,9 +939,13 @@ def create_app() -> Flask:
         filtered_total = len(rows)
         page_count = max(1, (filtered_total + PREDICTION_HISTORY_PAGE_SIZE - 1) // PREDICTION_HISTORY_PAGE_SIZE)
         page = min(max(1, request.args.get("page", 1, type=int)), page_count) if history else 1
+        refresh_in_ms = None
         if history:
             start = (page - 1) * PREDICTION_HISTORY_PAGE_SIZE
             rows = rows[start:start + PREDICTION_HISTORY_PAGE_SIZE]
+        else:
+            next_midnight = datetime.combine(today + timedelta(days=1), time.min, PREDICTION_DISPLAY_TZ)
+            refresh_in_ms = max(1, round((next_midnight.timestamp() - now.timestamp()) * 1000))
 
         return render_template(
             "predictor.html",
@@ -939,6 +961,8 @@ def create_app() -> Flask:
             season=get_live_season_end_year(today),
             page=page,
             page_count=page_count,
+            refresh_in_ms=refresh_in_ms,
+            max_rest_days=MAX_REST_DAYS,
         )
 
     @app.post("/reset-data")

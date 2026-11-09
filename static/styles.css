@@ -588,6 +588,7 @@ td, .metric strong, .info-row strong { font-variant-numeric: tabular-nums; }
 .prediction-inputs ul { margin: 4px 0 0; padding: 0; list-style: none; }
 .prediction-inputs li { display: flex; flex-wrap: wrap; gap: 4px 10px; }
 .prediction-inputs a { color: var(--accent-ink); text-decoration: underline; }
+.prediction-context-grid { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 4px; }
 .prediction-empty { margin: 0; padding: 16px 24px; color: var(--ink-soft); border-top: 1px solid var(--rule); }
 .prediction-history-note { margin: 0; padding: 0 24px 12px; color: var(--ink-soft); font-size: 0.82rem; }
 .prediction-history-search { padding: 0 24px 14px; }

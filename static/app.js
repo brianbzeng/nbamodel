@@ -5,6 +5,12 @@ document.addEventListener("DOMContentLoaded", () => {
  const injuryMode = document.getElementById("injury-mode");
  const injurySubmit = document.getElementById("injury-submit");
  const injuryJobStatus = document.getElementById("injury-job-status");
+ const slateBoard = document.querySelector("[data-slate-refresh-in]");
+
+ if (slateBoard) {
+   const refreshDelay = Number(slateBoard.dataset.slateRefreshIn);
+   window.setTimeout(() => window.location.reload(), refreshDelay);
+ }
 
  const syncInjuryMode = () => {
    if (!injuryMode) {

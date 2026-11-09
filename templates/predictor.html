@@ -5,11 +5,11 @@
   <div>
     <p class="eyebrow">NBA game predictions</p>
     <h1>Predictor</h1>
-    <p class="lede">Random forest picks appear in the hour before tipoff.</p>
+    <p class="lede">The daily slate rolls over at midnight Pacific. Pregame picks refresh as new results and injury reports come in.</p>
   </div>
 </section>
 
-<section class="prediction-board" aria-labelledby="prediction-view">
+<section class="prediction-board" aria-labelledby="prediction-view"{% if refresh_in_ms is not none %} data-slate-refresh-in="{{ refresh_in_ms }}"{% endif %}>
   <nav class="prediction-tabs" aria-label="Prediction views">
     <a href="{{ url_for('predictor') }}"{% if not history %} aria-current="page"{% endif %}>Today</a>
     <a href="{{ url_for('predictor', view='history') }}"{% if history %} aria-current="page"{% endif %}>History</a>
@@ -82,7 +82,7 @@
               <span class="prediction-pick-label">{{ game.model }}</span>
             {% endif %}
           {% elif game.pick_pending %}
-            <span class="prediction-pick-label">Pick due in the final hour</span>
+            <span class="prediction-pick-label">Pick pending</span>
           {% else %}
             <span class="prediction-pick-label">No pick saved before tipoff</span>
           {% endif %}
@@ -94,27 +94,51 @@
           {% endif %}
         </div>
 
-        {% if game.injuries %}
+        {% if game.context %}
         <details class="prediction-inputs">
-          <summary>{{ 'Inputs for this pick' if game.saved_at else 'Injury reports' }}</summary>
+          <summary>Context</summary>
           {% if game.saved_at %}
             <p>Saved {{ game.saved_at }} with {{ game.same_day_finals }} earlier {{ 'final' if game.same_day_finals == 1 else 'finals' }} from this game day.</p>
           {% endif %}
           {% if game.player_impact %}
             <p>Player availability moved the home win chance by {{ game.player_impact }} percentage points.</p>
           {% endif %}
-          <ul>
-            {% for injury in game.injuries %}
-            <li>
-              {% if injury.url %}
-                <a href="{{ injury.url }}" target="_blank" rel="noopener">{{ injury.team }} · {{ injury.out_count }} out</a>
-                <span>{{ injury.published }}</span>
-              {% else %}
-                <span>{{ injury.team }} · No official report available</span>
-              {% endif %}
-            </li>
-            {% endfor %}
-          </ul>
+          <div class="prediction-context-grid">
+            <div>
+              <p><strong>Rest days</strong></p>
+              <ul>
+                {% for team in game.context %}
+                <li>
+                  <span>{{ team.team }}</span>
+                  {% if team.rest_days is none %}
+                    <span>Rest unavailable</span>
+                  {% elif team.rest_days == 0 %}
+                    <span>0 days · Back-to-back</span>
+                  {% elif team.rest_days >= max_rest_days %}
+                    <span>{{ max_rest_days }}+ days</span>
+                  {% else %}
+                    <span>{{ team.rest_days }} {{ 'day' if team.rest_days == 1 else 'days' }}</span>
+                  {% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+            <div>
+              <p><strong>Injury reports</strong></p>
+              <ul>
+                {% for team in game.context %}
+                <li>
+                  {% if team.url %}
+                    <a href="{{ team.url }}" target="_blank" rel="noopener">{{ team.team }} · {{ team.out_count }} out</a>
+                    <span>{{ team.published }}</span>
+                  {% else %}
+                    <span>{{ team.team }} · No official report available</span>
+                  {% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
         </details>
         {% endif %}
       </li>

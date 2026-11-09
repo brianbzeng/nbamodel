@@ -1242,12 +1242,27 @@ def predict_slate(
     same_day_finals: Optional[pd.DataFrame] = None,
     model: str = "logistic",
 ) -> dict[str, float]:
+    probabilities, _ = predict_slate_with_context(
+        games, matchups, injury_df, game_date, same_day_finals=same_day_finals, model=model
+    )
+    return probabilities
+
+
+def predict_slate_with_context(
+    games: pd.DataFrame,
+    matchups: list[dict[str, object]],
+    injury_df: Optional[pd.DataFrame],
+    game_date: pd.Timestamp,
+    *,
+    same_day_finals: Optional[pd.DataFrame] = None,
+    model: str = "logistic",
+) -> tuple[dict[str, float], dict[str, tuple[int | None, int | None]]]:
     """Fit once per date, using same-day finals only when verified by the caller."""
     fitters = {"logistic": _fit_logistic_regression, "random_forest": _fit_random_forest}
     if model not in fitters:
         raise ValueError(f"Unknown prediction model: {model}")
     if not matchups:
-        return {}
+        return {}, {}
 
     game_date = pd.Timestamp(game_date).normalize()
     completed = games[pd.to_datetime(games["date"]) < game_date]
@@ -1284,7 +1299,15 @@ def predict_slate(
         for matchup in matchups
     ], ignore_index=True)
     probabilities = fitted_model.predict_proba(slate_features[list(fitted_model.feature_names_in_)])[:, 1]
-    return {str(matchup["game_id"]): float(probability) for matchup, probability in zip(matchups, probabilities)}
+    game_ids = [str(matchup["game_id"]) for matchup in matchups]
+    rest_days = {
+        game_id: (
+            int(row.home_rest_days) if row.home_games_played else None,
+            int(row.away_rest_days) if row.away_games_played else None,
+        )
+        for game_id, row in zip(game_ids, slate_features.itertuples(index=False))
+    }
+    return dict(zip(game_ids, map(float, probabilities))), rest_days
 
 
 def predict_matchup_from_games(

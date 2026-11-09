@@ -126,7 +126,7 @@ def test_legacy_early_picks_are_removed_for_scheduled_games_only(tmp_path, monke
     path = tmp_path / "slate.csv"
     path.write_text(
         "game_id,game_date,tipoff_utc,season,home_team,away_team,status,home_win_probability,predicted_at_utc\n"
-        "1,2026-11-08,2026-11-09T02:00:00Z,2027,BOS,CHI,scheduled,0.68,2026-11-08T21:00:00Z\n"
+        "1,2026-11-08,2026-11-09T02:00:00Z,2027,BOS,CHI,scheduled,0.68,2026-11-08T06:00:00Z\n"
         "2,2026-11-08,2026-11-08T23:00:00Z,2027,MIA,CHI,in_progress,0.71,2026-11-08T18:00:00Z\n",
         encoding="utf-8",
     )
@@ -138,12 +138,14 @@ def test_legacy_early_picks_are_removed_for_scheduled_games_only(tmp_path, monke
     ]
     monkeypatch.setattr(daily_predictions, "_utc_now", lambda: now)
     monkeypatch.setattr(daily_predictions, "fetch_scoreboard", lambda period: events)
+    monkeypatch.setattr(daily_predictions, "_predict_games", lambda *args: {"1": pick(0.69)})
 
     assert not daily_predictions.pregame_window_open()
     snapshot, changed = daily_predictions.refresh_daily_predictions(path)
     assert changed
     rows = snapshot.set_index("game_id")
-    assert pd.isna(rows.loc["1", "home_win_probability"])
+    assert rows.loc["1", "home_win_probability"] == 0.69
+    assert rows.loc["1", "predicted_at_utc"] == now.replace(microsecond=0)
     assert rows.loc["2", "home_win_probability"] == 0.71
     assert rows.loc["2", "model"] == "logistic"
     assert pd.isna(rows.loc["2", "same_day_finals"])
@@ -151,6 +153,41 @@ def test_legacy_early_picks_are_removed_for_scheduled_games_only(tmp_path, monke
 
     now = datetime.fromisoformat("2026-11-09T01:00:00Z")
     assert daily_predictions.pregame_window_open()
+
+
+def test_entire_next_pacific_slate_is_ready_before_midnight(tmp_path, monkeypatch):
+    path = tmp_path / "slate.csv"
+    now = datetime.fromisoformat("2026-11-09T07:29:59Z")
+    events = [
+        event("early", "2026-11-09T20:00:00Z"),
+        event("late", "2026-11-10T06:00:00Z", home="Miami Heat", away="Orlando Magic"),
+        event("future", "2026-11-10T23:00:00Z"),
+    ]
+    calls = []
+
+    def predict(matchups, as_of, finals):
+        game_ids = [matchup["game_id"] for matchup in matchups]
+        calls.append(game_ids)
+        return {game_id: pick(0.6) for game_id in game_ids}
+
+    monkeypatch.setattr(daily_predictions, "_utc_now", lambda: now)
+    monkeypatch.setattr(daily_predictions, "fetch_scoreboard", lambda period: events)
+    monkeypatch.setattr(daily_predictions, "_predict_games", predict)
+
+    snapshot, _ = daily_predictions.refresh_daily_predictions(path)
+    assert snapshot["home_win_probability"].isna().all()
+    assert calls == []
+
+    now = datetime.fromisoformat("2026-11-09T07:35:00Z")
+    assert not daily_predictions.pregame_window_open()  # The fast refresh is still limited to the last hour.
+    snapshot, changed = daily_predictions.refresh_daily_predictions(path)
+    assert changed and calls == [["early", "late"]]
+    assert snapshot.loc[snapshot["home_win_probability"].notna(), "game_id"].tolist() == ["early", "late"]
+
+    now = datetime.fromisoformat("2026-11-09T08:00:00Z")
+    snapshot, changed = daily_predictions.refresh_daily_predictions(path)
+    assert not changed
+    assert snapshot["home_win_probability"].count() == 2
 
 
 def test_final_scores_include_fresh_corrections_but_exclude_future_games(monkeypatch):
@@ -187,7 +224,7 @@ def test_daily_pick_records_the_player_adjustment_with_exact_report_provenance(m
         "out_count": 1,
     }])
     monkeypatch.setattr("predictor.load_optional_team_injuries", lambda games, *, as_of: reports)
-    monkeypatch.setattr("predictor.predict_slate", lambda *args, **kwargs: {"1": 0.55})
+    monkeypatch.setattr("predictor.predict_slate_with_context", lambda *args, **kwargs: ({"1": 0.55}, {"1": (0, 2)}))
 
     def adjust(matchups, probabilities, team_reports):
         assert matchups == slate
@@ -203,3 +240,4 @@ def test_daily_pick_records_the_player_adjustment_with_exact_report_provenance(m
     assert pick["model"] == "random_forest_player_impact"
     assert pick["home_player_impact_pp"] == -4.0
     assert pick["home_injury_report_utc"] == pd.Timestamp("2026-11-09T00:00:00Z")
+    assert (pick["home_rest_days"], pick["away_rest_days"]) == (0, 2)

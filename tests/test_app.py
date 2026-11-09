@@ -174,6 +174,7 @@ def set_prediction_data(monkeypatch):
     )
     slate["game_date"] = pd.to_datetime(slate["game_date"])
     slate["tipoff_utc"] = pd.to_datetime(slate["tipoff_utc"], utc=True)
+    slate["season"] = 2027
     slate["predicted_at_utc"] = pd.to_datetime(
         ["2026-11-09T01:00:00Z", None, "2026-11-08T00:00:00Z", "2026-11-09T23:45:00Z", None], utc=True
     )
@@ -248,6 +249,7 @@ def test_prediction_history_includes_every_current_season_final_newest_first(mon
     assert "New York Knicks" not in body
     assert "New Orleans Pelicans" not in body
     assert "Los Angeles Lakers" not in body  # An unfinished replay does not count toward accuracy.
+    assert "data-slate-refresh-in" not in body
 
 
 def test_prediction_history_searches_full_season_by_team_and_keeps_query_across_pages(monkeypatch):
@@ -305,12 +307,14 @@ def test_predictor_reports_the_injury_inputs_used_for_a_saved_pick(monkeypatch, 
     slate["away_out_count"] = None
     slate["model"] = [app_module.PLAYER_IMPACT_MODEL, None, None, None, None]
     slate["home_player_impact_pp"] = [-2.14, None, None, None, None]
+    slate["home_rest_days"] = [0, None, None, None, None]
+    slate["away_rest_days"] = [7, None, None, None, None]
 
     response = create_app().test_client().get("/predictor")
     body = response.get_data(as_text=True)
 
     assert response.status_code == 200
-    assert "Inputs for this pick" in body
+    assert "<summary>Context</summary>" in body
     assert "with 1 earlier final" in body
     assert 'prediction-pick-label">Random forest + player impact</span>' in body
     assert "moved the home win chance by -2.1 percentage points" in body
@@ -318,6 +322,56 @@ def test_predictor_reports_the_injury_inputs_used_for_a_saved_pick(monkeypatch, 
     assert "LAC · 2 out" in body
     assert "NOP · No official report available" in body
     assert "NOP · 3 out" not in body
+    assert "0 days · Back-to-back" in body
+    assert "7+ days" in body
+
+
+def test_predictor_rolls_the_slate_over_at_pacific_midnight(monkeypatch):
+    import app as app_module
+
+    slate = set_prediction_data(monkeypatch)
+    # Nov 9's pick was already saved the previous night.
+    slate.loc[3, "predicted_at_utc"] = pd.Timestamp("2026-11-09T07:50:00Z")
+    slate.loc[3, "same_day_finals"] = 0
+    for side in ("home", "away"):
+        slate[f"{side}_injury_report_utc"] = pd.NaT
+        slate[f"{side}_out_count"] = None
+    now = datetime(2026, 11, 9, 7, 59, 59, tzinfo=UTC)
+
+    class RolloverDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return now.astimezone(tz)
+
+    monkeypatch.setattr(app_module, "datetime", RolloverDateTime)
+    client = create_app().test_client()
+    before = client.get("/predictor").get_data(as_text=True)
+    assert "Sunday, November 8" in before
+    assert 'data-slate-refresh-in="1000"' in before
+    assert "Cleveland Cavaliers" not in before
+
+    now = datetime(2026, 11, 9, 8, tzinfo=UTC)
+    after = client.get("/predictor").get_data(as_text=True)
+    assert "Monday, November 9" in after
+    assert "<strong>Cleveland Cavaliers</strong>" in after and "77.0%" in after
+    assert "Saved Nov 8 at 11:50 PM PT" in after
+    assert "Philadelphia 76ers" not in after
+
+
+def test_predictor_uses_only_earlier_finals_for_rest_on_legacy_rows(monkeypatch):
+    import app as app_module
+
+    set_prediction_data(monkeypatch)
+    finals = app_module.read_game_updates()
+    other_finals = finals.iloc[[2, 2]].assign(
+        date=pd.to_datetime(["2026-11-08", "2026-11-09"]), away_team="Los Angeles Lakers",
+    )
+    combined = pd.concat([finals, other_finals.astype(finals.dtypes)], ignore_index=True)
+    monkeypatch.setattr(app_module, "read_game_updates", lambda: combined)
+
+    rows = app_module.load_prediction_rows(app_module.datetime.now(app_module.PREDICTION_DISPLAY_TZ), False)
+    lakers_game = next(row for row in rows if row["team_codes"] == ("LAL", "DET"))
+    assert [(team["team"], team["rest_days"]) for team in lakers_game["context"]] == [("LAL", None), ("DET", 1)]
 
 
 def test_bayesian_page_renders():

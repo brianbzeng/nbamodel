@@ -2,8 +2,9 @@
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from filelock import FileLock
@@ -22,10 +23,13 @@ from game_updates import (
 DAILY_PREDICTIONS_FILE = LIVE_GAMES_FILE.with_name("nba_daily_predictions.csv")
 BASELINE_GAMES_FILE = LIVE_GAMES_FILE.with_name("bref_games_2022_2025.csv")
 PREGAME_WINDOW = timedelta(minutes=60)
+PREDICTION_DISPLAY_TZ = ZoneInfo("America/Los_Angeles")
+NEXT_SLATE_OPENS = time(23, 30)
 DEFAULT_PREDICTION_MODEL = "random_forest"
 MATCHUP_KEY = ["game_date", "home_team", "away_team"]
 PROVENANCE_TIMES = ["home_injury_report_utc", "away_injury_report_utc"]
-PROVENANCE_COUNTS = ["same_day_finals", "home_out_count", "away_out_count"]
+REST_DAY_COLUMNS = ["home_rest_days", "away_rest_days"]
+PROVENANCE_COUNTS = ["same_day_finals", "home_out_count", "away_out_count", *REST_DAY_COLUMNS]
 PLAYER_IMPACT_COLUMN = "home_player_impact_pp"
 PICK_VALUES = ["home_win_probability", "model", *PROVENANCE_COUNTS, *PROVENANCE_TIMES, PLAYER_IMPACT_COLUMN]
 PICK_COLUMNS = [*PICK_VALUES, "predicted_at_utc"]
@@ -33,7 +37,7 @@ PREDICTION_COLUMNS = [
     "game_id", "game_date", "tipoff_utc", "season", "home_team", "away_team", "status",
     "home_win_probability", "predicted_at_utc", "same_day_finals",
     "home_injury_report_utc", "away_injury_report_utc", "home_out_count", "away_out_count", "model",
-    PLAYER_IMPACT_COLUMN,
+    PLAYER_IMPACT_COLUMN, *REST_DAY_COLUMNS,
 ]
 STATUS_NAMES = {
     "STATUS_SCHEDULED": "scheduled",
@@ -127,14 +131,26 @@ def _within_pregame_window(tipoff: datetime, as_of: datetime) -> bool:
     return timedelta(0) < tipoff - as_of <= PREGAME_WINDOW
 
 
+def _slate_window_open(tipoff: datetime, as_of: datetime) -> bool:
+    local_now = as_of.astimezone(PREDICTION_DISPLAY_TZ)
+    game_day = tipoff.astimezone(PREDICTION_DISPLAY_TZ).date()
+    last_day = local_now.date()
+    if local_now.time() >= NEXT_SLATE_OPENS:
+        last_day += timedelta(days=1)
+    return as_of < tipoff and local_now.date() <= game_day <= last_day
+
+
 def _can_predict(game: dict, as_of: datetime) -> bool:
-    return game["status"] == "scheduled" and _within_pregame_window(game["tipoff_utc"], as_of)
+    return game["status"] == "scheduled" and _slate_window_open(game["tipoff_utc"], as_of)
 
 
 def pregame_window_open() -> bool:
     slate, _ = _fetch_slate(_utc_now())
     as_of = _utc_now()
-    return any(_can_predict(game, as_of) for game in slate)
+    return any(
+        _can_predict(game, as_of) and _within_pregame_window(game["tipoff_utc"], as_of)
+        for game in slate
+    )
 
 
 def _final_games(events: list[dict], slate: list[dict], as_of: datetime) -> pd.DataFrame:
@@ -164,7 +180,7 @@ def _final_games(events: list[dict], slate: list[dict], as_of: datetime) -> pd.D
 
 def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) -> dict[str, dict]:
     from player_impact import PLAYER_IMPACT_MODEL, player_adjusted_picks
-    from predictor import load_optional_team_injuries, predict_slate
+    from predictor import load_optional_team_injuries, predict_slate_with_context
 
     history = normalize_team_names(clean_games(pd.read_csv(BASELINE_GAMES_FILE)))
     updates = finals.rename(columns={"game_date": "date"})
@@ -178,7 +194,7 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
     predictions = {}
     for game_date, slate in sorted(slates.items()):
         same_day_finals = updates[updates["date"] == game_date]
-        probabilities = predict_slate(
+        probabilities, rest_days = predict_slate_with_context(
             games, slate, injuries, game_date, same_day_finals=same_day_finals, model=DEFAULT_PREDICTION_MODEL
         )
         adjusted_picks = player_adjusted_picks(slate, probabilities, injuries)
@@ -198,6 +214,7 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
                 "home_win_probability": round(probability, 6),
                 "model": DEFAULT_PREDICTION_MODEL,
                 "same_day_finals": len(same_day_finals),
+                **dict(zip(REST_DAY_COLUMNS, rest_days[game_id])),
             }
             if probability != probabilities[game_id]:
                 values["model"] = PLAYER_IMPACT_MODEL
@@ -252,7 +269,7 @@ def refresh_daily_predictions(path: Path = DAILY_PREDICTIONS_FILE) -> tuple[pd.D
             if (
                 game["status"] == "scheduled"
                 and pd.notna(game["predicted_at_utc"])
-                and not _within_pregame_window(game["tipoff_utc"], game["predicted_at_utc"])
+                and not _slate_window_open(game["tipoff_utc"], game["predicted_at_utc"])
             ):
                 game.update(dict.fromkeys(PICK_COLUMNS))
 

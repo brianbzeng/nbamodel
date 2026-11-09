@@ -19,16 +19,17 @@ def test_daily_slate_fits_and_scores_once_using_only_prior_games(monkeypatch):
     matchups = [
         {"game_id": "first", "season": 2027, "home_team": "BOS", "away_team": "GSW"},
         {"game_id": "second", "season": 2027, "home_team": "DAL", "away_team": "LAL"},
+        {"game_id": "third", "season": 2027, "home_team": "NYK", "away_team": "PHI"},
     ]
     calls = []
 
     class Model:
-        feature_names_in_ = ["home_games_played", "away_games_played"]
+        feature_names_in_ = ["home_games_played", "away_games_played", "home_rest_days", "away_rest_days"]
 
         def predict_proba(self, features):
             calls.append("score")
-            assert features.to_numpy().tolist() == [[1, 1], [1, 1]]
-            return np.array([[0.25, 0.75], [0.6, 0.4]])
+            assert features.to_numpy().tolist() == [[1, 1, 1, 0], [1, 1, 0, 1], [0, 0, 7, 7]]
+            return np.array([[0.25, 0.75], [0.6, 0.4], [0.5, 0.5]])
 
     def fit(training):
         calls.append("fit")
@@ -37,10 +38,13 @@ def test_daily_slate_fits_and_scores_once_using_only_prior_games(monkeypatch):
 
     monkeypatch.setattr(predictor, "_fit_logistic_regression", fit)
 
-    assert predictor.predict_slate(games, matchups, None, pd.Timestamp("2026-11-08")) == {
+    probabilities, rest_days = predictor.predict_slate_with_context(games, matchups, None, pd.Timestamp("2026-11-08"))
+    assert probabilities == {
         "first": 0.75,
         "second": 0.4,
+        "third": 0.5,
     }
+    assert rest_days == {"first": (1, 0), "second": (0, 1), "third": (None, None)}
     assert calls == ["fit", "score"]
 
 
