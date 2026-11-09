@@ -1,4 +1,5 @@
 from app import create_app
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -153,270 +154,70 @@ def test_leaderboard_route_renders(monkeypatch):
     assert "Rating" in body
 
 
-def test_predictor_page_renders(monkeypatch):
+def set_prediction_data(monkeypatch):
     import app as app_module
 
-    evaluation_summary = {
-        "split": "train_before_2025_test_2025",
-        "train_rows": 10,
-        "test_rows": 5,
-        "test_season": 2025,
-        "home_baseline_accuracy": 0.54,
-        "logistic_accuracy": 0.64,
-        "random_forest_accuracy": 0.66,
-        "best_model": "Random forest",
-        "logistic_vs_baseline_gain": 0.10,
-        "random_forest_vs_baseline_gain": 0.12,
-        "export_name": "predictor_latest_season_predictions_2025.csv",
-    }
+    class FixedDateTime(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 11, 9, 1, tzinfo=UTC).astimezone(tz)
 
-    games = app_module.pd.DataFrame(
+    slate = pd.DataFrame(
         [
-            {
-                "date": "2024-10-22",
-                "season": 2025,
-                "home_team": "BOS",
-                "away_team": "NYK",
-                "home_pts": 110,
-                "away_pts": 101,
-                "home_win": 1,
-                "margin": 9,
-            },
-            {
-                "date": "2024-10-23",
-                "season": 2025,
-                "home_team": "LAL",
-                "away_team": "DEN",
-                "home_pts": 99,
-                "away_pts": 104,
-                "home_win": 0,
-                "margin": -5,
-            },
-        ]
+            ("2026-11-08", "2026-11-09T02:00:00Z", "LAC", "NOP", "scheduled", 0.46),
+            ("2026-11-08", "2026-11-08T20:30:00Z", "CHI", "PHI", "final", None),
+            ("2026-11-07", "2026-11-08T00:30:00Z", "ATL", "BRK", "final", 0.65),
+            ("2026-11-09", "2026-11-10T00:00:00Z", "CHA", "CLE", "scheduled", 0.23),
+        ],
+        columns=["game_date", "tipoff_utc", "home_team", "away_team", "status", "home_win_probability"],
+    )
+    slate["game_date"] = pd.to_datetime(slate["game_date"])
+    slate["tipoff_utc"] = pd.to_datetime(slate["tipoff_utc"], utc=True)
+    finals = pd.DataFrame(
+        [
+            (pd.Timestamp("2026-11-07"), "Atlanta Hawks", "Brooklyn Nets", 110, 101),
+            (pd.Timestamp("2026-11-08"), "Chicago Bulls", "Philadelphia 76ers", 121, 127),
+        ],
+        columns=["date", "home_team", "away_team", "home_pts", "away_pts"],
     )
 
-    monkeypatch.setattr(app_module, "load_predictor_games", lambda: games)
-    monkeypatch.setattr(app_module, "load_optional_team_injuries", lambda frame: None)
-    monkeypatch.setattr(app_module, "load_predictor_artifacts", lambda: evaluation_summary)
-    monkeypatch.setattr(
-        app_module,
-        "get_latest_prediction_context",
-        lambda frame: {
-            "season": 2025,
-            "latest_completed_date": "2024-10-23",
-            "prediction_date": "2024-10-24",
-            "teams": ["BOS", "DEN", "LAL", "NYK"],
-        },
-    )
+    monkeypatch.setattr(app_module, "datetime", FixedDateTime)
+    monkeypatch.setattr(app_module, "read_daily_predictions", lambda: slate)
+    monkeypatch.setattr(app_module, "read_game_updates", lambda: finals)
 
-    app = create_app()
-    client = app.test_client()
+
+def test_predictor_shows_the_pacific_slate_and_saved_picks(monkeypatch):
+    set_prediction_data(monkeypatch)
+    client = create_app().test_client()
     response = client.get("/predictor")
-    body = response.get_data(as_text = True)
+    body = response.get_data(as_text=True)
 
     assert response.status_code == 200
-    assert "Home-win predictor" in body
-    assert "Generate prediction" in body
-    assert "BOS" in body
-    assert "Refresh predictor data" in body
-    assert "Training range 2022-2025" in body
-    assert "No official injury CSV yet." in body
-    assert "Latest completed games through 2024-10-23" in body
-    assert "Prediction output" in body
-    assert "recent form, team strength" in body
-    assert "Pick a home and away team on the left and submit the form to see the combined prediction here." in body
+    assert "Sunday, November 8" in body
+    assert "6:00 PM PT" in body
+    assert "New Orleans Pelicans" in body
+    assert "54.0%" in body and "46.0%" in body
+    assert "<strong>New Orleans Pelicans</strong>" in body
+    assert "127" in body and "No saved pregame pick" in body
+    assert body.index("New Orleans Pelicans") < body.index("Philadelphia 76ers")
+    assert "Atlanta Hawks" not in body and "Cleveland Cavaliers" not in body
+    assert "<form" not in body
+    assert client.post("/predictor").status_code == 405
 
 
-def test_predictor_page_accepts_post(monkeypatch):
-    import app as app_module
-
-    evaluation_summary = {
-        "split": "train_before_2025_test_2025",
-        "train_rows": 10,
-        "test_rows": 5,
-        "test_season": 2025,
-        "home_baseline_accuracy": 0.54,
-        "logistic_accuracy": 0.64,
-        "random_forest_accuracy": 0.66,
-        "best_model": "Random forest",
-        "logistic_vs_baseline_gain": 0.10,
-        "random_forest_vs_baseline_gain": 0.12,
-        "export_name": "predictor_latest_season_predictions_2025.csv",
-    }
-
-    games = app_module.pd.DataFrame(
-        [
-            {
-                "date": "2024-10-22",
-                "season": 2025,
-                "home_team": "BOS",
-                "away_team": "NYK",
-                "home_pts": 110,
-                "away_pts": 101,
-                "home_win": 1,
-                "margin": 9,
-            },
-            {
-                "date": "2024-10-23",
-                "season": 2025,
-                "home_team": "LAL",
-                "away_team": "DEN",
-                "home_pts": 99,
-                "away_pts": 104,
-                "home_win": 0,
-                "margin": -5,
-            },
-        ]
-    )
-
-    # Keep the route test focused on wiring instead of model internals.
-    def fake_predict_matchup_from_games(*args, **kwargs):
-        return {
-            "matchup": "NYK @ BOS",
-            "season": 2025,
-            "game_date": "2025-01-01",
-            "elo": {
-                "home_win_probability": 0.58,
-                "predicted_winner": "BOS",
-            },
-            "logistic": {
-                "home_win_probability": 0.64,
-                "predicted_winner": "BOS",
-            },
-            "random_forest": {
-                "home_win_probability": 0.61,
-                "predicted_winner": "BOS",
-            },
-            "context": {
-                "home_win_pct": 0.700,
-                "away_win_pct": 0.500,
-                "home_team_strength": 0.760,
-                "away_team_strength": 0.540,
-                "team_strength_diff": 0.220,
-                "home_elo_rating": 1610.0,
-                "away_elo_rating": 1535.0,
-                "elo_diff": 75.0,
-                "home_blended_strength": 0.801,
-                "away_blended_strength": 0.623,
-                "blended_strength_diff": 0.178,
-                "home_rest_days": 1,
-                "away_rest_days": 0,
-                "home_out_count": 1.0,
-                "away_out_count": 2.0,
-                "home_injury_impact_score": 7.0,
-                "away_injury_impact_score": 14.0,
-            },
-            "injury_data_used": True,
-        }
-
-    monkeypatch.setattr(app_module, "load_predictor_games", lambda: games)
-    monkeypatch.setattr(app_module, "load_optional_team_injuries", lambda frame: app_module.pd.DataFrame([{"team": "BOS"}]))
-    monkeypatch.setattr(app_module, "load_predictor_artifacts", lambda: evaluation_summary)
-    monkeypatch.setattr(
-        app_module,
-        "get_latest_prediction_context",
-        lambda frame: {
-            "season": 2025,
-            "latest_completed_date": "2024-10-23",
-            "prediction_date": "2025-01-01",
-            "teams": ["BOS", "DEN", "LAL", "NYK"],
-        },
-    )
-    monkeypatch.setattr(app_module, "predict_matchup_from_games", fake_predict_matchup_from_games)
-
-    app = create_app()
-    client = app.test_client()
-    response = client.post(
-        "/predictor",
-        data = {
-            "home_team": "BOS",
-            "away_team": "NYK",
-        },
-    )
-    body = response.get_data(as_text = True)
+def test_prediction_history_only_compares_saved_picks_with_finals(monkeypatch):
+    set_prediction_data(monkeypatch)
+    response = create_app().test_client().get("/predictor?view=history")
+    body = response.get_data(as_text=True)
 
     assert response.status_code == 200
-    assert "NYK @ BOS" in body
-    assert "64.0%" in body
-    assert "61.0%" in body
-    assert "The latest saved injury report was folded into the matchup features" in body
-    assert "Tree model" in body
-
-
-def test_predictor_refresh_route(monkeypatch):
-    import app as app_module
-
-    evaluation_summary = {
-        "test_season": 2025,
-        "export_name": "predictor_latest_season_predictions_2025.csv",
-    }
-
-    monkeypatch.setattr(
-        app_module,
-        "refresh_predictor_dataset",
-        lambda: (
-            app_module.pd.DataFrame(
-                [
-                    {
-                        "date": "2025-04-12",
-                        "season": 2025,
-                        "home_team": "BOS",
-                        "away_team": "NYK",
-                        "home_pts": 110,
-                        "away_pts": 101,
-                        "home_win": 1,
-                        "margin": 9,
-                    }
-                ]
-            ),
-            False,
-            {
-                "status": "refreshed",
-                "message": "Official injury data refreshed for seasons 2022-2025 across 10 game dates.",
-                "rows": 40,
-                "file": "data/raw/official_nba_injuries_by_team_2022_2025.csv",
-            },
-        ),
-    )
-    monkeypatch.setattr(app_module, "build_predictor_artifacts", lambda games: evaluation_summary)
-    monkeypatch.setattr(
-        app_module,
-        "load_predictor_games",
-        lambda: app_module.pd.DataFrame(
-            [
-                {
-                    "date": "2025-04-12",
-                    "season": 2025,
-                    "home_team": "BOS",
-                    "away_team": "NYK",
-                    "home_pts": 110,
-                    "away_pts": 101,
-                    "home_win": 1,
-                    "margin": 9,
-                }
-            ]
-        ),
-    )
-    monkeypatch.setattr(
-        app_module,
-        "get_latest_prediction_context",
-        lambda frame: {
-            "season": 2025,
-            "latest_completed_date": "2025-04-12",
-            "prediction_date": "2025-04-13",
-            "teams": ["BOS", "NYK"],
-        },
-    )
-
-    app = create_app()
-    client = app.test_client()
-    response = client.post("/predictor/refresh", follow_redirects = True)
-    body = response.get_data(as_text = True)
-
-    assert response.status_code == 200
-    assert "Predictor training data refreshed for 2022-2025." in body
-    assert "Official injury data refreshed for seasons 2022-2025 across 10 game dates." in body
-    assert "Updated predictor comparison on test season 2025 and exported latest-season predictions." in body
+    assert "Prediction history" in body
+    assert "1 of 1 picks correct" in body
+    assert "Atlanta Hawks won" in body
+    assert "110" in body and "101" in body
+    assert "65.0%" in body
+    assert "Philadelphia 76ers" not in body
+    assert "New Orleans Pelicans" not in body
 
 
 def test_bayesian_page_renders():

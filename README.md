@@ -14,7 +14,7 @@ NBA game scraper, Elo tracker, and home-win predictor built from Basketball-Refe
 
 - `Home` explains the project and current workflow
 - `Leaderboard` shows the latest Elo ratings
-- `Predictor` compares logistic regression and random forest on the same matchup
+- `Predictor` shows today’s model win probabilities and saved picks with final scores in History
 - `Scrape` refreshes game data and injury reports
 - `About` lists contact information and lets visitors send questions by email
 - `Inner-Workings` explains how the scraper, predictor, and Elo model work
@@ -31,7 +31,6 @@ The predictor uses pre-game context only:
 ## Controls
 
 - `Refresh leaderboard` checks for new final scores and reruns the Elo standings
-- `Refresh predictor data` checks for new final scores and rebuilds the latest-season evaluation
 - `Reset data` clears generated exports, caches, and results while keeping the bundled datasets
 
 ## Automatic game and injury updates
@@ -44,12 +43,16 @@ season. The predictor trains on the full game history and joins injury features
 by team and game date using reports published before tipoff. Reports for upcoming
 games can feed matchup predictions before the final score is available.
 
-Render deploys changes to either snapshot. If injury retrieval fails, the workflow
+The workflow also batches logistic regression predictions for today and tomorrow
+into `data/raw/nba_daily_predictions.csv`. It updates picks before tipoff and saves
+them for comparison with final scores. The Predictor page reads the saved data.
+
+Render deploys changes to the snapshots. If injury retrieval fails, the workflow
 can still publish finals and retry injuries on the next run. A verification commit
 after 45 idle days keeps the offseason schedule active without redeploying Render.
 
-Run `python game_updates.py` and `python injury_updates.py` to refresh a local
-checkout, or run **Refresh NBA games** from the repository’s Actions tab. Use
+Run `python game_updates.py`, `python injury_updates.py`, and `python daily_predictions.py`
+in order to refresh a local checkout, or run **Refresh NBA games** from the repository’s Actions tab. Use
 `python injury_updates.py --since YYYY-MM-DD` to backfill older reports.
 
 ## Run it
@@ -130,7 +133,7 @@ for running the app behind a Cloudflare Tunnel later.
 - `data/raw/bref_games_2016_2025.csv`
 - `data/raw/nba_game_updates.csv`
 - `data/processed/games_2016_2025_normalized.csv`
-- predictor exports under `data/exports/predictor/`
+- `data/raw/nba_daily_predictions.csv`
 - scrape exports under `data/exports/scrapes/`
 - evaluation summaries under `data/results/`
 

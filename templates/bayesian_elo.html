@@ -98,16 +98,13 @@
   <article class="card math-card">
     <h2>2. Home-win predictor</h2>
     <p>
-      The predictor trains on every completed game in the window before the target date, then
-      builds one matchup row for the home and away teams you pick. Two models train on the same
-      engineered feature set and run side by side: a logistic regression (linear, readable,
-      coefficients you can inspect) and a random forest (nonlinear, captures interactions the
-      linear model can't).
+      The daily predictor trains logistic regression on completed games before each slate’s date,
+      then scores the scheduled matchups together. It saves each prediction before tipoff and
+      pairs the saved pick with the final score in History.
     </p>
     <p>
-      Keeping both visible isn't indecision. Linear and tree models weigh the same inputs
-      differently on a given matchup, and when they disagree the context table tells you why:
-      rest, injury load, and strength gap all show up as raw numbers beneath the winner call.
+      The original benchmark compares logistic regression with random forest on the same
+      pregame features.
     </p>
     <ul class="feature-list">
       <li>Season win percentage tracks overall team quality over the full year so far.</li>

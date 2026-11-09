@@ -2,32 +2,29 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 from threading import Lock, Thread
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from shutil import rmtree
 from uuid import uuid4
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 from flask import Flask, flash, redirect, render_template, request, send_from_directory, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from cleaner import clean_games, normalize_team_names
+from cleaner import TEAM_MAP_BREF, clean_games, normalize_team_names
+from daily_predictions import DAILY_PREDICTIONS_FILE, read_daily_predictions
 from game_updates import LIVE_GAMES_FILE, read_game_updates, refresh_game_updates
 from injury_updates import refresh_injury_updates
 from model import run_elo
 from predictor import (
     LIVE_INJURIES_FILE,
-    evaluate_prediction_models,
     aggregate_team_injuries,
     fetch_report_with_retries,
     get_latest_available_report_timestamp,
-    get_latest_prediction_context,
-    load_optional_team_injuries,
-    predict_matchup_from_games,
     scrape_injury_reports_for_dates,
 )
 from scraper import scrape_multiple_seasons
@@ -53,9 +50,11 @@ PREDICTOR_RAW_FILE = RAW_DIR / f"bref_games_{PREDICTOR_START_SEASON}_{PREDICTOR_
 PREDICTOR_PROCESSED_FILE = (
     PROCESSED_DIR / f"games_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}_normalized.csv"
 )
-PREDICTOR_EVAL_SUMMARY_FILE = (
-    RESULTS_DIR / f"predictor_eval_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.json"
-)
+PREDICTION_DISPLAY_TZ = ZoneInfo("America/Los_Angeles")
+PREDICTION_HISTORY_PAGE_SIZE = 25
+PREDICTION_TEAM_NAMES = {}
+for team_name, team_code in TEAM_MAP_BREF.items():
+    PREDICTION_TEAM_NAMES.setdefault(team_code, team_name)
 APP_TITLE = "NBA Odds Predictor"
 AUTHOR_NAME = "Brian Zeng"
 AUTHOR_EMAIL = "bzeng0000@gmail.com"
@@ -65,13 +64,6 @@ AUTHOR_GITHUB = "https://github.com/brianbzeng"
 DEFAULT_START_SEASON = 2016
 DEFAULT_END_SEASON = 2025
 PREVIEW_OPTIONS = (5, 10, 25, 50, 100)
-ENGINEERED_HEURISTICS = (
-    "Team strength blends season win percentage with average scoring margin.",
-    "Blended strength combines the team-strength score with normalized Elo.",
-    "Recent form tracks rolling five-game win rate and scoring margin.",
-    "Rest measures days since each team last played before the matchup.",
-    "Injury impact uses official status counts, weighted severity, and estimated absence days.",
-)
 PREDICTOR_BENCHMARK_SUMMARY = {
     "label": "Final project benchmark",
     "split": "train 2022-2024, test 2025",
@@ -180,44 +172,45 @@ def load_predictor_games() -> pd.DataFrame:
     return pd.concat([baseline, normalize_team_names(clean_games(updates))], ignore_index=True)
 
 
-def refresh_live_datasets() -> tuple[bool, dict[str, object]]:
-    _, changed = refresh_game_updates()
-    try:
-        injury_status = refresh_injury_updates()
-    except Exception:
-        logging.getLogger(__name__).exception("Official NBA injury refresh failed")
-        injury_status = {
-            "status": "error",
-            "message": "Could not refresh official NBA injury reports. Using the saved reports.",
-        }
-    return changed, injury_status
+def load_prediction_rows(today: date, history: bool) -> list[dict]:
+    slate = read_daily_predictions()
+    if slate.empty:
+        return []
 
+    finals = {
+        (game.date, TEAM_MAP_BREF[game.home_team], TEAM_MAP_BREF[game.away_team]): game
+        for game in read_game_updates().itertuples(index=False)
+    }
+    rows = []
+    for game in slate.sort_values("tipoff_utc", ascending=not history).itertuples(index=False):
+        local_tipoff = game.tipoff_utc.tz_convert(PREDICTION_DISPLAY_TZ)
+        if not history and local_tipoff.date() != today:
+            continue
+        final = finals.get((game.game_date, game.home_team, game.away_team))
+        has_pick = pd.notna(game.home_win_probability)
+        if history and (final is None or not has_pick):
+            continue
 
-def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool, dict[str, object]]:
-    changed, injury_status = refresh_live_datasets()
-    return load_predictor_games(), not changed, injury_status
-
-
-def build_predictor_artifacts(games: pd.DataFrame) -> dict[str, object]:
-    injury_df = load_optional_team_injuries(games)
-    evaluation_summary, export_df = evaluate_prediction_models(games, injury_df)
-    export_name = (
-        f"predictor_latest_season_predictions_{int(evaluation_summary['test_season'])}.csv"
-    )
-    export_path = PREDICTOR_EXPORTS_DIR / export_name
-    export_df.to_csv(export_path, index = False)
-
-    serialized_summary = dict(evaluation_summary)
-    serialized_summary["export_name"] = export_name
-    serialized_summary["export_path"] = str(export_path)
-    PREDICTOR_EVAL_SUMMARY_FILE.write_text(json.dumps(serialized_summary, indent = 2))
-    return serialized_summary
-
-
-def load_predictor_artifacts() -> dict[str, object] | None:
-    if not PREDICTOR_EVAL_SUMMARY_FILE.exists():
-        return None
-    return json.loads(PREDICTOR_EVAL_SUMMARY_FILE.read_text())
+        away, home = game.away_team, game.home_team
+        pick = (home if game.home_win_probability > 0.5 else away) if has_pick else None
+        winner = (home if final.home_pts > final.away_pts else away) if final is not None else None
+        rows.append({
+            "day": local_tipoff.strftime("%a, %b %d").replace(" 0", " "),
+            "tipoff": local_tipoff.strftime("%I:%M %p").lstrip("0") + " PT",
+            "tipoff_iso": game.tipoff_utc.isoformat(),
+            "status": "final" if final is not None else game.status,
+            "away": PREDICTION_TEAM_NAMES.get(away, away),
+            "home": PREDICTION_TEAM_NAMES.get(home, home),
+            "away_chance": f"{1 - game.home_win_probability:.1%}" if has_pick else None,
+            "home_chance": f"{game.home_win_probability:.1%}" if has_pick else None,
+            "away_score": final.away_pts if final is not None else None,
+            "home_score": final.home_pts if final is not None else None,
+            "pick": PREDICTION_TEAM_NAMES.get(pick, pick),
+            "winner": PREDICTION_TEAM_NAMES.get(winner, winner),
+            "correct": pick == winner if has_pick and winner is not None else None,
+        })
+    # Keep the upcoming picks at the top of today's board.
+    return rows if history else sorted(rows, key=lambda row: row["status"] != "scheduled")
 
 
 def save_scraped_games(start_season: int, end_season: int) -> tuple[pd.DataFrame, str]:
@@ -467,7 +460,11 @@ def get_live_season_end_year(reference_date: datetime | None = None) -> int:
 
 
 def refresh_live_leaderboard() -> tuple[pd.DataFrame, int, bool]:
-    changed, _ = refresh_live_datasets()
+    _, changed = refresh_game_updates()
+    try:
+        refresh_injury_updates()
+    except Exception:
+        logging.getLogger(__name__).exception("Official NBA injury refresh failed")
     games = get_latest_live_games()
     season = int(games["season"].max()) if not games.empty else get_live_season_end_year()
     return build_leaderboard_frame(games), season, not changed
@@ -523,6 +520,8 @@ def clear_generated_data() -> dict[str, int]:
         LIVE_GAMES_FILE.with_suffix(".lock"),
         LIVE_INJURIES_FILE,
         LIVE_INJURIES_FILE.with_suffix(".lock"),
+        DAILY_PREDICTIONS_FILE,
+        DAILY_PREDICTIONS_FILE.with_suffix(".lock"),
         PREDICTOR_RAW_FILE,
         RAW_DIR / f"official_nba_injuries_by_team_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.csv",
         RAW_DIR / f"official_nba_injuries_detailed_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.csv",
@@ -791,123 +790,29 @@ def create_app() -> Flask:
                 return {"status": "missing"}, 404
             return {"status": job["status"]}
 
-    @app.route("/predictor", methods=["GET", "POST"])
+    @app.get("/predictor")
     def predictor():
-        prediction = None
-        error = None
-        injury_file_present = False
-        latest_injury_report = None
-        evaluation_summary = None
-        benchmark_summary = PREDICTOR_BENCHMARK_SUMMARY
-
-        try:
-            games = load_predictor_games()
-            context = get_latest_prediction_context(games)
-            injury_df = load_optional_team_injuries(games)
-            injury_file_present = injury_df is not None
-            if injury_file_present and "latest_report_datetime" in injury_df:
-                latest = injury_df["latest_report_datetime"].max()
-                if pd.notna(latest):
-                    latest_injury_report = latest.strftime("%b %d, %Y %I:%M %p ET")
-            evaluation_summary = load_predictor_artifacts()
-            selected_season = int(context["season"])
-            prediction_date = context["prediction_date"]
-            latest_completed_date = context["latest_completed_date"]
-            teams = context["teams"]
-            default_home_team = teams[0] if teams else ""
-            default_away_team = teams[1] if len(teams) > 1 else default_home_team
-            home_team = request.form.get("home_team", default_home_team)
-            away_team = request.form.get("away_team", default_away_team)
-
-            if request.method == "POST":
-                prediction = predict_matchup_from_games(
-                    games,
-                    home_team = home_team,
-                    away_team = away_team,
-                    season = selected_season,
-                    game_date = pd.Timestamp(prediction_date),
-                )
-        except Exception as exc:  # noqa: BLE001 - user-facing feedback
-            error = str(exc)
-            teams = []
-            selected_season = None
-            prediction_date = datetime.now().strftime("%Y-%m-%d")
-            latest_completed_date = None
-            home_team = ""
-            away_team = ""
-            injury_file_present = False
-            latest_injury_report = None
-            evaluation_summary = None
-            benchmark_summary = PREDICTOR_BENCHMARK_SUMMARY
+        today = datetime.now(PREDICTION_DISPLAY_TZ).date()
+        history = request.args.get("view") == "history"
+        rows = load_prediction_rows(today, history)
+        correct = sum(row["correct"] is True for row in rows)
+        total = len(rows)
+        page_count = max(1, (total + PREDICTION_HISTORY_PAGE_SIZE - 1) // PREDICTION_HISTORY_PAGE_SIZE)
+        page = min(max(1, request.args.get("page", 1, type=int)), page_count) if history else 1
+        if history:
+            start = (page - 1) * PREDICTION_HISTORY_PAGE_SIZE
+            rows = rows[start:start + PREDICTION_HISTORY_PAGE_SIZE]
 
         return render_template(
             "predictor.html",
-            prediction = prediction,
-            error = error,
-            predictor_start_season = PREDICTOR_START_SEASON,
-            predictor_end_season = selected_season or PREDICTOR_END_SEASON,
-            selected_season = selected_season,
-            teams = teams,
-            home_team = home_team,
-            away_team = away_team,
-            prediction_date = prediction_date,
-            latest_completed_date = latest_completed_date,
-            injury_file_present = injury_file_present,
-            latest_injury_report = latest_injury_report,
-            evaluation_summary = evaluation_summary,
-            benchmark_summary = benchmark_summary,
-            engineered_heuristics = ENGINEERED_HEURISTICS,
+            history=history,
+            today=today.strftime("%A, %B %d").replace(" 0", " "),
+            rows=rows,
+            total=total,
+            correct=correct,
+            page=page,
+            page_count=page_count,
         )
-
-    @app.post("/predictor/refresh")
-    def refresh_predictor():
-        try:
-            games, already_current, injury_status = refresh_predictor_dataset()
-        except Exception:
-            app.logger.exception("Predictor game refresh failed")
-            flash("Could not refresh predictor data. Showing the saved games.", "error")
-            return redirect(url_for("predictor"))
-
-        if games.empty and already_current:
-            flash(
-                "Predictor refresh did not return any games yet. Try again in a bit.",
-                "error",
-            )
-        elif already_current:
-            flash(
-                "Predictor game data is already up to date.",
-                "info",
-            )
-        else:
-            end_season = int(games["season"].max())
-            flash(
-                f"Predictor training data refreshed for {PREDICTOR_START_SEASON}-{end_season}.",
-                "success",
-            )
-
-        if injury_status["status"] == "refreshed":
-            flash(injury_status["message"], "success")
-        elif injury_status["status"] == "cached":
-            flash(injury_status["message"], "info")
-        elif injury_status["status"] in {"missing_dependency", "no_overlap"}:
-            flash(injury_status["message"], "info")
-        elif injury_status["status"] in {"no_games", "error"}:
-            flash(injury_status["message"], "error")
-
-        if not games.empty:
-            try:
-                evaluation_summary = build_predictor_artifacts(games)
-                flash(
-                    (
-                        f"Updated predictor comparison on test season "
-                        f"{evaluation_summary['test_season']} and exported latest-season predictions."
-                    ),
-                    "success",
-                )
-            except Exception as exc:  # noqa: BLE001 - user-facing feedback
-                flash(f"Predictor evaluation refresh skipped: {exc}", "info")
-
-        return redirect(url_for("predictor"))
 
     @app.post("/reset-data")
     def reset_data():

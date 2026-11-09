@@ -11,3 +11,4 @@ data/results/
 data/raw/bref_games_2020_2025.csv
 data/raw/nba_game_updates.lock
 data/raw/official_nba_injuries_by_team_live.lock
+data/raw/nba_daily_predictions.lock

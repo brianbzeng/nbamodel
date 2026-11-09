@@ -34,10 +34,15 @@ jobs:
           export JAVA_HOME="$JAVA_HOME_17_X64"
           export PATH="$JAVA_HOME/bin:$PATH"
           python injury_updates.py
+      - name: Build the daily prediction board
+        id: predictions
+        if: ${{ !cancelled() && steps.games.outcome == 'success' }}
+        run: python daily_predictions.py
       - name: Publish updated NBA data
         if: ${{ !cancelled() && steps.games.outcome == 'success' }}
         env:
           INJURY_REFRESH_OUTCOME: ${{ steps.injuries.outcome }}
+          PREDICTION_REFRESH_OUTCOME: ${{ steps.predictions.outcome }}
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
@@ -46,16 +51,20 @@ jobs:
           if [[ "$INJURY_REFRESH_OUTCOME" == success && -f "$injury_snapshot" ]]; then
             git add -- "$injury_snapshot"
           fi
+          prediction_snapshot=data/raw/nba_daily_predictions.csv
+          if [[ "$PREDICTION_REFRESH_OUTCOME" == success && -f "$prediction_snapshot" ]]; then
+            git add -- "$prediction_snapshot"
+          fi
 
           if git diff --cached --quiet; then
             last_commit=$(git show -s --format=%ct HEAD)
-            if [[ "$INJURY_REFRESH_OUTCOME" == success ]] && (( $(date +%s) - last_commit > 45 * 86400 )); then
+            if [[ "$INJURY_REFRESH_OUTCOME" == success && "$PREDICTION_REFRESH_OUTCOME" == success ]] && (( $(date +%s) - last_commit > 45 * 86400 )); then
               git commit --allow-empty -m 'Verify NBA data snapshots [skip render]'
             else
               echo 'No NBA data changes to publish.'
               exit 0
             fi
           else
-            git commit -m 'Update NBA game results and injury reports'
+            git commit -m 'Update NBA scores, injury reports, and pregame picks'
           fi
           git push origin "HEAD:refs/heads/$GITHUB_REF_NAME"

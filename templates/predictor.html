@@ -3,175 +3,88 @@
 {% block content %}
 <section class="page-heading">
   <div>
-    <p class="eyebrow">Model feature</p>
-    <h1>Home-win predictor</h1>
-    <p class="lede">
-      Pick a home team and an away team, and the app turns recent form, team strength, rest, and the latest official injury report into a predicted winner and a home-win probability. It trains two models on the same engineered feature set and shows them side by side, because a linear model and a tree model can read the same features differently on a given matchup.
-    </p>
-    <p class="lede">
-      The predictor trains on completed games from {{ predictor_start_season }} through the latest season, using games before the target date to estimate the matchup you pick.
-    </p>
+    <p class="eyebrow">NBA game predictions</p>
+    <h1>Predictor</h1>
+    <p class="lede">Pregame win probabilities from the logistic regression model.</p>
   </div>
 </section>
 
-<section class="grid predictor-grid">
-  <article class="card">
-    <div class="section-header">
-      <h2>Matchup inputs</h2>
-      <p>Training window {{ predictor_start_season }}-{{ predictor_end_season }}.</p>
-    </div>
+<section class="prediction-board" aria-labelledby="prediction-view">
+  <nav class="prediction-tabs" aria-label="Prediction views">
+    <a href="{{ url_for('predictor') }}"{% if not history %} aria-current="page"{% endif %}>Today</a>
+    <a href="{{ url_for('predictor', view='history') }}"{% if history %} aria-current="page"{% endif %}>History</a>
+  </nav>
 
-    {% if error %}
-      <div class="notice error">{{ error }}</div>
-    {% endif %}
-
-    <div class="featured-team predictor-summary">
-      <strong>Training range {{ predictor_start_season }}-{{ predictor_end_season }}</strong>
-      <span>Season {{ selected_season or "N/A" }}</span>
-      <span>Latest completed games through {{ latest_completed_date or "N/A" }}</span>
-      <span>Prediction target date {{ prediction_date or "N/A" }}</span>
-      <span>
-        {% if latest_injury_report %}
-          Latest saved official injury report {{ latest_injury_report }}
-        {% elif injury_file_present %}
-          Official injury CSV present for the supported seasons
-        {% else %}
-          No official injury CSV yet. Install nbainjuries, then hit Refresh predictor data.
-        {% endif %}
-      </span>
-    </div>
-
-    <div class="page-actions">
-      <form method="post" action="{{ url_for('refresh_predictor') }}" data-show-loading="true">
-        <button type="submit" class="button-secondary">Refresh predictor data</button>
-      </form>
-    </div>
-    <p class="muted">Completed games and official injury reports refresh together on game nights. A manual refresh also rebuilds the latest-season evaluation.</p>
-
-    <form method="post" class="form" data-show-loading="true">
-      <div class="form-columns">
-       <label>
-          <span>Home team</span>
-          <select name="home_team">
-            {% for team in teams %}
-              <option value="{{ team }}" {% if team == home_team %}selected{% endif %}>{{ team }}</option>
-            {% endfor %}
-          </select>
-        </label>
-
-        <label>
-          <span>Away team</span>
-          <select name="away_team">
-            {% for team in teams %}
-              <option value="{{ team }}" {% if team == away_team %}selected{% endif %}>{{ team }}</option>
-            {% endfor %}
-          </select>
-        </label>
-     </div>
-      <button type="submit" class="button-primary">Generate prediction</button>
-    </form>
-  </article>
-
-  <article class="card">
-    <div class="section-header">
-      <h2>Prediction output</h2>
-          <p>Trained on all completed games before the target date, then asked to predict this one matchup.</p>
-    </div>
-
-    {% if prediction %}
-      <div class="featured-team predictor-summary">
-        <strong>{{ prediction.matchup }}</strong>
-        <span>Season {{ prediction.season }} | projected for {{ prediction.game_date }}</span>
-        <span>
-          {% if prediction.injury_data_used %}
-            The latest saved injury report was folded into the matchup features
-          {% else %}
-            No recent injury report matched this prediction date, so this run leaned on team form and strength only
-          {% endif %}
-        </span>
-      </div>
-
-      <div class="predictor-model-grid">
-        <section class="predictor-model-card predictor-model-card-logistic">
-          <div class="predictor-model-head">
-            <span class="predictor-model-label">Logistic regression</span>
-            <span class="predictor-model-badge">Classifier</span>
-          </div>
-          <div class="predictor-model-body">
-            <p class="predictor-model-kicker">Predicted winner</p>
-            <strong class="predictor-model-winner">{{ prediction.logistic.predicted_winner }}</strong>
-            <div class="predictor-model-stats">
-              <div class="predictor-model-stat">
-                <span>Home win %</span>
-                <strong>{{ "%.1f"|format(prediction.logistic.home_win_probability * 100) }}%</strong>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section class="predictor-model-card predictor-model-card-rf">
-          <div class="predictor-model-head">
-            <span class="predictor-model-label">Random forest</span>
-            <span class="predictor-model-badge">Tree model</span>
-          </div>
-          <div class="predictor-model-body">
-            <p class="predictor-model-kicker">Predicted winner</p>
-            <strong class="predictor-model-winner">{{ prediction.random_forest.predicted_winner }}</strong>
-            <div class="predictor-model-stats">
-              <div class="predictor-model-stat">
-                <span>Home win %</span>
-                <strong>{{ "%.1f"|format(prediction.random_forest.home_win_probability * 100) }}%</strong>
-              </div>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      <div class="table-wrap">
-        <table class="leaderboard context">
-          <thead>
-            <tr>
-              <th>Context</th>
-              <th>Home</th>
-              <th>Away</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Win %</td>
-              <td>{{ "%.3f"|format(prediction.context.home_win_pct) }}</td>
-              <td>{{ "%.3f"|format(prediction.context.away_win_pct) }}</td>
-            </tr>
-            <tr>
-              <td>Strength</td>
-              <td>{{ "%.3f"|format(prediction.context.home_team_strength) }}</td>
-              <td>{{ "%.3f"|format(prediction.context.away_team_strength) }}</td>
-            </tr>
-            <tr>
-              <td>Rest days</td>
-              <td>{{ prediction.context.home_rest_days }}</td>
-              <td>{{ prediction.context.away_rest_days }}</td>
-            </tr>
-            <tr>
-              <td>Out players</td>
-              <td>{{ prediction.context.home_out_count }}</td>
-              <td>{{ prediction.context.away_out_count }}</td>
-            </tr>
-            <tr>
-              <td>Injury impact</td>
-              <td>{{ "%.1f"|format(prediction.context.home_injury_impact_score) }}</td>
-              <td>{{ "%.1f"|format(prediction.context.away_injury_impact_score) }}</td>
-            </tr>
-            <tr>
-              <td>Strength diff</td>
-              <td colspan="2">{{ "%.3f"|format(prediction.context.team_strength_diff) }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+  <div class="prediction-heading">
+    {% if history %}
+      <h2 id="prediction-view">Prediction history</h2>
+      {% if total %}<span>{{ correct }} of {{ total }} picks correct</span>{% endif %}
     {% else %}
-      <p class="muted">Pick a home and away team on the left and submit the form to see the combined prediction here.</p>
+      <h2 id="prediction-view">{{ today }}</h2>
+      <span>{{ total }} {{ 'game' if total == 1 else 'games' }}</span>
     {% endif %}
-  </article>
+  </div>
+
+  {% if rows %}
+    <div class="prediction-columns" aria-hidden="true">
+      <span>{{ 'Game date' if history else 'Time / status' }}</span>
+      <div><span>Matchup</span><span>Win chance</span></div>
+      <span>{{ 'Pick and result' if history else 'Model pick' }}</span>
+    </div>
+    <ul class="prediction-games">
+      {% for game in rows %}
+      <li class="prediction-game">
+        <div class="prediction-status">
+          {% if history %}
+            <time datetime="{{ game.tipoff_iso }}">{{ game.day }}</time>
+          {% elif game.status == 'scheduled' %}
+            <time datetime="{{ game.tipoff_iso }}">{{ game.tipoff }}</time>
+          {% elif game.status == 'in_progress' %}
+            <span class="prediction-live">In progress</span>
+          {% else %}
+            <span>{{ game.status|capitalize }}</span>
+          {% endif %}
+        </div>
+
+        <div class="prediction-matchup">
+          {% for team, score, chance in [(game.away, game.away_score, game.away_chance), (game.home, game.home_score, game.home_chance)] %}
+            <div class="prediction-team">
+              <span{% if team == game.winner %} class="prediction-winner"{% endif %}>{{ team }}</span>
+              <span class="prediction-score">{% if score is not none %}{{ score }}{% endif %}</span>
+              <strong class="prediction-chance">{{ chance or '' }}</strong>
+            </div>
+          {% endfor %}
+        </div>
+
+        <div class="prediction-pick">
+          {% if game.pick %}
+            <span class="prediction-pick-label prediction-mobile-label">Model pick</span>
+            <strong>{{ game.pick }}</strong>
+            {% if history %}
+              <span class="prediction-outcome">{{ game.winner }} won</span>
+              <span class="{{ 'prediction-correct' if game.correct else 'prediction-missed' }}">{{ 'Correct' if game.correct else 'Missed' }}</span>
+            {% endif %}
+          {% elif game.status == 'scheduled' %}
+            <span class="prediction-pick-label">Prediction pending</span>
+          {% else %}
+            <span class="prediction-pick-label">No saved pregame pick</span>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% elif history %}
+    <p class="prediction-empty">Saved pregame picks appear here once their final scores are available.</p>
+  {% else %}
+    <p class="prediction-empty">No games on today’s saved schedule.</p>
+  {% endif %}
+
+  {% if history and page_count > 1 %}
+    <nav class="prediction-pagination" aria-label="Prediction history pages">
+      {% if page > 1 %}<a href="{{ url_for('predictor', view='history', page=page - 1) }}">Newer picks</a>{% endif %}
+      <span>Page {{ page }} of {{ page_count }}</span>
+      {% if page < page_count %}<a href="{{ url_for('predictor', view='history', page=page + 1) }}">Older picks</a>{% endif %}
+    </nav>
+  {% endif %}
 </section>
 {% endblock %}

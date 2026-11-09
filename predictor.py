@@ -932,6 +932,17 @@ def _build_preprocessor(numeric_features: list[str]) -> ColumnTransformer:
     )
 
 
+def _fit_logistic_regression(feature_df: pd.DataFrame) -> Pipeline:
+    numeric_features = get_numeric_features()
+    model = Pipeline(
+        steps = [
+            ("preprocessor", _build_preprocessor(numeric_features)),
+            ("classifier", LogisticRegression(max_iter = 2000, random_state = 100)),
+        ]
+    )
+    return model.fit(feature_df[CATEGORICAL_FEATURES + numeric_features], feature_df["home_win"])
+
+
 def train_prediction_models(
     games: pd.DataFrame,
     injury_df: Optional[pd.DataFrame] = None,
@@ -943,16 +954,8 @@ def train_prediction_models(
     if feature_df.empty:
         raise ValueError("Feature engineering produced no training rows.")
 
-    y = feature_df["home_win"]
+    logistic_regression = _fit_logistic_regression(feature_df)
     numeric_features = get_numeric_features()
-    model_columns = CATEGORICAL_FEATURES + numeric_features
-
-    logistic_regression = Pipeline(
-        steps = [
-            ("preprocessor", _build_preprocessor(numeric_features)),
-            ("classifier", LogisticRegression(max_iter = 2000, random_state = 100)),
-        ]
-    )
     random_forest = Pipeline(
         steps = [
             ("preprocessor", _build_preprocessor(numeric_features)),
@@ -968,8 +971,7 @@ def train_prediction_models(
         ]
     )
 
-    logistic_regression.fit(feature_df[model_columns], y)
-    random_forest.fit(feature_df[model_columns], y)
+    random_forest.fit(feature_df[CATEGORICAL_FEATURES + numeric_features], feature_df["home_win"])
     return logistic_regression, random_forest, feature_df
 
 
@@ -1214,6 +1216,33 @@ def build_matchup_features(
         matchup_df = _apply_manual_injury_overrides(matchup_df, injury_overrides)
 
     return matchup_df
+
+
+def predict_slate(
+    games: pd.DataFrame,
+    matchups: list[dict[str, object]],
+    injury_df: Optional[pd.DataFrame],
+    game_date: pd.Timestamp,
+) -> dict[str, float]:
+    """Fit once for a game date and return the home-win probability for each game ID."""
+    if not matchups:
+        return {}
+
+    game_date = pd.Timestamp(game_date).normalize()
+    completed = games[pd.to_datetime(games["date"]) < game_date]
+    if completed.empty:
+        raise ValueError("No completed games exist before the requested game date.")
+
+    training = merge_injury_features(build_pregame_features(completed), injury_df)
+    model = _fit_logistic_regression(training)
+    slate_features = pd.concat([
+        build_matchup_features(
+            completed, matchup["season"], game_date, matchup["home_team"], matchup["away_team"], injury_df
+        )
+        for matchup in matchups
+    ], ignore_index=True)
+    probabilities = model.predict_proba(slate_features[list(model.feature_names_in_)])[:, 1]
+    return {str(matchup["game_id"]): float(probability) for matchup, probability in zip(matchups, probabilities)}
 
 
 def predict_matchup_from_games(
