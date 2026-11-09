@@ -5,7 +5,7 @@
   <div>
     <p class="eyebrow">NBA game predictions</p>
     <h1>Predictor</h1>
-    <p class="lede">Random forest picks appear in the hour before tipoff and refresh as new finals and injury reports come in.</p>
+    <p class="lede">Random forest picks appear in the hour before tipoff.</p>
   </div>
 </section>
 
@@ -19,7 +19,7 @@
     {% if history %}
       <h2 id="prediction-view">Prediction history · {{ season - 1 }}–{{ (season|string)[-2:] }}</h2>
       {% if total %}
-        <span>{{ total }} {{ 'final' if total == 1 else 'finals' }}{% if live_total %} · {{ correct }} of {{ live_total }} live picks correct{% endif %}</span>
+        <span>{{ total }} completed {{ 'game' if total == 1 else 'games' }}{% if live_total %} · {{ correct }} of {{ live_total }} live picks correct{% endif %}</span>
       {% endif %}
     {% else %}
       <h2 id="prediction-view">{{ today }}</h2>
@@ -33,30 +33,21 @@
 
   {% if rows %}
     <div class="prediction-columns" aria-hidden="true">
-      <span>{{ 'Game date' if history else 'Time / status' }}</span>
+      <span>{{ 'Game date' if history else 'Tipoff' }}</span>
       <div><span>Matchup</span><span>Win chance</span></div>
       <span>{{ 'Pick and result' if history else 'Model pick' }}</span>
     </div>
     <ul class="prediction-games">
       {% for game in rows %}
       <li class="prediction-game">
-        <div class="prediction-status">
-          {% if history %}
-            <time datetime="{{ game.tipoff_iso }}">{{ game.day }}</time>
-          {% elif game.status == 'scheduled' %}
-            <time datetime="{{ game.tipoff_iso }}">{{ game.tipoff }}</time>
-          {% elif game.status == 'in_progress' %}
-            <span class="prediction-live">In progress</span>
-          {% else %}
-            <span>{{ game.status|capitalize }}</span>
-          {% endif %}
+        <div class="prediction-time">
+          <time datetime="{{ game.tipoff_iso }}">{{ game.day if history else game.tipoff }}</time>
         </div>
 
         <div class="prediction-matchup">
-          {% for team, score, chance in [(game.away, game.away_score, game.away_chance), (game.home, game.home_score, game.home_chance)] %}
+          {% for team, chance in [(game.away, game.away_chance), (game.home, game.home_chance)] %}
             <div class="prediction-team">
-              <span{% if team == game.winner %} class="prediction-winner"{% endif %}>{{ team }}</span>
-              <span class="prediction-score">{% if score is not none %}{{ score }}{% endif %}</span>
+              <span>{{ team }}</span>
               <strong class="prediction-chance">{{ chance or '' }}</strong>
             </div>
           {% endfor %}
@@ -67,14 +58,16 @@
             <span class="prediction-pick-label prediction-mobile-label">Model pick</span>
             <strong>{{ game.pick }}</strong>
             <span class="prediction-pick-label">{{ 'Replay' if game.source == 'replay' else 'Saved pregame' }}{% if game.model %} · {{ game.model }}{% endif %}</span>
-            {% if history %}
-              <span class="prediction-outcome">{{ game.winner }} won</span>
-              <span class="{{ 'prediction-correct' if game.correct else 'prediction-missed' }}">{{ 'Correct' if game.correct else 'Missed' }}</span>
-            {% endif %}
-          {% elif game.status == 'scheduled' %}
+          {% elif game.pick_pending %}
             <span class="prediction-pick-label">Pick due in the final hour</span>
           {% else %}
             <span class="prediction-pick-label">No pick saved before tipoff</span>
+          {% endif %}
+          {% if history %}
+            <span class="prediction-outcome">{{ game.winner }} won</span>
+            {% if game.correct is not none %}
+              <span class="{{ 'prediction-correct' if game.correct else 'prediction-missed' }}">{{ 'Correct' if game.correct else 'Missed' }}</span>
+            {% endif %}
           {% endif %}
         </div>
 
@@ -102,7 +95,7 @@
       {% endfor %}
     </ul>
   {% elif history %}
-    <p class="prediction-empty">No final scores for this season yet.</p>
+    <p class="prediction-empty">No completed games this season yet.</p>
   {% else %}
     <p class="prediction-empty">No games on today’s saved schedule.</p>
   {% endif %}

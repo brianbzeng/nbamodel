@@ -553,31 +553,28 @@ td, .metric strong, .info-row strong { font-variant-numeric: tabular-nums; }
 .prediction-game { row-gap: 6px; }
 .prediction-game + .prediction-game { border-top: 1px solid var(--rule); }
 
-.prediction-status {
+.prediction-time {
   color: var(--ink-soft);
   font-family: var(--mono);
   font-size: 0.8rem;
   font-weight: 600;
 }
 
-.prediction-live { color: var(--accent-ink); }
 .prediction-matchup { display: grid; gap: 4px; }
 
 .prediction-team {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 2.6rem 4.4rem;
+  grid-template-columns: minmax(0, 1fr) 4.4rem;
   align-items: baseline;
   gap: 8px;
   font-size: 0.94rem;
 }
 
-.prediction-score, .prediction-chance {
+.prediction-chance {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-.prediction-score { color: var(--ink-soft); }
-.prediction-winner { font-weight: 700; }
 .prediction-pick { display: grid; align-content: center; gap: 2px; font-size: 0.88rem; }
 .prediction-pick-label, .prediction-outcome { color: var(--ink-soft); font-size: 0.82rem; }
 .prediction-mobile-label { display: none; }

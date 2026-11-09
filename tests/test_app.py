@@ -168,13 +168,14 @@ def set_prediction_data(monkeypatch):
             ("2026-11-08", "2026-11-08T20:30:00Z", "CHI", "PHI", "final", None),
             ("2026-11-07", "2026-11-08T00:30:00Z", "ATL", "BRK", "final", 0.65),
             ("2026-11-09", "2026-11-10T00:00:00Z", "CHA", "CLE", "scheduled", 0.23),
+            ("2026-11-08", "2026-11-08T23:00:00Z", "DET", "LAL", "in_progress", None),
         ],
         columns=["game_date", "tipoff_utc", "home_team", "away_team", "status", "home_win_probability"],
     )
     slate["game_date"] = pd.to_datetime(slate["game_date"])
     slate["tipoff_utc"] = pd.to_datetime(slate["tipoff_utc"], utc=True)
     slate["predicted_at_utc"] = pd.to_datetime(
-        ["2026-11-09T01:00:00Z", None, "2026-11-08T00:00:00Z", "2026-11-09T23:45:00Z"], utc=True
+        ["2026-11-09T01:00:00Z", None, "2026-11-08T00:00:00Z", "2026-11-09T23:45:00Z", None], utc=True
     )
     finals = pd.DataFrame(
         [
@@ -205,12 +206,15 @@ def test_predictor_shows_the_pacific_slate_and_saved_picks(monkeypatch):
 
     assert response.status_code == 200
     assert "Sunday, November 8" in body
+    assert "12:30 PM PT" in body and "3:00 PM PT" in body
     assert "6:00 PM PT" in body
     assert "New Orleans Pelicans" in body
     assert "54.0%" in body and "46.0%" in body
     assert "<strong>New Orleans Pelicans</strong>" in body
-    assert "127" in body and "Replay · Random forest" in body
-    assert body.index("New Orleans Pelicans") < body.index("Philadelphia 76ers")
+    assert "Replay · Random forest" in body
+    assert body.index("Philadelphia 76ers") < body.index("Los Angeles Lakers") < body.index("New Orleans Pelicans")
+    assert "In progress" not in body and "Time / status" not in body
+    assert "prediction-score" not in body and "Philadelphia 76ers won" not in body
     assert "Atlanta Hawks" not in body and "Cleveland Cavaliers" not in body
     assert "<form" not in body
     assert client.post("/predictor").status_code == 405
@@ -223,15 +227,15 @@ def test_prediction_history_includes_every_current_season_final_newest_first(mon
 
     assert response.status_code == 200
     assert "Prediction history" in body
-    assert "3 finals · 1 of 1 live picks correct" in body
+    assert "3 completed games · 1 of 1 live picks correct" in body
     assert "Atlanta Hawks won" in body
     assert "Philadelphia 76ers won" in body
-    assert "110" in body and "101" in body
+    assert "prediction-score" not in body and ">110<" not in body and ">101<" not in body
     assert "65.0%" in body
     assert "70.0%" not in body  # Live pick takes precedence over replay for Atlanta.
     assert "Replay · Random forest" in body
     assert "Saved pregame · Logistic regression" in body
-    assert "Detroit Pistons" in body and "No pick saved before tipoff" in body
+    assert "Detroit Pistons won" in body and "No pick saved before tipoff" in body
     assert body.index("Philadelphia 76ers") < body.index("Atlanta Hawks") < body.index("Detroit Pistons")
     assert "New York Knicks" not in body
     assert "New Orleans Pelicans" not in body
@@ -247,11 +251,11 @@ def test_predictor_reports_the_injury_inputs_used_for_a_saved_pick(monkeypatch, 
         encoding="utf-8",
     )
     monkeypatch.setattr(app_module, "LIVE_INJURIES_FILE", report_file)
-    slate["predicted_at_utc"] = pd.to_datetime(["2026-11-09T01:20:00Z", None, None, None], utc=True)
-    slate["same_day_finals"] = [1, None, None, None]
-    slate["home_injury_report_utc"] = pd.to_datetime(["2026-11-09T01:15:00Z", None, None, None], utc=True)
+    slate["predicted_at_utc"] = pd.to_datetime(["2026-11-09T01:20:00Z", None, None, None, None], utc=True)
+    slate["same_day_finals"] = [1, None, None, None, None]
+    slate["home_injury_report_utc"] = pd.to_datetime(["2026-11-09T01:15:00Z", None, None, None, None], utc=True)
     slate["away_injury_report_utc"] = pd.NaT
-    slate["home_out_count"] = [2, None, None, None]
+    slate["home_out_count"] = [2, None, None, None, None]
     slate["away_out_count"] = None
 
     response = create_app().test_client().get("/predictor")
