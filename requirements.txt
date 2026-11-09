@@ -10,3 +10,4 @@ pylatex
 httpx
 lxml
 nbainjuries==1.1.1
+filelock

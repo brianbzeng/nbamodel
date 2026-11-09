@@ -1,6 +1,6 @@
 # NBA Odds Predictor
 
-NBA game scraper, Elo tracker, and home-win predictor built from Basketball-Reference data.
+NBA game scraper, Elo tracker, and home-win predictor built from Basketball-Reference history and current ESPN scoreboard results.
 
 ## What it does
 
@@ -30,9 +30,21 @@ The predictor uses pre-game context only:
 
 ## Controls
 
-- `Refresh leaderboard` reruns the Elo standings from processed data
-- `Refresh predictor data` rebuilds the predictor training range and refreshes injury context
-- `Reset data` clears generated raw, processed, and result files
+- `Refresh leaderboard` checks for new final scores and reruns the Elo standings
+- `Refresh predictor data` checks for new final scores and rebuilds the latest-season evaluation
+- `Reset data` clears generated exports, caches, and results while keeping the bundled datasets
+
+## Automatic game updates
+
+GitHub Actions checks the ESPN NBA scoreboard every three hours at minute 17 and
+publishes score changes to `data/raw/nba_game_updates.csv`. Render deploys the
+updated snapshot from the default branch. The leaderboard rates the latest
+season in that file, and the predictor combines it with the bundled 2021–25
+history for training. The snapshot includes NBA Cup, play-in, and playoff
+results. Each refresh keeps saved games and merges new finals and score corrections.
+
+Run `python game_updates.py` to refresh a local checkout, or run **Refresh NBA
+games** manually from the repository’s Actions tab.
 
 ## Run it
 
@@ -110,6 +122,7 @@ for running the app behind a Cloudflare Tunnel later.
 ## Data outputs
 
 - `data/raw/bref_games_2016_2025.csv`
+- `data/raw/nba_game_updates.csv`
 - `data/processed/games_2016_2025_normalized.csv`
 - predictor exports under `data/exports/predictor/`
 - scrape exports under `data/exports/scrapes/`

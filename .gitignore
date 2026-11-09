@@ -9,3 +9,4 @@ data/exports/
 data/processed/
 data/results/
 data/raw/bref_games_2020_2025.csv
+data/raw/nba_game_updates.lock

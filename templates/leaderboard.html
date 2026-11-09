@@ -11,7 +11,7 @@
       If the current season hasn't tipped off yet, it falls back to the most recent completed season's ratings, so the board is never empty during the offseason.
     </p>
     <p class="lede">
-      Hit refresh to pull the latest games from Basketball-Reference, clean them, and replay the full game history into fresh ratings. The first refresh in a new session can take a few seconds because it re-scrapes the current season; subsequent ones are faster if nothing has changed.
+      Ratings use the latest completed games from the current season. Scores refresh automatically every three hours, and you can check for new finals on demand.
     </p>
   </div>
 
@@ -24,7 +24,7 @@
 
 <section class="card info-card">
   <div class="info-row">
-    <span>Last model refresh</span>
+      <span>Games through</span>
     <strong>{{ last_updated or "Not available yet" }}</strong>
   </div>
   <div class="info-row">
@@ -66,7 +66,7 @@
       </table>
     </div>
   {% else %}
-    <p class="muted">No leaderboard data yet. Head to the Scrape page, import a season range, then come back here and hit refresh.</p>
+    <p class="muted">No leaderboard data yet. Select Refresh leaderboard to check for completed games.</p>
   {% endif %}
 </section>
 {% endblock %}

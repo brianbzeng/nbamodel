@@ -15,6 +15,7 @@ from flask import Flask, flash, redirect, render_template, request, send_from_di
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from cleaner import clean_games, normalize_team_names
+from game_updates import LIVE_GAMES_FILE, read_game_updates, refresh_game_updates
 from model import run_elo
 from predictor import (
     evaluate_prediction_models,
@@ -28,7 +29,7 @@ from predictor import (
     refresh_official_injury_dataset,
     scrape_injury_reports_for_dates,
 )
-from scraper import scrape_bref_season_games, scrape_multiple_seasons
+from scraper import scrape_multiple_seasons
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
@@ -127,12 +128,6 @@ def load_processed_games() -> pd.DataFrame:
     return processed
 
 
-def save_processed_games(games: pd.DataFrame) -> pd.DataFrame:
-    processed = normalize_team_names(clean_games(games))
-    processed.to_csv(PROCESSED_FILE, index=False)
-    return processed
-
-
 def _predictor_dataset_is_valid(games: pd.DataFrame) -> bool:
     # Reject obviously broken cached predictor datasets before the model uses them.
     if games.empty or "date" not in games.columns or "season" not in games.columns:
@@ -155,7 +150,7 @@ def _predictor_dataset_is_valid(games: pd.DataFrame) -> bool:
     )
 
 
-def load_predictor_games() -> pd.DataFrame:
+def load_predictor_baseline() -> pd.DataFrame:
     if PREDICTOR_PROCESSED_FILE.exists():
         processed = pd.read_csv(PREDICTOR_PROCESSED_FILE, parse_dates=["date"])
         if _predictor_dataset_is_valid(processed):
@@ -176,52 +171,25 @@ def load_predictor_games() -> pd.DataFrame:
     return processed
 
 
+def load_predictor_games() -> pd.DataFrame:
+    baseline = load_predictor_baseline()
+    updates = read_game_updates()
+    if updates.empty:
+        return baseline
+    return pd.concat([baseline, normalize_team_names(clean_games(updates))], ignore_index=True)
+
+
 def refresh_predictor_dataset() -> tuple[pd.DataFrame, bool, dict[str, object]]:
-    existing_processed = None
-    if PREDICTOR_PROCESSED_FILE.exists():
-        existing_processed = pd.read_csv(PREDICTOR_PROCESSED_FILE, parse_dates=["date"])
-        if _predictor_dataset_is_valid(existing_processed):
-            cached_injury_path = get_exact_injury_dataset_path(existing_processed)
-            if cached_injury_path is not None:
-                return existing_processed, True, {
-                    "status": "cached",
-                    "message": (
-                        f"Using stored backend injury CSV {cached_injury_path.name} "
-                        "for the predictor window."
-                    ),
-                    "rows": 0,
-                    "file": str(cached_injury_path),
-                }
-
-    fresh_games = scrape_multiple_seasons(
-        PREDICTOR_START_SEASON, PREDICTOR_END_SEASON
-    )
-    if fresh_games.empty:
-        if PREDICTOR_PROCESSED_FILE.exists():
-            existing_games = load_predictor_games()
-            return existing_games, True, refresh_official_injury_dataset(existing_games)
-        return pd.DataFrame(), True, {
-            "status": "no_games",
-            "message": "Predictor game refresh did not return any games yet.",
-            "rows": 0,
-            "file": None,
+    _, changed = refresh_game_updates()
+    games = load_predictor_games()
+    baseline = games[games["season"] <= PREDICTOR_END_SEASON]
+    cached_injury_path = get_exact_injury_dataset_path(baseline)
+    if cached_injury_path is not None:
+        return games, not changed, {
+            "status": "cached",
+            "message": f"Using stored injury CSV {cached_injury_path.name} for the historical seasons.",
         }
-
-    fresh_games.to_csv(PREDICTOR_RAW_FILE, index=False)
-    fresh_processed = normalize_team_names(clean_games(fresh_games))
-
-    if existing_processed is not None:
-        current_sorted = existing_processed.sort_values(
-            ["date", "home_team", "away_team"]
-        ).reset_index(drop=True)
-        fresh_sorted = fresh_processed.sort_values(
-            ["date", "home_team", "away_team"]
-        ).reset_index(drop=True)
-        if current_sorted.equals(fresh_sorted):
-            return existing_processed, True, refresh_official_injury_dataset(existing_processed)
-
-    fresh_processed.to_csv(PREDICTOR_PROCESSED_FILE, index=False)
-    return fresh_processed, False, refresh_official_injury_dataset(fresh_processed)
+    return games, not changed, refresh_official_injury_dataset(baseline)
 
 
 def build_predictor_artifacts(games: pd.DataFrame) -> dict[str, object]:
@@ -499,57 +467,22 @@ def get_live_season_end_year(reference_date: datetime | None = None) -> int:
 
 
 def refresh_live_leaderboard() -> tuple[pd.DataFrame, int, bool]:
-    season = get_live_season_end_year()
-    fresh_games = scrape_bref_season_games(season)
-
-    if fresh_games.empty:
-        if PROCESSED_FILE.exists():
-            return build_leaderboard_frame(get_latest_live_games()), season, True
-        return pd.DataFrame(columns=["rank", "team", "rating"]), season, True
-
-    # Read existing processed games before overwriting, so the up-to-date
-    # check compares old vs new instead of the file against itself.
-    existing_all = load_processed_games() if PROCESSED_FILE.exists() else None
-
-    fresh_processed = save_processed_games(fresh_games)
-
-    if existing_all is not None:
-        existing_current = existing_all[existing_all["season"] == season].copy()
-        fresh_current = fresh_processed[fresh_processed["season"] == season].copy()
-
-        if not existing_current.empty:
-            existing_current = existing_current.sort_values(
-                ["date", "home_team", "away_team"]
-            ).reset_index(drop=True)
-        if not fresh_current.empty:
-            fresh_current = fresh_current.sort_values(
-                ["date", "home_team", "away_team"]
-            ).reset_index(drop=True)
-
-        if not fresh_current.empty and existing_current.equals(fresh_current):
-            return build_leaderboard_frame(existing_all), season, True
-
-    return build_leaderboard_frame(fresh_processed), season, False
+    _, changed = refresh_game_updates()
+    games = get_latest_live_games()
+    season = int(games["season"].max()) if not games.empty else get_live_season_end_year()
+    return build_leaderboard_frame(games), season, not changed
 
 
 def get_latest_live_games() -> pd.DataFrame:
-    if not PROCESSED_FILE.exists():
+    updates = read_game_updates()
+    if not updates.empty:
+        games = normalize_team_names(clean_games(updates))
+    else:
         try:
             games = load_processed_games()
         except FileNotFoundError:
             return pd.DataFrame(columns=["date", "season", "home_team", "away_team", "home_pts", "away_pts", "home_win", "margin"])
-    else:
-        games = load_processed_games()
-    if games.empty:
-        return pd.DataFrame(
-            columns=["date", "season", "home_team", "away_team", "home_pts", "away_pts", "home_win", "margin"]
-        )
-    live_season = get_live_season_end_year()
-    live_games = games[games["season"] == live_season].copy()
-    if live_games.empty:
-        live_season = int(games["season"].max())
-        live_games = games[games["season"] == live_season].copy()
-    return live_games
+    return games[games["season"] == games["season"].max()].copy()
 
 
 def load_home_stats() -> dict[str, object]:
@@ -569,9 +502,7 @@ def load_home_stats() -> dict[str, object]:
     latest_season_games = int((games["season"] == latest_season).sum()) if latest_season else 0
     team_count = int(len(set(games["home_team"]).union(set(games["away_team"]))))
     last_updated = (
-        datetime.fromtimestamp(PROCESSED_FILE.stat().st_mtime).strftime("%Y-%m-%d")
-        if PROCESSED_FILE.exists()
-        else None
+        pd.Timestamp(games["date"].max()).strftime("%Y-%m-%d") if not games.empty else None
     )
 
     return {
@@ -587,12 +518,21 @@ def load_home_stats() -> dict[str, object]:
 def clear_generated_data() -> dict[str, int]:
     removed_files = 0
     removed_dirs = 0
+    bundled_data = {
+        LIVE_GAMES_FILE,
+        LIVE_GAMES_FILE.with_suffix(".lock"),
+        PREDICTOR_RAW_FILE,
+        RAW_DIR / f"official_nba_injuries_by_team_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.csv",
+        RAW_DIR / f"official_nba_injuries_detailed_{PREDICTOR_START_SEASON}_{PREDICTOR_END_SEASON}.csv",
+    }
 
     for directory in (RAW_DIR, PROCESSED_DIR, RESULTS_DIR, EXPORTS_DIR):
         if not directory.exists():
             continue
 
         for path in list(directory.iterdir()):
+            if path in bundled_data:
+                continue
             if path.is_file():
                 path.unlink()
                 removed_files += 1
@@ -644,9 +584,7 @@ def create_app() -> Flask:
             games = get_latest_live_games()
             standings = build_leaderboard_frame(games)
             latest_season = int(games["season"].max()) if not games.empty else None
-            last_updated = datetime.fromtimestamp(PROCESSED_FILE.stat().st_mtime).strftime(
-                "%Y-%m-%d"
-            )
+            last_updated = pd.Timestamp(games["date"].max()).strftime("%Y-%m-%d") if not games.empty else None
         except FileNotFoundError:
             standings = pd.DataFrame(columns=["rank", "team", "rating"])
             latest_season = None
@@ -661,15 +599,22 @@ def create_app() -> Flask:
 
     @app.post("/leaderboard/refresh")
     def refresh_leaderboard():
-        standings, season, already_current = refresh_live_leaderboard()
+        try:
+            _, season, already_current = refresh_live_leaderboard()
+        except Exception:
+            app.logger.exception("Leaderboard game refresh failed")
+            flash("Could not refresh NBA scores. Showing the saved games.", "error")
+            return redirect(url_for("leaderboard"))
+
+        season_label = f"{season - 1}-{str(season)[-2:]}"
         if already_current:
             flash(
-                f"The current {season}-{str(season + 1)[-2:]} season is already up to date.",
+                f"The {season_label} leaderboard is already up to date.",
                 "info",
             )
         else:
             flash(
-                f"Leaderboard refreshed from the live {season}-{str(season + 1)[-2:]} season.",
+                f"Leaderboard refreshed with completed games from {season_label}.",
                 "success",
             )
         return redirect(url_for("leaderboard"))
@@ -892,7 +837,7 @@ def create_app() -> Flask:
             prediction = prediction,
             error = error,
             predictor_start_season = PREDICTOR_START_SEASON,
-            predictor_end_season = PREDICTOR_END_SEASON,
+            predictor_end_season = selected_season or PREDICTOR_END_SEASON,
             selected_season = selected_season,
             teams = teams,
             home_team = home_team,
@@ -907,7 +852,13 @@ def create_app() -> Flask:
 
     @app.post("/predictor/refresh")
     def refresh_predictor():
-        games, already_current, injury_status = refresh_predictor_dataset()
+        try:
+            games, already_current, injury_status = refresh_predictor_dataset()
+        except Exception:
+            app.logger.exception("Predictor game refresh failed")
+            flash("Could not refresh predictor data. Showing the saved games.", "error")
+            return redirect(url_for("predictor"))
+
         if games.empty and already_current:
             flash(
                 "Predictor refresh did not return any games yet. Try again in a bit.",
@@ -915,12 +866,13 @@ def create_app() -> Flask:
             )
         elif already_current:
             flash(
-                f"Predictor training data for {PREDICTOR_START_SEASON}-{PREDICTOR_END_SEASON} is already up to date.",
+                "Predictor game data is already up to date.",
                 "info",
             )
         else:
+            end_season = int(games["season"].max())
             flash(
-                f"Predictor training data refreshed for {PREDICTOR_START_SEASON}-{PREDICTOR_END_SEASON}.",
+                f"Predictor training data refreshed for {PREDICTOR_START_SEASON}-{end_season}.",
                 "success",
             )
 

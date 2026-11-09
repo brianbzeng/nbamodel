@@ -1,0 +1,1463 @@
+date,season,home_team,away_team,home_pts,away_pts
+2025-10-21,2026,Los Angeles Lakers,Golden State Warriors,109,119
+2025-10-21,2026,Oklahoma City Thunder,Houston Rockets,125,124
+2025-10-22,2026,Atlanta Hawks,Toronto Raptors,118,138
+2025-10-22,2026,Boston Celtics,Philadelphia 76ers,116,117
+2025-10-22,2026,Charlotte Hornets,Brooklyn Nets,136,117
+2025-10-22,2026,Chicago Bulls,Detroit Pistons,115,111
+2025-10-22,2026,Dallas Mavericks,San Antonio Spurs,92,125
+2025-10-22,2026,Memphis Grizzlies,New Orleans Pelicans,128,122
+2025-10-22,2026,Milwaukee Bucks,Washington Wizards,133,120
+2025-10-22,2026,New York Knicks,Cleveland Cavaliers,119,111
+2025-10-22,2026,Orlando Magic,Miami Heat,125,121
+2025-10-22,2026,Phoenix Suns,Sacramento Kings,120,116
+2025-10-22,2026,Portland Trail Blazers,Minnesota Timberwolves,114,118
+2025-10-22,2026,Utah Jazz,LA Clippers,129,108
+2025-10-23,2026,Golden State Warriors,Denver Nuggets,137,131
+2025-10-23,2026,Indiana Pacers,Oklahoma City Thunder,135,141
+2025-10-24,2026,Brooklyn Nets,Cleveland Cavaliers,124,131
+2025-10-24,2026,Dallas Mavericks,Washington Wizards,107,117
+2025-10-24,2026,Houston Rockets,Detroit Pistons,111,115
+2025-10-24,2026,LA Clippers,Phoenix Suns,129,102
+2025-10-24,2026,Los Angeles Lakers,Minnesota Timberwolves,128,110
+2025-10-24,2026,Memphis Grizzlies,Miami Heat,114,146
+2025-10-24,2026,New Orleans Pelicans,San Antonio Spurs,116,120
+2025-10-24,2026,New York Knicks,Boston Celtics,105,95
+2025-10-24,2026,Orlando Magic,Atlanta Hawks,107,111
+2025-10-24,2026,Portland Trail Blazers,Golden State Warriors,139,119
+2025-10-24,2026,Sacramento Kings,Utah Jazz,105,104
+2025-10-24,2026,Toronto Raptors,Milwaukee Bucks,116,122
+2025-10-25,2026,Atlanta Hawks,Oklahoma City Thunder,100,117
+2025-10-25,2026,Denver Nuggets,Phoenix Suns,133,111
+2025-10-25,2026,Memphis Grizzlies,Indiana Pacers,128,103
+2025-10-25,2026,Orlando Magic,Chicago Bulls,98,110
+2025-10-25,2026,Philadelphia 76ers,Charlotte Hornets,125,121
+2025-10-26,2026,Cleveland Cavaliers,Milwaukee Bucks,118,113
+2025-10-26,2026,Dallas Mavericks,Toronto Raptors,139,129
+2025-10-26,2026,Detroit Pistons,Boston Celtics,119,113
+2025-10-26,2026,LA Clippers,Portland Trail Blazers,114,107
+2025-10-26,2026,Miami Heat,New York Knicks,115,107
+2025-10-26,2026,Minnesota Timberwolves,Indiana Pacers,114,110
+2025-10-26,2026,Sacramento Kings,Los Angeles Lakers,120,127
+2025-10-26,2026,San Antonio Spurs,Brooklyn Nets,118,107
+2025-10-26,2026,Washington Wizards,Charlotte Hornets,113,139
+2025-10-27,2026,Chicago Bulls,Atlanta Hawks,128,123
+2025-10-27,2026,Dallas Mavericks,Oklahoma City Thunder,94,101
+2025-10-27,2026,Detroit Pistons,Cleveland Cavaliers,95,116
+2025-10-27,2026,Golden State Warriors,Memphis Grizzlies,131,118
+2025-10-27,2026,Houston Rockets,Brooklyn Nets,137,109
+2025-10-27,2026,Los Angeles Lakers,Portland Trail Blazers,108,122
+2025-10-27,2026,Minnesota Timberwolves,Denver Nuggets,114,127
+2025-10-27,2026,New Orleans Pelicans,Boston Celtics,90,122
+2025-10-27,2026,Philadelphia 76ers,Orlando Magic,136,124
+2025-10-27,2026,San Antonio Spurs,Toronto Raptors,121,103
+2025-10-27,2026,Utah Jazz,Phoenix Suns,138,134
+2025-10-28,2026,Golden State Warriors,LA Clippers,98,79
+2025-10-28,2026,Miami Heat,Charlotte Hornets,144,117
+2025-10-28,2026,Milwaukee Bucks,New York Knicks,121,111
+2025-10-28,2026,Oklahoma City Thunder,Sacramento Kings,107,101
+2025-10-28,2026,Washington Wizards,Philadelphia 76ers,134,139
+2025-10-29,2026,Boston Celtics,Cleveland Cavaliers,125,105
+2025-10-29,2026,Brooklyn Nets,Atlanta Hawks,112,117
+2025-10-29,2026,Chicago Bulls,Sacramento Kings,126,113
+2025-10-29,2026,Dallas Mavericks,Indiana Pacers,107,105
+2025-10-29,2026,Denver Nuggets,New Orleans Pelicans,122,88
+2025-10-29,2026,Detroit Pistons,Orlando Magic,135,116
+2025-10-29,2026,Minnesota Timberwolves,Los Angeles Lakers,115,116
+2025-10-29,2026,Phoenix Suns,Memphis Grizzlies,113,114
+2025-10-29,2026,Toronto Raptors,Houston Rockets,121,139
+2025-10-29,2026,Utah Jazz,Portland Trail Blazers,134,136
+2025-10-30,2026,Charlotte Hornets,Orlando Magic,107,123
+2025-10-30,2026,Milwaukee Bucks,Golden State Warriors,120,110
+2025-10-30,2026,Oklahoma City Thunder,Washington Wizards,127,108
+2025-10-30,2026,San Antonio Spurs,Miami Heat,107,101
+2025-10-31,2026,Chicago Bulls,New York Knicks,135,125
+2025-10-31,2026,Cleveland Cavaliers,Toronto Raptors,101,112
+2025-10-31,2026,Indiana Pacers,Atlanta Hawks,108,128
+2025-10-31,2026,LA Clippers,New Orleans Pelicans,126,124
+2025-10-31,2026,Memphis Grizzlies,Los Angeles Lakers,112,117
+2025-10-31,2026,Philadelphia 76ers,Boston Celtics,108,109
+2025-10-31,2026,Phoenix Suns,Utah Jazz,118,96
+2025-10-31,2026,Portland Trail Blazers,Denver Nuggets,109,107
+2025-11-01,2026,Boston Celtics,Houston Rockets,101,128
+2025-11-01,2026,Charlotte Hornets,Minnesota Timberwolves,105,122
+2025-11-01,2026,Detroit Pistons,Dallas Mavericks,122,110
+2025-11-01,2026,Indiana Pacers,Golden State Warriors,114,109
+2025-11-01,2026,Milwaukee Bucks,Sacramento Kings,133,135
+2025-11-01,2026,Washington Wizards,Orlando Magic,94,125
+2025-11-02,2026,Brooklyn Nets,Philadelphia 76ers,105,129
+2025-11-02,2026,Charlotte Hornets,Utah Jazz,126,103
+2025-11-02,2026,Cleveland Cavaliers,Atlanta Hawks,117,109
+2025-11-02,2026,Los Angeles Lakers,Miami Heat,130,120
+2025-11-02,2026,New York Knicks,Chicago Bulls,128,116
+2025-11-02,2026,Oklahoma City Thunder,New Orleans Pelicans,137,106
+2025-11-02,2026,Phoenix Suns,San Antonio Spurs,130,118
+2025-11-02,2026,Toronto Raptors,Memphis Grizzlies,117,104
+2025-11-03,2026,Boston Celtics,Utah Jazz,103,105
+2025-11-03,2026,Brooklyn Nets,Minnesota Timberwolves,109,125
+2025-11-03,2026,Denver Nuggets,Sacramento Kings,130,124
+2025-11-03,2026,Houston Rockets,Dallas Mavericks,110,102
+2025-11-03,2026,Indiana Pacers,Milwaukee Bucks,115,117
+2025-11-03,2026,LA Clippers,Miami Heat,119,120
+2025-11-03,2026,Memphis Grizzlies,Detroit Pistons,106,114
+2025-11-03,2026,New York Knicks,Washington Wizards,119,102
+2025-11-03,2026,Portland Trail Blazers,Los Angeles Lakers,115,123
+2025-11-04,2026,Atlanta Hawks,Orlando Magic,127,112
+2025-11-04,2026,Chicago Bulls,Philadelphia 76ers,113,111
+2025-11-04,2026,Golden State Warriors,Phoenix Suns,118,107
+2025-11-04,2026,LA Clippers,Oklahoma City Thunder,107,126
+2025-11-04,2026,New Orleans Pelicans,Charlotte Hornets,116,112
+2025-11-04,2026,Toronto Raptors,Milwaukee Bucks,128,100
+2025-11-05,2026,Boston Celtics,Washington Wizards,136,107
+2025-11-05,2026,Cleveland Cavaliers,Philadelphia 76ers,132,121
+2025-11-05,2026,Dallas Mavericks,New Orleans Pelicans,99,101
+2025-11-05,2026,Denver Nuggets,Miami Heat,122,112
+2025-11-05,2026,Detroit Pistons,Utah Jazz,114,103
+2025-11-05,2026,Indiana Pacers,Brooklyn Nets,103,112
+2025-11-05,2026,Los Angeles Lakers,San Antonio Spurs,118,116
+2025-11-05,2026,Memphis Grizzlies,Houston Rockets,109,124
+2025-11-05,2026,New York Knicks,Minnesota Timberwolves,137,114
+2025-11-05,2026,Portland Trail Blazers,Oklahoma City Thunder,121,119
+2025-11-05,2026,Sacramento Kings,Golden State Warriors,121,116
+2025-11-06,2026,Phoenix Suns,LA Clippers,115,102
+2025-11-07,2026,Atlanta Hawks,Toronto Raptors,97,109
+2025-11-07,2026,Brooklyn Nets,Detroit Pistons,107,125
+2025-11-07,2026,Denver Nuggets,Golden State Warriors,129,104
+2025-11-07,2026,Memphis Grizzlies,Dallas Mavericks,118,104
+2025-11-07,2026,Miami Heat,Charlotte Hornets,126,108
+2025-11-07,2026,Milwaukee Bucks,Chicago Bulls,126,110
+2025-11-07,2026,Minnesota Timberwolves,Utah Jazz,137,97
+2025-11-07,2026,Orlando Magic,Boston Celtics,123,110
+2025-11-07,2026,Sacramento Kings,Oklahoma City Thunder,101,132
+2025-11-07,2026,San Antonio Spurs,Houston Rockets,121,110
+2025-11-07,2026,Washington Wizards,Cleveland Cavaliers,115,148
+2025-11-08,2026,Atlanta Hawks,Los Angeles Lakers,122,102
+2025-11-08,2026,Cleveland Cavaliers,Chicago Bulls,128,122
+2025-11-08,2026,Denver Nuggets,Indiana Pacers,117,100
+2025-11-08,2026,LA Clippers,Phoenix Suns,103,114
+2025-11-08,2026,Miami Heat,Portland Trail Blazers,136,131
+2025-11-08,2026,Philadelphia 76ers,Toronto Raptors,130,120
+2025-11-08,2026,San Antonio Spurs,New Orleans Pelicans,126,119
+2025-11-08,2026,Washington Wizards,Dallas Mavericks,105,111
+2025-11-09,2026,Golden State Warriors,Indiana Pacers,114,83
+2025-11-09,2026,Memphis Grizzlies,Oklahoma City Thunder,100,114
+2025-11-09,2026,Milwaukee Bucks,Houston Rockets,115,122
+2025-11-09,2026,New York Knicks,Brooklyn Nets,134,98
+2025-11-09,2026,Orlando Magic,Boston Celtics,107,111
+2025-11-09,2026,Philadelphia 76ers,Detroit Pistons,108,111
+2025-11-09,2026,Sacramento Kings,Minnesota Timberwolves,117,144
+2025-11-10,2026,Charlotte Hornets,Los Angeles Lakers,111,121
+2025-11-10,2026,Chicago Bulls,San Antonio Spurs,117,121
+2025-11-10,2026,Dallas Mavericks,Milwaukee Bucks,114,116
+2025-11-10,2026,Detroit Pistons,Washington Wizards,137,135
+2025-11-10,2026,LA Clippers,Atlanta Hawks,102,105
+2025-11-10,2026,Miami Heat,Cleveland Cavaliers,140,138
+2025-11-10,2026,Orlando Magic,Portland Trail Blazers,115,112
+2025-11-10,2026,Phoenix Suns,New Orleans Pelicans,121,98
+2025-11-10,2026,Utah Jazz,Minnesota Timberwolves,113,120
+2025-11-11,2026,Brooklyn Nets,Toronto Raptors,109,119
+2025-11-11,2026,New York Knicks,Memphis Grizzlies,133,120
+2025-11-11,2026,Oklahoma City Thunder,Golden State Warriors,126,102
+2025-11-11,2026,Philadelphia 76ers,Boston Celtics,102,100
+2025-11-11,2026,Sacramento Kings,Denver Nuggets,108,122
+2025-11-11,2026,Utah Jazz,Indiana Pacers,152,128
+2025-11-12,2026,Boston Celtics,Memphis Grizzlies,131,95
+2025-11-12,2026,Charlotte Hornets,Milwaukee Bucks,111,100
+2025-11-12,2026,Dallas Mavericks,Phoenix Suns,114,123
+2025-11-12,2026,Detroit Pistons,Chicago Bulls,124,113
+2025-11-12,2026,Houston Rockets,Washington Wizards,135,112
+2025-11-12,2026,LA Clippers,Denver Nuggets,116,130
+2025-11-12,2026,Miami Heat,Cleveland Cavaliers,116,130
+2025-11-12,2026,New Orleans Pelicans,Portland Trail Blazers,117,125
+2025-11-12,2026,New York Knicks,Orlando Magic,107,124
+2025-11-12,2026,Oklahoma City Thunder,Los Angeles Lakers,121,92
+2025-11-12,2026,Sacramento Kings,Atlanta Hawks,100,133
+2025-11-12,2026,San Antonio Spurs,Golden State Warriors,120,125
+2025-11-13,2026,Cleveland Cavaliers,Toronto Raptors,113,126
+2025-11-13,2026,Phoenix Suns,Indiana Pacers,133,98
+2025-11-13,2026,Utah Jazz,Atlanta Hawks,122,132
+2025-11-14,2026,Dallas Mavericks,LA Clippers,127,133
+2025-11-14,2026,Detroit Pistons,Philadelphia 76ers,114,105
+2025-11-14,2026,Houston Rockets,Portland Trail Blazers,140,116
+2025-11-14,2026,Milwaukee Bucks,Charlotte Hornets,147,134
+2025-11-14,2026,Minnesota Timberwolves,Sacramento Kings,124,110
+2025-11-14,2026,New Orleans Pelicans,Los Angeles Lakers,104,118
+2025-11-14,2026,New York Knicks,Miami Heat,140,132
+2025-11-14,2026,Orlando Magic,Brooklyn Nets,105,98
+2025-11-14,2026,San Antonio Spurs,Golden State Warriors,108,109
+2025-11-15,2026,Charlotte Hornets,Oklahoma City Thunder,96,109
+2025-11-15,2026,Cleveland Cavaliers,Memphis Grizzlies,108,100
+2025-11-15,2026,Indiana Pacers,Toronto Raptors,111,129
+2025-11-15,2026,Milwaukee Bucks,Los Angeles Lakers,95,119
+2025-11-15,2026,Minnesota Timberwolves,Denver Nuggets,112,123
+2025-11-16,2026,Boston Celtics,LA Clippers,121,118
+2025-11-16,2026,Dallas Mavericks,Portland Trail Blazers,138,133
+2025-11-16,2026,Houston Rockets,Orlando Magic,117,113
+2025-11-16,2026,New Orleans Pelicans,Golden State Warriors,106,124
+2025-11-16,2026,Phoenix Suns,Atlanta Hawks,122,124
+2025-11-16,2026,San Antonio Spurs,Sacramento Kings,123,110
+2025-11-16,2026,Utah Jazz,Chicago Bulls,150,147
+2025-11-16,2026,Washington Wizards,Brooklyn Nets,106,129
+2025-11-17,2026,Cleveland Cavaliers,Milwaukee Bucks,118,106
+2025-11-17,2026,Denver Nuggets,Chicago Bulls,127,130
+2025-11-17,2026,Detroit Pistons,Indiana Pacers,127,112
+2025-11-17,2026,Miami Heat,New York Knicks,115,113
+2025-11-17,2026,Minnesota Timberwolves,Dallas Mavericks,120,96
+2025-11-17,2026,New Orleans Pelicans,Oklahoma City Thunder,109,126
+2025-11-17,2026,Philadelphia 76ers,LA Clippers,110,108
+2025-11-17,2026,Toronto Raptors,Charlotte Hornets,110,108
+2025-11-18,2026,Atlanta Hawks,Detroit Pistons,112,120
+2025-11-18,2026,Brooklyn Nets,Boston Celtics,99,113
+2025-11-18,2026,Los Angeles Lakers,Utah Jazz,140,126
+2025-11-18,2026,Orlando Magic,Golden State Warriors,121,113
+2025-11-18,2026,Portland Trail Blazers,Phoenix Suns,110,127
+2025-11-18,2026,San Antonio Spurs,Memphis Grizzlies,111,101
+2025-11-19,2026,Cleveland Cavaliers,Houston Rockets,104,114
+2025-11-19,2026,Dallas Mavericks,New York Knicks,111,113
+2025-11-19,2026,Indiana Pacers,Charlotte Hornets,127,118
+2025-11-19,2026,Miami Heat,Golden State Warriors,110,96
+2025-11-19,2026,Minnesota Timberwolves,Washington Wizards,120,109
+2025-11-19,2026,New Orleans Pelicans,Denver Nuggets,118,125
+2025-11-19,2026,Oklahoma City Thunder,Sacramento Kings,113,99
+2025-11-19,2026,Philadelphia 76ers,Toronto Raptors,112,121
+2025-11-19,2026,Portland Trail Blazers,Chicago Bulls,121,122
+2025-11-20,2026,Memphis Grizzlies,Sacramento Kings,137,96
+2025-11-20,2026,Milwaukee Bucks,Philadelphia 76ers,114,123
+2025-11-20,2026,Orlando Magic,LA Clippers,129,101
+2025-11-20,2026,San Antonio Spurs,Atlanta Hawks,135,126
+2025-11-21,2026,Boston Celtics,Brooklyn Nets,105,113
+2025-11-21,2026,Chicago Bulls,Miami Heat,107,143
+2025-11-21,2026,Cleveland Cavaliers,Indiana Pacers,120,109
+2025-11-21,2026,Dallas Mavericks,New Orleans Pelicans,118,115
+2025-11-21,2026,Golden State Warriors,Portland Trail Blazers,123,127
+2025-11-21,2026,Houston Rockets,Denver Nuggets,109,112
+2025-11-21,2026,Phoenix Suns,Minnesota Timberwolves,114,113
+2025-11-21,2026,Toronto Raptors,Washington Wizards,140,110
+2025-11-21,2026,Utah Jazz,Oklahoma City Thunder,112,144
+2025-11-22,2026,Charlotte Hornets,LA Clippers,116,131
+2025-11-22,2026,Chicago Bulls,Washington Wizards,121,120
+2025-11-22,2026,Dallas Mavericks,Memphis Grizzlies,96,102
+2025-11-22,2026,Denver Nuggets,Sacramento Kings,123,128
+2025-11-22,2026,Milwaukee Bucks,Detroit Pistons,116,129
+2025-11-22,2026,New Orleans Pelicans,Atlanta Hawks,98,115
+2025-11-22,2026,Orlando Magic,New York Knicks,133,121
+2025-11-23,2026,Atlanta Hawks,Charlotte Hornets,113,110
+2025-11-23,2026,Boston Celtics,Orlando Magic,138,129
+2025-11-23,2026,Cleveland Cavaliers,LA Clippers,120,105
+2025-11-23,2026,Oklahoma City Thunder,Portland Trail Blazers,122,95
+2025-11-23,2026,Philadelphia 76ers,Miami Heat,117,127
+2025-11-23,2026,Phoenix Suns,San Antonio Spurs,111,102
+2025-11-23,2026,Toronto Raptors,Brooklyn Nets,119,109
+2025-11-23,2026,Utah Jazz,Los Angeles Lakers,106,108
+2025-11-24,2026,Brooklyn Nets,New York Knicks,100,113
+2025-11-24,2026,Golden State Warriors,Utah Jazz,134,117
+2025-11-24,2026,Indiana Pacers,Detroit Pistons,117,122
+2025-11-24,2026,Memphis Grizzlies,Denver Nuggets,115,125
+2025-11-24,2026,Miami Heat,Dallas Mavericks,106,102
+2025-11-24,2026,Milwaukee Bucks,Portland Trail Blazers,103,115
+2025-11-24,2026,New Orleans Pelicans,Chicago Bulls,143,130
+2025-11-24,2026,Phoenix Suns,Houston Rockets,92,114
+2025-11-24,2026,Sacramento Kings,Minnesota Timberwolves,117,112
+2025-11-24,2026,Toronto Raptors,Cleveland Cavaliers,110,99
+2025-11-25,2026,Los Angeles Lakers,LA Clippers,135,118
+2025-11-25,2026,Philadelphia 76ers,Orlando Magic,103,144
+2025-11-25,2026,Washington Wizards,Atlanta Hawks,132,113
+2025-11-26,2026,Boston Celtics,Detroit Pistons,117,114
+2025-11-26,2026,Charlotte Hornets,New York Knicks,101,129
+2025-11-26,2026,Golden State Warriors,Houston Rockets,100,104
+2025-11-26,2026,Miami Heat,Milwaukee Bucks,106,103
+2025-11-26,2026,New Orleans Pelicans,Memphis Grizzlies,128,133
+2025-11-26,2026,Oklahoma City Thunder,Minnesota Timberwolves,113,105
+2025-11-26,2026,Portland Trail Blazers,San Antonio Spurs,102,115
+2025-11-26,2026,Sacramento Kings,Phoenix Suns,100,112
+2025-11-26,2026,Toronto Raptors,Indiana Pacers,97,95
+2025-11-28,2026,Atlanta Hawks,Cleveland Cavaliers,130,123
+2025-11-28,2026,Brooklyn Nets,Philadelphia 76ers,103,115
+2025-11-28,2026,Charlotte Hornets,Chicago Bulls,123,116
+2025-11-28,2026,Denver Nuggets,San Antonio Spurs,136,139
+2025-11-28,2026,Detroit Pistons,Orlando Magic,109,112
+2025-11-28,2026,Indiana Pacers,Washington Wizards,119,86
+2025-11-28,2026,LA Clippers,Memphis Grizzlies,107,112
+2025-11-28,2026,Los Angeles Lakers,Dallas Mavericks,129,119
+2025-11-28,2026,New York Knicks,Milwaukee Bucks,118,109
+2025-11-28,2026,Oklahoma City Thunder,Phoenix Suns,123,119
+2025-11-28,2026,Utah Jazz,Sacramento Kings,128,119
+2025-11-29,2026,Charlotte Hornets,Toronto Raptors,118,111
+2025-11-29,2026,Golden State Warriors,New Orleans Pelicans,104,96
+2025-11-29,2026,Indiana Pacers,Chicago Bulls,103,101
+2025-11-29,2026,LA Clippers,Dallas Mavericks,110,114
+2025-11-29,2026,Miami Heat,Detroit Pistons,135,138
+2025-11-29,2026,Milwaukee Bucks,Brooklyn Nets,116,99
+2025-11-29,2026,Minnesota Timberwolves,Boston Celtics,119,115
+2025-11-29,2026,Phoenix Suns,Denver Nuggets,112,130
+2025-11-30,2026,Cleveland Cavaliers,Boston Celtics,115,117
+2025-11-30,2026,Los Angeles Lakers,New Orleans Pelicans,133,121
+2025-11-30,2026,Minnesota Timberwolves,San Antonio Spurs,125,112
+2025-11-30,2026,New York Knicks,Toronto Raptors,116,94
+2025-11-30,2026,Philadelphia 76ers,Atlanta Hawks,134,142
+2025-11-30,2026,Portland Trail Blazers,Oklahoma City Thunder,115,123
+2025-11-30,2026,Sacramento Kings,Memphis Grizzlies,107,115
+2025-11-30,2026,Utah Jazz,Houston Rockets,101,129
+2025-12-01,2026,Brooklyn Nets,Charlotte Hornets,116,103
+2025-12-01,2026,Denver Nuggets,Dallas Mavericks,121,131
+2025-12-01,2026,Detroit Pistons,Atlanta Hawks,99,98
+2025-12-01,2026,Indiana Pacers,Cleveland Cavaliers,119,135
+2025-12-01,2026,Los Angeles Lakers,Phoenix Suns,108,125
+2025-12-01,2026,Miami Heat,LA Clippers,140,123
+2025-12-01,2026,Orlando Magic,Chicago Bulls,125,120
+2025-12-01,2026,Utah Jazz,Houston Rockets,133,125
+2025-12-01,2026,Washington Wizards,Milwaukee Bucks,129,126
+2025-12-02,2026,Boston Celtics,New York Knicks,123,117
+2025-12-02,2026,Golden State Warriors,Oklahoma City Thunder,112,124
+2025-12-02,2026,New Orleans Pelicans,Minnesota Timberwolves,142,149
+2025-12-02,2026,Philadelphia 76ers,Washington Wizards,121,102
+2025-12-02,2026,San Antonio Spurs,Memphis Grizzlies,126,119
+2025-12-02,2026,Toronto Raptors,Portland Trail Blazers,121,118
+2025-12-03,2026,Atlanta Hawks,LA Clippers,92,115
+2025-12-03,2026,Chicago Bulls,Brooklyn Nets,103,113
+2025-12-03,2026,Cleveland Cavaliers,Portland Trail Blazers,110,122
+2025-12-03,2026,Dallas Mavericks,Miami Heat,118,108
+2025-12-03,2026,Houston Rockets,Sacramento Kings,121,95
+2025-12-03,2026,Indiana Pacers,Denver Nuggets,120,135
+2025-12-03,2026,Milwaukee Bucks,Detroit Pistons,113,109
+2025-12-03,2026,New York Knicks,Charlotte Hornets,119,104
+2025-12-03,2026,Orlando Magic,San Antonio Spurs,112,114
+2025-12-04,2026,Brooklyn Nets,Utah Jazz,110,123
+2025-12-04,2026,New Orleans Pelicans,Minnesota Timberwolves,116,125
+2025-12-04,2026,Philadelphia 76ers,Golden State Warriors,99,98
+2025-12-04,2026,Toronto Raptors,Los Angeles Lakers,120,123
+2025-12-04,2026,Washington Wizards,Boston Celtics,101,146
+2025-12-05,2026,Atlanta Hawks,Denver Nuggets,133,134
+2025-12-05,2026,Boston Celtics,Los Angeles Lakers,126,105
+2025-12-05,2026,Chicago Bulls,Indiana Pacers,105,120
+2025-12-05,2026,Cleveland Cavaliers,San Antonio Spurs,130,117
+2025-12-05,2026,Detroit Pistons,Portland Trail Blazers,122,116
+2025-12-05,2026,Houston Rockets,Phoenix Suns,117,98
+2025-12-05,2026,Memphis Grizzlies,LA Clippers,107,98
+2025-12-05,2026,Milwaukee Bucks,Philadelphia 76ers,101,116
+2025-12-05,2026,New York Knicks,Utah Jazz,146,112
+2025-12-05,2026,Oklahoma City Thunder,Dallas Mavericks,132,111
+2025-12-05,2026,Orlando Magic,Miami Heat,106,105
+2025-12-05,2026,Toronto Raptors,Charlotte Hornets,86,111
+2025-12-06,2026,Brooklyn Nets,New Orleans Pelicans,119,101
+2025-12-06,2026,Cleveland Cavaliers,Golden State Warriors,94,99
+2025-12-06,2026,Dallas Mavericks,Houston Rockets,122,109
+2025-12-06,2026,Detroit Pistons,Milwaukee Bucks,124,112
+2025-12-06,2026,Miami Heat,Sacramento Kings,111,127
+2025-12-06,2026,Minnesota Timberwolves,LA Clippers,109,106
+2025-12-06,2026,Washington Wizards,Atlanta Hawks,116,131
+2025-12-07,2026,Charlotte Hornets,Denver Nuggets,106,115
+2025-12-07,2026,Chicago Bulls,Golden State Warriors,91,123
+2025-12-07,2026,Memphis Grizzlies,Portland Trail Blazers,119,96
+2025-12-07,2026,New York Knicks,Orlando Magic,106,100
+2025-12-07,2026,Philadelphia 76ers,Los Angeles Lakers,108,112
+2025-12-07,2026,Toronto Raptors,Boston Celtics,113,121
+2025-12-07,2026,Utah Jazz,Oklahoma City Thunder,101,131
+2025-12-08,2026,Indiana Pacers,Sacramento Kings,116,105
+2025-12-08,2026,Minnesota Timberwolves,Phoenix Suns,105,108
+2025-12-08,2026,New Orleans Pelicans,San Antonio Spurs,132,135
+2025-12-09,2026,Orlando Magic,Miami Heat,117,108
+2025-12-09,2026,Toronto Raptors,New York Knicks,101,117
+2025-12-10,2026,Los Angeles Lakers,San Antonio Spurs,119,132
+2025-12-10,2026,Oklahoma City Thunder,Phoenix Suns,138,89
+2025-12-11,2026,Houston Rockets,LA Clippers,115,113
+2025-12-11,2026,Milwaukee Bucks,Boston Celtics,116,101
+2025-12-11,2026,New Orleans Pelicans,Portland Trail Blazers,143,120
+2025-12-11,2026,Sacramento Kings,Denver Nuggets,105,136
+2025-12-12,2026,Charlotte Hornets,Chicago Bulls,126,129
+2025-12-12,2026,Dallas Mavericks,Brooklyn Nets,119,111
+2025-12-12,2026,Detroit Pistons,Atlanta Hawks,142,115
+2025-12-12,2026,Golden State Warriors,Minnesota Timberwolves,120,127
+2025-12-12,2026,Memphis Grizzlies,Utah Jazz,126,130
+2025-12-12,2026,Philadelphia 76ers,Indiana Pacers,115,105
+2025-12-12,2026,Washington Wizards,Cleveland Cavaliers,126,130
+2025-12-13,2026,Oklahoma City Thunder,San Antonio Spurs,109,111
+2025-12-13,2026,Orlando Magic,New York Knicks,120,132
+2025-12-14,2026,Atlanta Hawks,Philadelphia 76ers,120,117
+2025-12-14,2026,Brooklyn Nets,Milwaukee Bucks,127,82
+2025-12-14,2026,Chicago Bulls,New Orleans Pelicans,104,114
+2025-12-14,2026,Cleveland Cavaliers,Charlotte Hornets,111,119
+2025-12-14,2026,Indiana Pacers,Washington Wizards,89,108
+2025-12-14,2026,Minnesota Timberwolves,Sacramento Kings,117,103
+2025-12-14,2026,Phoenix Suns,Los Angeles Lakers,114,116
+2025-12-14,2026,Portland Trail Blazers,Golden State Warriors,136,131
+2025-12-15,2026,Boston Celtics,Detroit Pistons,105,112
+2025-12-15,2026,Denver Nuggets,Houston Rockets,128,125
+2025-12-15,2026,LA Clippers,Memphis Grizzlies,103,121
+2025-12-15,2026,Miami Heat,Toronto Raptors,96,106
+2025-12-15,2026,Utah Jazz,Dallas Mavericks,140,133
+2025-12-16,2026,New York Knicks,San Antonio Spurs,124,113
+2025-12-17,2026,Chicago Bulls,Cleveland Cavaliers,127,111
+2025-12-17,2026,Minnesota Timberwolves,Memphis Grizzlies,110,116
+2025-12-18,2026,Brooklyn Nets,Miami Heat,95,106
+2025-12-18,2026,Charlotte Hornets,Atlanta Hawks,133,126
+2025-12-18,2026,Dallas Mavericks,Detroit Pistons,116,114
+2025-12-18,2026,Denver Nuggets,Orlando Magic,126,115
+2025-12-18,2026,Indiana Pacers,New York Knicks,113,114
+2025-12-18,2026,Milwaukee Bucks,Toronto Raptors,105,111
+2025-12-18,2026,New Orleans Pelicans,Houston Rockets,133,128
+2025-12-18,2026,Oklahoma City Thunder,LA Clippers,122,101
+2025-12-18,2026,Phoenix Suns,Golden State Warriors,99,98
+2025-12-18,2026,Portland Trail Blazers,Sacramento Kings,134,133
+2025-12-18,2026,San Antonio Spurs,Washington Wizards,119,94
+2025-12-18,2026,Utah Jazz,Los Angeles Lakers,135,143
+2025-12-19,2026,Atlanta Hawks,San Antonio Spurs,98,126
+2025-12-19,2026,Boston Celtics,Miami Heat,129,116
+2025-12-19,2026,Cleveland Cavaliers,Chicago Bulls,125,136
+2025-12-19,2026,Minnesota Timberwolves,Oklahoma City Thunder,112,107
+2025-12-19,2026,New York Knicks,Philadelphia 76ers,107,116
+2025-12-20,2026,Denver Nuggets,Houston Rockets,101,115
+2025-12-20,2026,Detroit Pistons,Charlotte Hornets,112,86
+2025-12-20,2026,Golden State Warriors,Phoenix Suns,119,116
+2025-12-20,2026,LA Clippers,Los Angeles Lakers,103,88
+2025-12-20,2026,Memphis Grizzlies,Washington Wizards,122,130
+2025-12-20,2026,New Orleans Pelicans,Indiana Pacers,128,109
+2025-12-20,2026,Philadelphia 76ers,Dallas Mavericks,121,114
+2025-12-20,2026,Sacramento Kings,Portland Trail Blazers,93,98
+2025-12-20,2026,Toronto Raptors,Boston Celtics,96,112
+2025-12-20,2026,Utah Jazz,Orlando Magic,127,128
+2025-12-21,2026,Atlanta Hawks,Chicago Bulls,150,152
+2025-12-21,2026,Brooklyn Nets,Toronto Raptors,96,81
+2025-12-21,2026,Minnesota Timberwolves,Milwaukee Bucks,103,100
+2025-12-21,2026,New York Knicks,Miami Heat,132,125
+2025-12-21,2026,Sacramento Kings,Houston Rockets,125,124
+2025-12-21,2026,Washington Wizards,San Antonio Spurs,113,124
+2025-12-22,2026,Boston Celtics,Indiana Pacers,103,95
+2025-12-22,2026,Cleveland Cavaliers,Charlotte Hornets,139,132
+2025-12-22,2026,Denver Nuggets,Utah Jazz,135,112
+2025-12-22,2026,Golden State Warriors,Orlando Magic,120,97
+2025-12-22,2026,New Orleans Pelicans,Dallas Mavericks,119,113
+2025-12-22,2026,Oklahoma City Thunder,Memphis Grizzlies,119,103
+2025-12-22,2026,Portland Trail Blazers,Detroit Pistons,102,110
+2025-12-23,2026,Atlanta Hawks,Chicago Bulls,123,126
+2025-12-23,2026,Charlotte Hornets,Washington Wizards,126,109
+2025-12-23,2026,Cleveland Cavaliers,New Orleans Pelicans,141,118
+2025-12-23,2026,Dallas Mavericks,Denver Nuggets,131,130
+2025-12-23,2026,Indiana Pacers,Milwaukee Bucks,94,111
+2025-12-23,2026,LA Clippers,Houston Rockets,128,108
+2025-12-23,2026,Miami Heat,Toronto Raptors,91,112
+2025-12-23,2026,Minnesota Timberwolves,New York Knicks,115,104
+2025-12-23,2026,Philadelphia 76ers,Brooklyn Nets,106,114
+2025-12-23,2026,Phoenix Suns,Los Angeles Lakers,132,108
+2025-12-23,2026,Portland Trail Blazers,Orlando Magic,106,110
+2025-12-23,2026,Sacramento Kings,Detroit Pistons,127,136
+2025-12-23,2026,San Antonio Spurs,Oklahoma City Thunder,130,110
+2025-12-23,2026,Utah Jazz,Memphis Grizzlies,128,137
+2025-12-25,2026,Denver Nuggets,Minnesota Timberwolves,142,138
+2025-12-25,2026,Golden State Warriors,Dallas Mavericks,126,116
+2025-12-25,2026,Los Angeles Lakers,Houston Rockets,96,119
+2025-12-25,2026,New York Knicks,Cleveland Cavaliers,126,124
+2025-12-25,2026,Oklahoma City Thunder,San Antonio Spurs,102,117
+2025-12-26,2026,Atlanta Hawks,Miami Heat,111,126
+2025-12-26,2026,Chicago Bulls,Philadelphia 76ers,109,102
+2025-12-26,2026,Indiana Pacers,Boston Celtics,122,140
+2025-12-26,2026,Memphis Grizzlies,Milwaukee Bucks,125,104
+2025-12-26,2026,New Orleans Pelicans,Phoenix Suns,108,115
+2025-12-26,2026,Orlando Magic,Charlotte Hornets,105,120
+2025-12-26,2026,Portland Trail Blazers,LA Clippers,103,119
+2025-12-26,2026,Utah Jazz,Detroit Pistons,131,129
+2025-12-26,2026,Washington Wizards,Toronto Raptors,138,117
+2025-12-27,2026,Atlanta Hawks,New York Knicks,125,128
+2025-12-27,2026,Chicago Bulls,Milwaukee Bucks,103,112
+2025-12-27,2026,Houston Rockets,Cleveland Cavaliers,117,100
+2025-12-27,2026,Miami Heat,Indiana Pacers,142,116
+2025-12-27,2026,Minnesota Timberwolves,Brooklyn Nets,107,123
+2025-12-27,2026,New Orleans Pelicans,Phoenix Suns,114,123
+2025-12-27,2026,Orlando Magic,Denver Nuggets,127,126
+2025-12-27,2026,Sacramento Kings,Dallas Mavericks,113,107
+2025-12-27,2026,San Antonio Spurs,Utah Jazz,114,127
+2025-12-28,2026,LA Clippers,Detroit Pistons,112,99
+2025-12-28,2026,Los Angeles Lakers,Sacramento Kings,125,101
+2025-12-28,2026,Oklahoma City Thunder,Philadelphia 76ers,129,104
+2025-12-28,2026,Portland Trail Blazers,Boston Celtics,114,108
+2025-12-28,2026,Toronto Raptors,Golden State Warriors,141,127
+2025-12-28,2026,Washington Wizards,Memphis Grizzlies,116,112
+2025-12-29,2026,Brooklyn Nets,Golden State Warriors,107,120
+2025-12-29,2026,Charlotte Hornets,Milwaukee Bucks,113,123
+2025-12-29,2026,Chicago Bulls,Minnesota Timberwolves,101,136
+2025-12-29,2026,Houston Rockets,Indiana Pacers,126,119
+2025-12-29,2026,Miami Heat,Denver Nuggets,147,123
+2025-12-29,2026,New Orleans Pelicans,New York Knicks,125,130
+2025-12-29,2026,Oklahoma City Thunder,Atlanta Hawks,140,129
+2025-12-29,2026,Portland Trail Blazers,Dallas Mavericks,125,122
+2025-12-29,2026,San Antonio Spurs,Cleveland Cavaliers,101,113
+2025-12-29,2026,Toronto Raptors,Orlando Magic,107,106
+2025-12-29,2026,Washington Wizards,Phoenix Suns,101,115
+2025-12-30,2026,LA Clippers,Sacramento Kings,131,90
+2025-12-30,2026,Los Angeles Lakers,Detroit Pistons,106,128
+2025-12-30,2026,Memphis Grizzlies,Philadelphia 76ers,136,139
+2025-12-30,2026,Utah Jazz,Boston Celtics,119,129
+2025-12-31,2026,Atlanta Hawks,Minnesota Timberwolves,126,102
+2025-12-31,2026,Charlotte Hornets,Golden State Warriors,125,132
+2025-12-31,2026,Chicago Bulls,New Orleans Pelicans,134,118
+2025-12-31,2026,Cleveland Cavaliers,Phoenix Suns,129,113
+2025-12-31,2026,Indiana Pacers,Orlando Magic,110,112
+2025-12-31,2026,Milwaukee Bucks,Washington Wizards,113,114
+2025-12-31,2026,Oklahoma City Thunder,Portland Trail Blazers,124,95
+2025-12-31,2026,San Antonio Spurs,New York Knicks,134,132
+2025-12-31,2026,Toronto Raptors,Denver Nuggets,103,106
+2026-01-01,2026,Brooklyn Nets,Houston Rockets,96,120
+2026-01-01,2026,Dallas Mavericks,Philadelphia 76ers,108,123
+2026-01-01,2026,Detroit Pistons,Miami Heat,112,118
+2026-01-01,2026,LA Clippers,Utah Jazz,118,101
+2026-01-01,2026,Sacramento Kings,Boston Celtics,106,120
+2026-01-02,2026,Chicago Bulls,Orlando Magic,121,114
+2026-01-02,2026,Cleveland Cavaliers,Denver Nuggets,113,108
+2026-01-02,2026,Golden State Warriors,Oklahoma City Thunder,94,131
+2026-01-02,2026,Indiana Pacers,San Antonio Spurs,113,123
+2026-01-02,2026,Los Angeles Lakers,Memphis Grizzlies,128,121
+2026-01-02,2026,Milwaukee Bucks,Charlotte Hornets,122,121
+2026-01-02,2026,New Orleans Pelicans,Portland Trail Blazers,109,122
+2026-01-02,2026,New York Knicks,Atlanta Hawks,99,111
+2026-01-02,2026,Phoenix Suns,Sacramento Kings,129,102
+2026-01-02,2026,Washington Wizards,Brooklyn Nets,119,99
+2026-01-03,2026,Chicago Bulls,Charlotte Hornets,99,112
+2026-01-03,2026,Dallas Mavericks,Houston Rockets,110,104
+2026-01-03,2026,Golden State Warriors,Utah Jazz,123,114
+2026-01-03,2026,LA Clippers,Boston Celtics,115,146
+2026-01-03,2026,Miami Heat,Minnesota Timberwolves,115,125
+2026-01-03,2026,New York Knicks,Philadelphia 76ers,119,130
+2026-01-03,2026,San Antonio Spurs,Portland Trail Blazers,110,115
+2026-01-03,2026,Toronto Raptors,Atlanta Hawks,134,117
+2026-01-04,2026,Brooklyn Nets,Denver Nuggets,127,115
+2026-01-04,2026,Cleveland Cavaliers,Detroit Pistons,110,114
+2026-01-04,2026,Los Angeles Lakers,Memphis Grizzlies,120,114
+2026-01-04,2026,Miami Heat,New Orleans Pelicans,125,106
+2026-01-04,2026,Orlando Magic,Indiana Pacers,135,127
+2026-01-04,2026,Phoenix Suns,Oklahoma City Thunder,108,105
+2026-01-04,2026,Sacramento Kings,Milwaukee Bucks,98,115
+2026-01-04,2026,Washington Wizards,Minnesota Timberwolves,115,141
+2026-01-05,2026,Boston Celtics,Chicago Bulls,115,101
+2026-01-05,2026,Detroit Pistons,New York Knicks,121,90
+2026-01-05,2026,Houston Rockets,Phoenix Suns,100,97
+2026-01-05,2026,LA Clippers,Golden State Warriors,103,102
+2026-01-05,2026,Oklahoma City Thunder,Charlotte Hornets,97,124
+2026-01-05,2026,Philadelphia 76ers,Denver Nuggets,124,125
+2026-01-05,2026,Portland Trail Blazers,Utah Jazz,137,117
+2026-01-05,2026,Toronto Raptors,Atlanta Hawks,118,100
+2026-01-06,2026,Indiana Pacers,Cleveland Cavaliers,116,120
+2026-01-06,2026,Memphis Grizzlies,San Antonio Spurs,106,105
+2026-01-06,2026,Minnesota Timberwolves,Miami Heat,122,94
+2026-01-06,2026,New Orleans Pelicans,Los Angeles Lakers,103,111
+2026-01-06,2026,Sacramento Kings,Dallas Mavericks,98,100
+2026-01-06,2026,Washington Wizards,Orlando Magic,120,112
+2026-01-07,2026,Atlanta Hawks,New Orleans Pelicans,117,100
+2026-01-07,2026,Boston Celtics,Denver Nuggets,110,114
+2026-01-07,2026,Brooklyn Nets,Orlando Magic,103,104
+2026-01-07,2026,Charlotte Hornets,Toronto Raptors,96,97
+2026-01-07,2026,Detroit Pistons,Chicago Bulls,108,93
+2026-01-07,2026,Golden State Warriors,Milwaukee Bucks,120,113
+2026-01-07,2026,Memphis Grizzlies,Phoenix Suns,98,117
+2026-01-07,2026,New York Knicks,LA Clippers,123,111
+2026-01-07,2026,Oklahoma City Thunder,Utah Jazz,129,125
+2026-01-07,2026,Philadelphia 76ers,Washington Wizards,131,110
+2026-01-07,2026,Portland Trail Blazers,Houston Rockets,103,102
+2026-01-07,2026,San Antonio Spurs,Los Angeles Lakers,107,91
+2026-01-08,2026,Charlotte Hornets,Indiana Pacers,112,114
+2026-01-08,2026,Minnesota Timberwolves,Cleveland Cavaliers,131,122
+2026-01-08,2026,Utah Jazz,Dallas Mavericks,116,114
+2026-01-09,2026,Boston Celtics,Toronto Raptors,125,117
+2026-01-09,2026,Brooklyn Nets,LA Clippers,105,121
+2026-01-09,2026,Denver Nuggets,Atlanta Hawks,87,110
+2026-01-09,2026,Golden State Warriors,Sacramento Kings,137,103
+2026-01-09,2026,Los Angeles Lakers,Milwaukee Bucks,101,105
+2026-01-09,2026,Memphis Grizzlies,Oklahoma City Thunder,116,117
+2026-01-09,2026,Orlando Magic,Philadelphia 76ers,91,103
+2026-01-09,2026,Phoenix Suns,New York Knicks,112,107
+2026-01-09,2026,Portland Trail Blazers,Houston Rockets,111,105
+2026-01-09,2026,Washington Wizards,New Orleans Pelicans,107,128
+2026-01-10,2026,Boston Celtics,San Antonio Spurs,95,100
+2026-01-10,2026,Chicago Bulls,Dallas Mavericks,125,107
+2026-01-10,2026,Cleveland Cavaliers,Minnesota Timberwolves,146,134
+2026-01-10,2026,Detroit Pistons,LA Clippers,92,98
+2026-01-10,2026,Indiana Pacers,Miami Heat,123,99
+2026-01-10,2026,Utah Jazz,Charlotte Hornets,95,150
+2026-01-11,2026,Denver Nuggets,Milwaukee Bucks,108,104
+2026-01-11,2026,Golden State Warriors,Atlanta Hawks,111,124
+2026-01-11,2026,Memphis Grizzlies,Brooklyn Nets,103,98
+2026-01-11,2026,Minnesota Timberwolves,San Antonio Spurs,104,103
+2026-01-11,2026,Oklahoma City Thunder,Miami Heat,124,112
+2026-01-11,2026,Orlando Magic,New Orleans Pelicans,128,118
+2026-01-11,2026,Phoenix Suns,Washington Wizards,112,93
+2026-01-11,2026,Portland Trail Blazers,New York Knicks,114,123
+2026-01-11,2026,Sacramento Kings,Houston Rockets,111,98
+2026-01-11,2026,Toronto Raptors,Philadelphia 76ers,116,115
+2026-01-12,2026,Cleveland Cavaliers,Utah Jazz,112,123
+2026-01-12,2026,Dallas Mavericks,Brooklyn Nets,113,105
+2026-01-12,2026,Indiana Pacers,Boston Celtics,98,96
+2026-01-12,2026,LA Clippers,Charlotte Hornets,117,109
+2026-01-12,2026,Sacramento Kings,Los Angeles Lakers,124,112
+2026-01-12,2026,Toronto Raptors,Philadelphia 76ers,102,115
+2026-01-13,2026,Golden State Warriors,Portland Trail Blazers,119,97
+2026-01-13,2026,Houston Rockets,Chicago Bulls,119,113
+2026-01-13,2026,Los Angeles Lakers,Atlanta Hawks,141,116
+2026-01-13,2026,Miami Heat,Phoenix Suns,127,121
+2026-01-13,2026,Milwaukee Bucks,Minnesota Timberwolves,106,139
+2026-01-13,2026,New Orleans Pelicans,Denver Nuggets,116,122
+2026-01-13,2026,Oklahoma City Thunder,San Antonio Spurs,119,98
+2026-01-14,2026,Chicago Bulls,Utah Jazz,128,126
+2026-01-14,2026,Dallas Mavericks,Denver Nuggets,109,118
+2026-01-14,2026,Indiana Pacers,Toronto Raptors,101,115
+2026-01-14,2026,LA Clippers,Washington Wizards,119,105
+2026-01-14,2026,New Orleans Pelicans,Brooklyn Nets,116,113
+2026-01-14,2026,Philadelphia 76ers,Cleveland Cavaliers,107,133
+2026-01-14,2026,Sacramento Kings,New York Knicks,112,101
+2026-01-15,2026,Dallas Mavericks,Utah Jazz,144,122
+2026-01-15,2026,Detroit Pistons,Phoenix Suns,108,105
+2026-01-15,2026,Golden State Warriors,New York Knicks,126,113
+2026-01-15,2026,Houston Rockets,Oklahoma City Thunder,91,111
+2026-01-15,2026,Los Angeles Lakers,Charlotte Hornets,117,135
+2026-01-15,2026,Miami Heat,Boston Celtics,114,119
+2026-01-15,2026,Orlando Magic,Memphis Grizzlies,118,111
+2026-01-15,2026,Portland Trail Blazers,Atlanta Hawks,117,101
+2026-01-15,2026,San Antonio Spurs,Milwaukee Bucks,119,101
+2026-01-16,2026,Brooklyn Nets,Chicago Bulls,112,109
+2026-01-16,2026,Houston Rockets,Minnesota Timberwolves,110,105
+2026-01-16,2026,Indiana Pacers,New Orleans Pelicans,127,119
+2026-01-16,2026,Philadelphia 76ers,Cleveland Cavaliers,115,117
+2026-01-16,2026,Sacramento Kings,Washington Wizards,128,115
+2026-01-16,2026,Toronto Raptors,LA Clippers,117,121
+2026-01-17,2026,Atlanta Hawks,Boston Celtics,106,132
+2026-01-17,2026,Dallas Mavericks,Utah Jazz,138,120
+2026-01-17,2026,Denver Nuggets,Washington Wizards,121,115
+2026-01-17,2026,Detroit Pistons,Indiana Pacers,121,78
+2026-01-17,2026,Golden State Warriors,Charlotte Hornets,136,116
+2026-01-17,2026,Miami Heat,Oklahoma City Thunder,122,120
+2026-01-17,2026,New York Knicks,Phoenix Suns,99,106
+2026-01-17,2026,Portland Trail Blazers,Los Angeles Lakers,132,116
+2026-01-17,2026,San Antonio Spurs,Minnesota Timberwolves,126,123
+2026-01-18,2026,Chicago Bulls,Brooklyn Nets,124,102
+2026-01-18,2026,Denver Nuggets,Charlotte Hornets,87,110
+2026-01-18,2026,Houston Rockets,New Orleans Pelicans,119,110
+2026-01-18,2026,Los Angeles Lakers,Toronto Raptors,110,93
+2026-01-18,2026,Memphis Grizzlies,Orlando Magic,126,109
+2026-01-18,2026,Sacramento Kings,Portland Trail Blazers,110,117
+2026-01-19,2026,Atlanta Hawks,Milwaukee Bucks,110,112
+2026-01-19,2026,Brooklyn Nets,Phoenix Suns,117,126
+2026-01-19,2026,Cleveland Cavaliers,Oklahoma City Thunder,104,136
+2026-01-19,2026,Detroit Pistons,Boston Celtics,104,103
+2026-01-19,2026,Golden State Warriors,Miami Heat,135,112
+2026-01-19,2026,New York Knicks,Dallas Mavericks,97,114
+2026-01-19,2026,Philadelphia 76ers,Indiana Pacers,113,104
+2026-01-19,2026,San Antonio Spurs,Utah Jazz,123,110
+2026-01-19,2026,Washington Wizards,LA Clippers,106,110
+2026-01-20,2026,Chicago Bulls,LA Clippers,138,110
+2026-01-20,2026,Denver Nuggets,Los Angeles Lakers,107,115
+2026-01-20,2026,Golden State Warriors,Toronto Raptors,127,145
+2026-01-20,2026,Houston Rockets,San Antonio Spurs,111,106
+2026-01-20,2026,Philadelphia 76ers,Phoenix Suns,110,116
+2026-01-20,2026,Sacramento Kings,Miami Heat,117,130
+2026-01-20,2026,Utah Jazz,Minnesota Timberwolves,127,122
+2026-01-21,2026,Boston Celtics,Indiana Pacers,119,104
+2026-01-21,2026,Charlotte Hornets,Cleveland Cavaliers,87,94
+2026-01-21,2026,Memphis Grizzlies,Atlanta Hawks,122,124
+2026-01-21,2026,Milwaukee Bucks,Oklahoma City Thunder,102,122
+2026-01-21,2026,New Orleans Pelicans,Detroit Pistons,104,112
+2026-01-21,2026,New York Knicks,Brooklyn Nets,120,66
+2026-01-21,2026,Sacramento Kings,Toronto Raptors,109,122
+2026-01-22,2026,Dallas Mavericks,Golden State Warriors,123,115
+2026-01-22,2026,LA Clippers,Los Angeles Lakers,112,104
+2026-01-22,2026,Minnesota Timberwolves,Chicago Bulls,115,120
+2026-01-22,2026,Orlando Magic,Charlotte Hornets,97,124
+2026-01-22,2026,Philadelphia 76ers,Houston Rockets,128,122
+2026-01-22,2026,Portland Trail Blazers,Miami Heat,127,110
+2026-01-22,2026,Utah Jazz,San Antonio Spurs,109,126
+2026-01-22,2026,Washington Wizards,Denver Nuggets,97,107
+2026-01-23,2026,Atlanta Hawks,Phoenix Suns,110,103
+2026-01-23,2026,Brooklyn Nets,Boston Celtics,126,130
+2026-01-23,2026,Cleveland Cavaliers,Sacramento Kings,123,118
+2026-01-23,2026,Detroit Pistons,Houston Rockets,104,111
+2026-01-23,2026,Memphis Grizzlies,New Orleans Pelicans,127,133
+2026-01-23,2026,Milwaukee Bucks,Denver Nuggets,100,102
+2026-01-23,2026,Oklahoma City Thunder,Indiana Pacers,114,117
+2026-01-23,2026,Portland Trail Blazers,Toronto Raptors,98,110
+2026-01-24,2026,Charlotte Hornets,Washington Wizards,119,115
+2026-01-24,2026,Chicago Bulls,Boston Celtics,114,111
+2026-01-24,2026,Dallas Mavericks,Los Angeles Lakers,110,116
+2026-01-24,2026,Orlando Magic,Cleveland Cavaliers,105,119
+2026-01-24,2026,Philadelphia 76ers,New York Knicks,109,112
+2026-01-24,2026,Utah Jazz,Miami Heat,116,147
+2026-01-25,2026,Detroit Pistons,Sacramento Kings,139,116
+2026-01-25,2026,LA Clippers,Brooklyn Nets,126,89
+2026-01-25,2026,Minnesota Timberwolves,Golden State Warriors,85,111
+2026-01-25,2026,Oklahoma City Thunder,Toronto Raptors,101,103
+2026-01-25,2026,Phoenix Suns,Miami Heat,102,111
+2026-01-25,2026,San Antonio Spurs,New Orleans Pelicans,95,104
+2026-01-26,2026,Atlanta Hawks,Indiana Pacers,132,116
+2026-01-26,2026,Boston Celtics,Portland Trail Blazers,102,94
+2026-01-26,2026,Charlotte Hornets,Philadelphia 76ers,130,93
+2026-01-26,2026,Chicago Bulls,Los Angeles Lakers,118,129
+2026-01-26,2026,Cleveland Cavaliers,Orlando Magic,114,98
+2026-01-26,2026,Houston Rockets,Memphis Grizzlies,108,99
+2026-01-26,2026,Minnesota Timberwolves,Golden State Warriors,108,83
+2026-01-27,2026,Denver Nuggets,Detroit Pistons,107,109
+2026-01-27,2026,New York Knicks,Sacramento Kings,103,87
+2026-01-27,2026,Oklahoma City Thunder,New Orleans Pelicans,104,95
+2026-01-27,2026,Philadelphia 76ers,Milwaukee Bucks,139,122
+2026-01-27,2026,Phoenix Suns,Brooklyn Nets,106,102
+2026-01-27,2026,Utah Jazz,LA Clippers,103,115
+2026-01-27,2026,Washington Wizards,Portland Trail Blazers,115,111
+2026-01-28,2026,Boston Celtics,Atlanta Hawks,106,117
+2026-01-28,2026,Cleveland Cavaliers,Los Angeles Lakers,129,99
+2026-01-28,2026,Dallas Mavericks,Minnesota Timberwolves,105,118
+2026-01-28,2026,Houston Rockets,San Antonio Spurs,99,111
+2026-01-28,2026,Indiana Pacers,Chicago Bulls,113,110
+2026-01-28,2026,Memphis Grizzlies,Charlotte Hornets,97,112
+2026-01-28,2026,Miami Heat,Orlando Magic,124,133
+2026-01-28,2026,Toronto Raptors,New York Knicks,92,119
+2026-01-28,2026,Utah Jazz,Golden State Warriors,124,140
+2026-01-29,2026,Atlanta Hawks,Houston Rockets,86,104
+2026-01-29,2026,Chicago Bulls,Miami Heat,113,116
+2026-01-29,2026,Dallas Mavericks,Charlotte Hornets,121,123
+2026-01-29,2026,Denver Nuggets,Brooklyn Nets,107,103
+2026-01-29,2026,Minnesota Timberwolves,Oklahoma City Thunder,123,111
+2026-01-29,2026,Philadelphia 76ers,Sacramento Kings,113,111
+2026-01-29,2026,Phoenix Suns,Detroit Pistons,114,96
+2026-01-29,2026,Washington Wizards,Milwaukee Bucks,109,99
+2026-01-30,2026,Boston Celtics,Sacramento Kings,112,93
+2026-01-30,2026,Denver Nuggets,LA Clippers,122,109
+2026-01-30,2026,Golden State Warriors,Detroit Pistons,124,131
+2026-01-30,2026,New Orleans Pelicans,Memphis Grizzlies,114,106
+2026-01-30,2026,New York Knicks,Portland Trail Blazers,127,97
+2026-01-30,2026,Orlando Magic,Toronto Raptors,130,120
+2026-01-30,2026,Phoenix Suns,Cleveland Cavaliers,126,113
+2026-01-30,2026,Utah Jazz,Brooklyn Nets,99,109
+2026-01-30,2026,Washington Wizards,Los Angeles Lakers,111,142
+2026-01-31,2026,Charlotte Hornets,San Antonio Spurs,111,106
+2026-01-31,2026,Houston Rockets,Dallas Mavericks,111,107
+2026-01-31,2026,Indiana Pacers,Atlanta Hawks,129,124
+2026-01-31,2026,Memphis Grizzlies,Minnesota Timberwolves,114,131
+2026-01-31,2026,Miami Heat,Chicago Bulls,118,125
+2026-01-31,2026,Philadelphia 76ers,New Orleans Pelicans,124,114
+2026-02-01,2026,Boston Celtics,Milwaukee Bucks,107,79
+2026-02-01,2026,Denver Nuggets,Oklahoma City Thunder,111,121
+2026-02-01,2026,Detroit Pistons,Brooklyn Nets,130,77
+2026-02-01,2026,Miami Heat,Chicago Bulls,134,91
+2026-02-01,2026,New York Knicks,Los Angeles Lakers,112,100
+2026-02-01,2026,Phoenix Suns,LA Clippers,93,117
+2026-02-01,2026,Portland Trail Blazers,Cleveland Cavaliers,111,130
+2026-02-01,2026,San Antonio Spurs,Orlando Magic,112,103
+2026-02-01,2026,Toronto Raptors,Utah Jazz,107,100
+2026-02-01,2026,Washington Wizards,Sacramento Kings,116,112
+2026-02-02,2026,Charlotte Hornets,New Orleans Pelicans,102,95
+2026-02-02,2026,Indiana Pacers,Houston Rockets,114,118
+2026-02-02,2026,LA Clippers,Philadelphia 76ers,113,128
+2026-02-02,2026,Memphis Grizzlies,Minnesota Timberwolves,137,128
+2026-02-03,2026,Brooklyn Nets,Los Angeles Lakers,109,125
+2026-02-03,2026,Dallas Mavericks,Boston Celtics,100,110
+2026-02-03,2026,Detroit Pistons,Denver Nuggets,124,121
+2026-02-03,2026,Golden State Warriors,Philadelphia 76ers,94,113
+2026-02-03,2026,Indiana Pacers,Utah Jazz,122,131
+2026-02-03,2026,Miami Heat,Atlanta Hawks,115,127
+2026-02-03,2026,Milwaukee Bucks,Chicago Bulls,131,115
+2026-02-03,2026,Oklahoma City Thunder,Orlando Magic,128,92
+2026-02-03,2026,Portland Trail Blazers,Phoenix Suns,125,130
+2026-02-03,2026,Washington Wizards,New York Knicks,101,132
+2026-02-04,2026,Houston Rockets,Boston Celtics,93,114
+2026-02-04,2026,LA Clippers,Cleveland Cavaliers,91,124
+2026-02-04,2026,Milwaukee Bucks,New Orleans Pelicans,141,137
+2026-02-04,2026,New York Knicks,Denver Nuggets,134,127
+2026-02-04,2026,Sacramento Kings,Memphis Grizzlies,125,129
+2026-02-04,2026,San Antonio Spurs,Oklahoma City Thunder,116,106
+2026-02-04,2026,Toronto Raptors,Minnesota Timberwolves,126,128
+2026-02-05,2026,Atlanta Hawks,Utah Jazz,121,119
+2026-02-05,2026,Dallas Mavericks,San Antonio Spurs,123,135
+2026-02-05,2026,Detroit Pistons,Washington Wizards,117,126
+2026-02-05,2026,Houston Rockets,Charlotte Hornets,99,109
+2026-02-05,2026,Los Angeles Lakers,Philadelphia 76ers,119,115
+2026-02-05,2026,Orlando Magic,Brooklyn Nets,118,98
+2026-02-05,2026,Phoenix Suns,Golden State Warriors,97,101
+2026-02-05,2026,Toronto Raptors,Chicago Bulls,123,107
+2026-02-06,2026,Boston Celtics,Miami Heat,98,96
+2026-02-06,2026,Detroit Pistons,New York Knicks,118,80
+2026-02-06,2026,Milwaukee Bucks,Indiana Pacers,105,99
+2026-02-06,2026,Minnesota Timberwolves,New Orleans Pelicans,115,119
+2026-02-06,2026,Portland Trail Blazers,Memphis Grizzlies,135,115
+2026-02-06,2026,Sacramento Kings,LA Clippers,111,114
+2026-02-07,2026,Atlanta Hawks,Charlotte Hornets,119,126
+2026-02-07,2026,Brooklyn Nets,Washington Wizards,127,113
+2026-02-07,2026,Chicago Bulls,Denver Nuggets,120,136
+2026-02-07,2026,Los Angeles Lakers,Golden State Warriors,105,99
+2026-02-07,2026,Oklahoma City Thunder,Houston Rockets,106,112
+2026-02-07,2026,Orlando Magic,Utah Jazz,120,117
+2026-02-07,2026,Phoenix Suns,Philadelphia 76ers,103,109
+2026-02-07,2026,Portland Trail Blazers,Memphis Grizzlies,122,115
+2026-02-07,2026,Sacramento Kings,Cleveland Cavaliers,126,132
+2026-02-07,2026,San Antonio Spurs,Dallas Mavericks,138,125
+2026-02-08,2026,Boston Celtics,New York Knicks,89,111
+2026-02-08,2026,Minnesota Timberwolves,LA Clippers,96,115
+2026-02-08,2026,Toronto Raptors,Indiana Pacers,122,104
+2026-02-08,2026,Washington Wizards,Miami Heat,101,132
+2026-02-09,2026,Brooklyn Nets,Chicago Bulls,123,115
+2026-02-09,2026,Charlotte Hornets,Detroit Pistons,104,110
+2026-02-09,2026,Denver Nuggets,Cleveland Cavaliers,117,119
+2026-02-09,2026,Golden State Warriors,Memphis Grizzlies,114,113
+2026-02-09,2026,Los Angeles Lakers,Oklahoma City Thunder,110,119
+2026-02-09,2026,Miami Heat,Utah Jazz,111,115
+2026-02-09,2026,Minnesota Timberwolves,Atlanta Hawks,138,116
+2026-02-09,2026,New Orleans Pelicans,Sacramento Kings,120,94
+2026-02-09,2026,Orlando Magic,Milwaukee Bucks,118,99
+2026-02-09,2026,Portland Trail Blazers,Philadelphia 76ers,135,118
+2026-02-10,2026,Houston Rockets,LA Clippers,102,95
+2026-02-10,2026,Los Angeles Lakers,San Antonio Spurs,108,136
+2026-02-10,2026,New York Knicks,Indiana Pacers,134,137
+2026-02-10,2026,Phoenix Suns,Dallas Mavericks,120,111
+2026-02-11,2026,Boston Celtics,Chicago Bulls,124,105
+2026-02-11,2026,Brooklyn Nets,Indiana Pacers,110,115
+2026-02-11,2026,Charlotte Hornets,Atlanta Hawks,110,107
+2026-02-11,2026,Cleveland Cavaliers,Washington Wizards,138,113
+2026-02-11,2026,Denver Nuggets,Memphis Grizzlies,122,116
+2026-02-11,2026,Golden State Warriors,San Antonio Spurs,113,126
+2026-02-11,2026,Houston Rockets,LA Clippers,102,105
+2026-02-11,2026,Minnesota Timberwolves,Portland Trail Blazers,133,109
+2026-02-11,2026,New Orleans Pelicans,Miami Heat,111,123
+2026-02-11,2026,Orlando Magic,Milwaukee Bucks,108,116
+2026-02-11,2026,Philadelphia 76ers,New York Knicks,89,138
+2026-02-11,2026,Phoenix Suns,Oklahoma City Thunder,109,136
+2026-02-11,2026,Toronto Raptors,Detroit Pistons,95,113
+2026-02-11,2026,Utah Jazz,Sacramento Kings,121,93
+2026-02-12,2026,Los Angeles Lakers,Dallas Mavericks,124,104
+2026-02-12,2026,Oklahoma City Thunder,Milwaukee Bucks,93,110
+2026-02-12,2026,Utah Jazz,Portland Trail Blazers,119,135
+2026-02-19,2026,Charlotte Hornets,Houston Rockets,101,105
+2026-02-19,2026,Chicago Bulls,Toronto Raptors,101,110
+2026-02-19,2026,Cleveland Cavaliers,Brooklyn Nets,112,84
+2026-02-19,2026,Golden State Warriors,Boston Celtics,110,121
+2026-02-19,2026,LA Clippers,Denver Nuggets,115,114
+2026-02-19,2026,New York Knicks,Detroit Pistons,111,126
+2026-02-19,2026,Philadelphia 76ers,Atlanta Hawks,107,117
+2026-02-19,2026,Sacramento Kings,Orlando Magic,94,131
+2026-02-19,2026,San Antonio Spurs,Phoenix Suns,121,94
+2026-02-19,2026,Washington Wizards,Indiana Pacers,112,105
+2026-02-20,2026,Atlanta Hawks,Miami Heat,97,128
+2026-02-20,2026,Charlotte Hornets,Cleveland Cavaliers,113,118
+2026-02-20,2026,Los Angeles Lakers,LA Clippers,125,122
+2026-02-20,2026,Memphis Grizzlies,Utah Jazz,123,114
+2026-02-20,2026,Minnesota Timberwolves,Dallas Mavericks,122,111
+2026-02-20,2026,New Orleans Pelicans,Milwaukee Bucks,118,139
+2026-02-20,2026,Oklahoma City Thunder,Brooklyn Nets,105,86
+2026-02-20,2026,Portland Trail Blazers,Denver Nuggets,103,157
+2026-02-20,2026,Washington Wizards,Indiana Pacers,131,118
+2026-02-21,2026,Chicago Bulls,Detroit Pistons,110,126
+2026-02-21,2026,Miami Heat,Memphis Grizzlies,136,120
+2026-02-21,2026,New Orleans Pelicans,Philadelphia 76ers,126,111
+2026-02-21,2026,New York Knicks,Houston Rockets,108,106
+2026-02-21,2026,Phoenix Suns,Orlando Magic,113,110
+2026-02-21,2026,San Antonio Spurs,Sacramento Kings,139,122
+2026-02-22,2026,Atlanta Hawks,Brooklyn Nets,115,104
+2026-02-22,2026,Chicago Bulls,New York Knicks,99,105
+2026-02-22,2026,Golden State Warriors,Denver Nuggets,128,117
+2026-02-22,2026,Indiana Pacers,Dallas Mavericks,130,134
+2026-02-22,2026,LA Clippers,Orlando Magic,109,111
+2026-02-22,2026,Los Angeles Lakers,Boston Celtics,89,111
+2026-02-22,2026,Milwaukee Bucks,Toronto Raptors,94,122
+2026-02-22,2026,Minnesota Timberwolves,Philadelphia 76ers,108,135
+2026-02-22,2026,Oklahoma City Thunder,Cleveland Cavaliers,121,113
+2026-02-22,2026,Phoenix Suns,Portland Trail Blazers,77,92
+2026-02-22,2026,Washington Wizards,Charlotte Hornets,112,129
+2026-02-23,2026,Detroit Pistons,San Antonio Spurs,103,114
+2026-02-23,2026,Houston Rockets,Utah Jazz,125,105
+2026-02-23,2026,Memphis Grizzlies,Sacramento Kings,114,123
+2026-02-24,2026,Atlanta Hawks,Washington Wizards,119,98
+2026-02-24,2026,Brooklyn Nets,Dallas Mavericks,114,123
+2026-02-24,2026,Chicago Bulls,Charlotte Hornets,99,131
+2026-02-24,2026,Cleveland Cavaliers,New York Knicks,109,94
+2026-02-24,2026,Indiana Pacers,Philadelphia 76ers,114,135
+2026-02-24,2026,Los Angeles Lakers,Orlando Magic,109,110
+2026-02-24,2026,Milwaukee Bucks,Miami Heat,128,117
+2026-02-24,2026,New Orleans Pelicans,Golden State Warriors,113,109
+2026-02-24,2026,Phoenix Suns,Boston Celtics,81,97
+2026-02-24,2026,Portland Trail Blazers,Minnesota Timberwolves,121,124
+2026-02-24,2026,Toronto Raptors,Oklahoma City Thunder,107,116
+2026-02-25,2026,Denver Nuggets,Boston Celtics,103,84
+2026-02-25,2026,Detroit Pistons,Oklahoma City Thunder,124,116
+2026-02-25,2026,Houston Rockets,Sacramento Kings,128,97
+2026-02-25,2026,Memphis Grizzlies,Golden State Warriors,112,133
+2026-02-25,2026,Milwaukee Bucks,Cleveland Cavaliers,118,116
+2026-02-25,2026,Toronto Raptors,San Antonio Spurs,107,110
+2026-02-26,2026,Atlanta Hawks,Washington Wizards,126,96
+2026-02-26,2026,Brooklyn Nets,San Antonio Spurs,110,126
+2026-02-26,2026,Chicago Bulls,Portland Trail Blazers,112,121
+2026-02-26,2026,Dallas Mavericks,Sacramento Kings,121,130
+2026-02-26,2026,Indiana Pacers,Charlotte Hornets,109,133
+2026-02-26,2026,LA Clippers,Minnesota Timberwolves,88,94
+2026-02-26,2026,Orlando Magic,Houston Rockets,108,113
+2026-02-26,2026,Philadelphia 76ers,Miami Heat,124,117
+2026-02-26,2026,Phoenix Suns,Los Angeles Lakers,113,110
+2026-02-26,2026,Utah Jazz,New Orleans Pelicans,118,129
+2026-02-27,2026,Boston Celtics,Brooklyn Nets,148,111
+2026-02-27,2026,Dallas Mavericks,Memphis Grizzlies,105,124
+2026-02-27,2026,Detroit Pistons,Cleveland Cavaliers,122,119
+2026-02-27,2026,Milwaukee Bucks,New York Knicks,98,127
+2026-02-27,2026,Oklahoma City Thunder,Denver Nuggets,127,121
+2026-02-28,2026,Charlotte Hornets,Portland Trail Blazers,109,93
+2026-02-28,2026,Golden State Warriors,Los Angeles Lakers,101,129
+2026-02-28,2026,Miami Heat,Houston Rockets,115,105
+2026-02-28,2026,Utah Jazz,New Orleans Pelicans,105,115
+2026-02-28,2026,Washington Wizards,Toronto Raptors,125,134
+2026-03-01,2026,Atlanta Hawks,Portland Trail Blazers,135,101
+2026-03-01,2026,Boston Celtics,Philadelphia 76ers,114,98
+2026-03-01,2026,Brooklyn Nets,Cleveland Cavaliers,102,106
+2026-03-01,2026,Chicago Bulls,Milwaukee Bucks,120,97
+2026-03-01,2026,Dallas Mavericks,Oklahoma City Thunder,87,100
+2026-03-01,2026,Denver Nuggets,Minnesota Timberwolves,108,117
+2026-03-01,2026,Indiana Pacers,Memphis Grizzlies,106,125
+2026-03-01,2026,LA Clippers,New Orleans Pelicans,137,117
+2026-03-01,2026,Los Angeles Lakers,Sacramento Kings,128,104
+2026-03-01,2026,New York Knicks,San Antonio Spurs,114,89
+2026-03-01,2026,Orlando Magic,Detroit Pistons,92,106
+2026-03-02,2026,Golden State Warriors,LA Clippers,101,114
+2026-03-02,2026,Milwaukee Bucks,Boston Celtics,81,108
+2026-03-02,2026,Utah Jazz,Denver Nuggets,125,128
+2026-03-02,2026,Washington Wizards,Houston Rockets,118,123
+2026-03-03,2026,Charlotte Hornets,Dallas Mavericks,117,90
+2026-03-03,2026,Chicago Bulls,Oklahoma City Thunder,108,116
+2026-03-03,2026,Cleveland Cavaliers,Detroit Pistons,113,109
+2026-03-03,2026,Los Angeles Lakers,New Orleans Pelicans,110,101
+2026-03-03,2026,Miami Heat,Brooklyn Nets,124,98
+2026-03-03,2026,Minnesota Timberwolves,Memphis Grizzlies,117,110
+2026-03-03,2026,Orlando Magic,Washington Wizards,126,109
+2026-03-03,2026,Philadelphia 76ers,San Antonio Spurs,91,131
+2026-03-03,2026,Sacramento Kings,Phoenix Suns,103,114
+2026-03-03,2026,Toronto Raptors,New York Knicks,95,111
+2026-03-04,2026,Boston Celtics,Charlotte Hornets,89,118
+2026-03-04,2026,LA Clippers,Indiana Pacers,130,107
+2026-03-04,2026,Memphis Grizzlies,Portland Trail Blazers,114,122
+2026-03-04,2026,Milwaukee Bucks,Atlanta Hawks,113,131
+2026-03-04,2026,New York Knicks,Oklahoma City Thunder,100,103
+2026-03-04,2026,Philadelphia 76ers,Utah Jazz,106,102
+2026-03-05,2026,Denver Nuggets,Los Angeles Lakers,120,113
+2026-03-05,2026,Houston Rockets,Golden State Warriors,113,115
+2026-03-05,2026,Miami Heat,Brooklyn Nets,126,110
+2026-03-05,2026,Minnesota Timberwolves,Toronto Raptors,115,107
+2026-03-05,2026,Orlando Magic,Dallas Mavericks,115,114
+2026-03-05,2026,Phoenix Suns,Chicago Bulls,103,105
+2026-03-05,2026,Sacramento Kings,New Orleans Pelicans,123,133
+2026-03-05,2026,San Antonio Spurs,Detroit Pistons,121,106
+2026-03-05,2026,Washington Wizards,Utah Jazz,112,122
+2026-03-06,2026,Boston Celtics,Dallas Mavericks,120,100
+2026-03-06,2026,Charlotte Hornets,Miami Heat,120,128
+2026-03-06,2026,Denver Nuggets,New York Knicks,103,142
+2026-03-06,2026,Houston Rockets,Portland Trail Blazers,106,99
+2026-03-06,2026,Los Angeles Lakers,Indiana Pacers,128,117
+2026-03-06,2026,Phoenix Suns,New Orleans Pelicans,118,116
+2026-03-06,2026,San Antonio Spurs,LA Clippers,116,112
+2026-03-07,2026,Atlanta Hawks,Philadelphia 76ers,125,116
+2026-03-07,2026,Detroit Pistons,Brooklyn Nets,105,107
+2026-03-07,2026,Memphis Grizzlies,LA Clippers,120,123
+2026-03-07,2026,Milwaukee Bucks,Utah Jazz,113,99
+2026-03-07,2026,Minnesota Timberwolves,Orlando Magic,92,119
+2026-03-07,2026,Oklahoma City Thunder,Golden State Warriors,104,97
+2026-03-08,2026,Cleveland Cavaliers,Boston Celtics,98,109
+2026-03-08,2026,Los Angeles Lakers,New York Knicks,110,97
+2026-03-08,2026,Miami Heat,Detroit Pistons,121,110
+2026-03-08,2026,Milwaukee Bucks,Orlando Magic,91,130
+2026-03-08,2026,New Orleans Pelicans,Washington Wizards,138,118
+2026-03-08,2026,Phoenix Suns,Charlotte Hornets,111,99
+2026-03-08,2026,Portland Trail Blazers,Indiana Pacers,131,111
+2026-03-08,2026,Sacramento Kings,Chicago Bulls,126,110
+2026-03-08,2026,San Antonio Spurs,Houston Rockets,145,120
+2026-03-08,2026,Toronto Raptors,Dallas Mavericks,122,92
+2026-03-09,2026,Brooklyn Nets,Memphis Grizzlies,126,115
+2026-03-09,2026,Cleveland Cavaliers,Philadelphia 76ers,115,101
+2026-03-09,2026,LA Clippers,New York Knicks,126,118
+2026-03-09,2026,Oklahoma City Thunder,Denver Nuggets,129,126
+2026-03-09,2026,Utah Jazz,Golden State Warriors,119,116
+2026-03-10,2026,Atlanta Hawks,Dallas Mavericks,124,112
+2026-03-10,2026,Brooklyn Nets,Detroit Pistons,100,138
+2026-03-10,2026,Golden State Warriors,Chicago Bulls,124,130
+2026-03-10,2026,Houston Rockets,Toronto Raptors,113,99
+2026-03-10,2026,Los Angeles Lakers,Minnesota Timberwolves,120,106
+2026-03-10,2026,Miami Heat,Washington Wizards,150,129
+2026-03-10,2026,Milwaukee Bucks,Phoenix Suns,114,129
+2026-03-10,2026,Philadelphia 76ers,Memphis Grizzlies,139,129
+2026-03-10,2026,Portland Trail Blazers,Charlotte Hornets,101,103
+2026-03-10,2026,Sacramento Kings,Indiana Pacers,114,109
+2026-03-10,2026,San Antonio Spurs,Boston Celtics,125,116
+2026-03-11,2026,Denver Nuggets,Houston Rockets,129,93
+2026-03-11,2026,LA Clippers,Minnesota Timberwolves,153,128
+2026-03-11,2026,New Orleans Pelicans,Toronto Raptors,122,111
+2026-03-11,2026,Orlando Magic,Cleveland Cavaliers,128,122
+2026-03-11,2026,Sacramento Kings,Charlotte Hornets,109,117
+2026-03-11,2026,Utah Jazz,New York Knicks,117,134
+2026-03-12,2026,Atlanta Hawks,Brooklyn Nets,108,97
+2026-03-12,2026,Detroit Pistons,Philadelphia 76ers,131,109
+2026-03-12,2026,Indiana Pacers,Phoenix Suns,108,123
+2026-03-12,2026,Los Angeles Lakers,Chicago Bulls,142,130
+2026-03-12,2026,Memphis Grizzlies,Dallas Mavericks,112,120
+2026-03-12,2026,Miami Heat,Milwaukee Bucks,112,105
+2026-03-12,2026,Oklahoma City Thunder,Boston Celtics,104,102
+2026-03-12,2026,Orlando Magic,Washington Wizards,136,131
+2026-03-12,2026,San Antonio Spurs,Denver Nuggets,131,136
+2026-03-13,2026,Dallas Mavericks,Cleveland Cavaliers,105,138
+2026-03-13,2026,Detroit Pistons,Memphis Grizzlies,126,110
+2026-03-13,2026,Golden State Warriors,Minnesota Timberwolves,117,127
+2026-03-13,2026,Houston Rockets,New Orleans Pelicans,107,105
+2026-03-13,2026,Indiana Pacers,New York Knicks,92,101
+2026-03-13,2026,LA Clippers,Chicago Bulls,119,108
+2026-03-13,2026,Portland Trail Blazers,Utah Jazz,124,114
+2026-03-13,2026,Toronto Raptors,Phoenix Suns,122,115
+2026-03-14,2026,Atlanta Hawks,Milwaukee Bucks,122,99
+2026-03-14,2026,Boston Celtics,Washington Wizards,111,100
+2026-03-14,2026,LA Clippers,Sacramento Kings,109,118
+2026-03-14,2026,Los Angeles Lakers,Denver Nuggets,127,125
+2026-03-14,2026,Miami Heat,Orlando Magic,117,121
+2026-03-14,2026,Philadelphia 76ers,Brooklyn Nets,104,97
+2026-03-14,2026,San Antonio Spurs,Charlotte Hornets,115,102
+2026-03-15,2026,Cleveland Cavaliers,Dallas Mavericks,120,130
+2026-03-15,2026,Milwaukee Bucks,Indiana Pacers,134,123
+2026-03-15,2026,New York Knicks,Golden State Warriors,110,107
+2026-03-15,2026,Oklahoma City Thunder,Minnesota Timberwolves,116,103
+2026-03-15,2026,Philadelphia 76ers,Portland Trail Blazers,109,103
+2026-03-15,2026,Sacramento Kings,Utah Jazz,116,111
+2026-03-15,2026,Toronto Raptors,Detroit Pistons,119,108
+2026-03-16,2026,Atlanta Hawks,Orlando Magic,124,112
+2026-03-16,2026,Boston Celtics,Phoenix Suns,120,112
+2026-03-16,2026,Brooklyn Nets,Portland Trail Blazers,95,114
+2026-03-16,2026,Chicago Bulls,Memphis Grizzlies,132,107
+2026-03-16,2026,Houston Rockets,Los Angeles Lakers,92,100
+2026-03-16,2026,LA Clippers,San Antonio Spurs,115,119
+2026-03-16,2026,New Orleans Pelicans,Dallas Mavericks,129,111
+2026-03-16,2026,Washington Wizards,Golden State Warriors,117,125
+2026-03-17,2026,Charlotte Hornets,Miami Heat,136,106
+2026-03-17,2026,Denver Nuggets,Philadelphia 76ers,124,96
+2026-03-17,2026,Milwaukee Bucks,Cleveland Cavaliers,116,123
+2026-03-17,2026,Minnesota Timberwolves,Phoenix Suns,116,104
+2026-03-17,2026,New York Knicks,Indiana Pacers,136,110
+2026-03-17,2026,Orlando Magic,Oklahoma City Thunder,108,113
+2026-03-17,2026,Sacramento Kings,San Antonio Spurs,104,132
+2026-03-17,2026,Washington Wizards,Detroit Pistons,117,130
+2026-03-18,2026,Boston Celtics,Golden State Warriors,120,99
+2026-03-18,2026,Brooklyn Nets,Oklahoma City Thunder,92,121
+2026-03-18,2026,Chicago Bulls,Toronto Raptors,109,139
+2026-03-18,2026,Dallas Mavericks,Atlanta Hawks,120,135
+2026-03-18,2026,Houston Rockets,Los Angeles Lakers,116,124
+2026-03-18,2026,Indiana Pacers,Portland Trail Blazers,119,127
+2026-03-18,2026,Memphis Grizzlies,Denver Nuggets,125,118
+2026-03-18,2026,Minnesota Timberwolves,Utah Jazz,147,111
+2026-03-18,2026,New Orleans Pelicans,LA Clippers,124,109
+2026-03-19,2026,Charlotte Hornets,Orlando Magic,130,111
+2026-03-19,2026,Chicago Bulls,Cleveland Cavaliers,110,115
+2026-03-19,2026,Miami Heat,Los Angeles Lakers,126,134
+2026-03-19,2026,New Orleans Pelicans,LA Clippers,105,99
+2026-03-19,2026,Sacramento Kings,Philadelphia 76ers,118,139
+2026-03-19,2026,San Antonio Spurs,Phoenix Suns,101,100
+2026-03-19,2026,Utah Jazz,Milwaukee Bucks,128,96
+2026-03-19,2026,Washington Wizards,Detroit Pistons,95,117
+2026-03-20,2026,Brooklyn Nets,New York Knicks,92,93
+2026-03-20,2026,Denver Nuggets,Toronto Raptors,121,115
+2026-03-20,2026,Detroit Pistons,Golden State Warriors,115,101
+2026-03-20,2026,Houston Rockets,Atlanta Hawks,117,95
+2026-03-20,2026,Memphis Grizzlies,Boston Celtics,112,117
+2026-03-20,2026,Minnesota Timberwolves,Portland Trail Blazers,104,108
+2026-03-21,2026,Atlanta Hawks,Golden State Warriors,126,110
+2026-03-21,2026,Charlotte Hornets,Memphis Grizzlies,124,101
+2026-03-21,2026,Dallas Mavericks,LA Clippers,131,138
+2026-03-21,2026,Houston Rockets,Miami Heat,123,122
+2026-03-21,2026,New Orleans Pelicans,Cleveland Cavaliers,106,111
+2026-03-21,2026,Orlando Magic,Los Angeles Lakers,104,105
+2026-03-21,2026,Phoenix Suns,Milwaukee Bucks,105,108
+2026-03-21,2026,San Antonio Spurs,Indiana Pacers,134,119
+2026-03-21,2026,Utah Jazz,Philadelphia 76ers,116,126
+2026-03-21,2026,Washington Wizards,Oklahoma City Thunder,111,132
+2026-03-22,2026,Boston Celtics,Minnesota Timberwolves,92,102
+2026-03-22,2026,Denver Nuggets,Portland Trail Blazers,128,112
+2026-03-22,2026,New York Knicks,Washington Wizards,145,113
+2026-03-22,2026,Phoenix Suns,Toronto Raptors,120,98
+2026-03-22,2026,Sacramento Kings,Brooklyn Nets,126,122
+2026-03-23,2026,Atlanta Hawks,Memphis Grizzlies,146,107
+2026-03-23,2026,Chicago Bulls,Houston Rockets,132,124
+2026-03-23,2026,Dallas Mavericks,Golden State Warriors,131,137
+2026-03-23,2026,Detroit Pistons,Los Angeles Lakers,113,110
+2026-03-23,2026,LA Clippers,Milwaukee Bucks,129,96
+2026-03-23,2026,Miami Heat,San Antonio Spurs,111,136
+2026-03-23,2026,Orlando Magic,Indiana Pacers,126,128
+2026-03-23,2026,Philadelphia 76ers,Oklahoma City Thunder,103,123
+2026-03-23,2026,Portland Trail Blazers,Brooklyn Nets,134,99
+2026-03-23,2026,Utah Jazz,Toronto Raptors,127,143
+2026-03-24,2026,Charlotte Hornets,Sacramento Kings,134,90
+2026-03-24,2026,Cleveland Cavaliers,Orlando Magic,136,131
+2026-03-24,2026,New York Knicks,New Orleans Pelicans,121,116
+2026-03-24,2026,Phoenix Suns,Denver Nuggets,123,125
+2026-03-25,2026,Boston Celtics,Oklahoma City Thunder,119,109
+2026-03-25,2026,Cleveland Cavaliers,Miami Heat,103,120
+2026-03-25,2026,Denver Nuggets,Dallas Mavericks,142,135
+2026-03-25,2026,Detroit Pistons,Atlanta Hawks,129,130
+2026-03-25,2026,Golden State Warriors,Brooklyn Nets,109,106
+2026-03-25,2026,Indiana Pacers,Los Angeles Lakers,130,137
+2026-03-25,2026,LA Clippers,Toronto Raptors,119,94
+2026-03-25,2026,Memphis Grizzlies,San Antonio Spurs,98,123
+2026-03-25,2026,Minnesota Timberwolves,Houston Rockets,110,108
+2026-03-25,2026,Philadelphia 76ers,Chicago Bulls,157,137
+2026-03-25,2026,Portland Trail Blazers,Milwaukee Bucks,130,99
+2026-03-25,2026,Utah Jazz,Washington Wizards,110,133
+2026-03-26,2026,Charlotte Hornets,New York Knicks,114,103
+2026-03-26,2026,Detroit Pistons,New Orleans Pelicans,129,108
+2026-03-26,2026,Orlando Magic,Sacramento Kings,121,117
+2026-03-27,2026,Boston Celtics,Atlanta Hawks,109,102
+2026-03-27,2026,Cleveland Cavaliers,Miami Heat,149,128
+2026-03-27,2026,Denver Nuggets,Utah Jazz,135,129
+2026-03-27,2026,Golden State Warriors,Washington Wizards,131,126
+2026-03-27,2026,Indiana Pacers,LA Clippers,113,114
+2026-03-27,2026,Los Angeles Lakers,Brooklyn Nets,116,99
+2026-03-27,2026,Memphis Grizzlies,Houston Rockets,109,119
+2026-03-27,2026,Oklahoma City Thunder,Chicago Bulls,131,113
+2026-03-27,2026,Portland Trail Blazers,Dallas Mavericks,93,100
+2026-03-27,2026,Toronto Raptors,New Orleans Pelicans,119,106
+2026-03-28,2026,Atlanta Hawks,Sacramento Kings,123,113
+2026-03-28,2026,Charlotte Hornets,Philadelphia 76ers,114,118
+2026-03-28,2026,Memphis Grizzlies,Chicago Bulls,125,124
+2026-03-28,2026,Milwaukee Bucks,San Antonio Spurs,95,127
+2026-03-28,2026,Minnesota Timberwolves,Detroit Pistons,87,109
+2026-03-28,2026,Phoenix Suns,Utah Jazz,134,109
+2026-03-29,2026,Brooklyn Nets,Sacramento Kings,116,99
+2026-03-29,2026,Charlotte Hornets,Boston Celtics,99,114
+2026-03-29,2026,Denver Nuggets,Golden State Warriors,116,93
+2026-03-29,2026,Indiana Pacers,Miami Heat,135,118
+2026-03-29,2026,Milwaukee Bucks,LA Clippers,113,127
+2026-03-29,2026,New Orleans Pelicans,Houston Rockets,102,134
+2026-03-29,2026,Oklahoma City Thunder,New York Knicks,111,100
+2026-03-29,2026,Portland Trail Blazers,Washington Wizards,123,88
+2026-03-29,2026,Toronto Raptors,Orlando Magic,139,87
+2026-03-30,2026,Atlanta Hawks,Boston Celtics,112,102
+2026-03-30,2026,Dallas Mavericks,Minnesota Timberwolves,94,124
+2026-03-30,2026,Los Angeles Lakers,Washington Wizards,120,101
+2026-03-30,2026,Memphis Grizzlies,Phoenix Suns,105,131
+2026-03-30,2026,Miami Heat,Philadelphia 76ers,119,109
+2026-03-30,2026,Oklahoma City Thunder,Detroit Pistons,114,110
+2026-03-30,2026,San Antonio Spurs,Chicago Bulls,129,114
+2026-03-30,2026,Utah Jazz,Cleveland Cavaliers,113,122
+2026-03-31,2026,Brooklyn Nets,Charlotte Hornets,86,117
+2026-03-31,2026,Detroit Pistons,Toronto Raptors,127,116
+2026-03-31,2026,Houston Rockets,New York Knicks,111,94
+2026-03-31,2026,LA Clippers,Portland Trail Blazers,104,114
+2026-03-31,2026,Los Angeles Lakers,Cleveland Cavaliers,127,113
+2026-03-31,2026,Milwaukee Bucks,Dallas Mavericks,123,99
+2026-03-31,2026,Orlando Magic,Phoenix Suns,115,111
+2026-04-01,2026,Chicago Bulls,Indiana Pacers,126,145
+2026-04-01,2026,Golden State Warriors,San Antonio Spurs,113,127
+2026-04-01,2026,Houston Rockets,Milwaukee Bucks,119,113
+2026-04-01,2026,Memphis Grizzlies,New York Knicks,119,130
+2026-04-01,2026,Miami Heat,Boston Celtics,129,147
+2026-04-01,2026,Orlando Magic,Atlanta Hawks,101,130
+2026-04-01,2026,Toronto Raptors,Sacramento Kings,115,123
+2026-04-01,2026,Utah Jazz,Denver Nuggets,117,130
+2026-04-01,2026,Washington Wizards,Philadelphia 76ers,131,153
+2026-04-02,2026,Charlotte Hornets,Phoenix Suns,127,107
+2026-04-02,2026,Detroit Pistons,Minnesota Timberwolves,113,108
+2026-04-02,2026,Golden State Warriors,Cleveland Cavaliers,111,118
+2026-04-02,2026,LA Clippers,San Antonio Spurs,99,118
+2026-04-02,2026,Oklahoma City Thunder,Los Angeles Lakers,139,96
+2026-04-02,2026,Portland Trail Blazers,New Orleans Pelicans,118,106
+2026-04-03,2026,Brooklyn Nets,Atlanta Hawks,107,141
+2026-04-03,2026,Charlotte Hornets,Indiana Pacers,129,108
+2026-04-03,2026,Dallas Mavericks,Orlando Magic,127,138
+2026-04-03,2026,Houston Rockets,Utah Jazz,140,106
+2026-04-03,2026,Memphis Grizzlies,Toronto Raptors,96,128
+2026-04-03,2026,Milwaukee Bucks,Boston Celtics,101,133
+2026-04-03,2026,New York Knicks,Chicago Bulls,136,96
+2026-04-03,2026,Philadelphia 76ers,Minnesota Timberwolves,115,103
+2026-04-03,2026,Sacramento Kings,New Orleans Pelicans,117,113
+2026-04-04,2026,Denver Nuggets,San Antonio Spurs,136,134
+2026-04-04,2026,Miami Heat,Washington Wizards,152,136
+2026-04-04,2026,Philadelphia 76ers,Detroit Pistons,93,116
+2026-04-05,2026,Boston Celtics,Toronto Raptors,115,101
+2026-04-05,2026,Brooklyn Nets,Washington Wizards,121,115
+2026-04-05,2026,Chicago Bulls,Phoenix Suns,110,120
+2026-04-05,2026,Cleveland Cavaliers,Indiana Pacers,117,108
+2026-04-05,2026,Dallas Mavericks,Los Angeles Lakers,134,128
+2026-04-05,2026,Golden State Warriors,Houston Rockets,116,117
+2026-04-05,2026,Milwaukee Bucks,Memphis Grizzlies,131,115
+2026-04-05,2026,Minnesota Timberwolves,Charlotte Hornets,108,122
+2026-04-05,2026,New Orleans Pelicans,Orlando Magic,108,112
+2026-04-05,2026,Oklahoma City Thunder,Utah Jazz,146,111
+2026-04-05,2026,Sacramento Kings,LA Clippers,109,138
+2026-04-06,2026,Atlanta Hawks,New York Knicks,105,108
+2026-04-06,2026,Denver Nuggets,Portland Trail Blazers,137,132
+2026-04-06,2026,Memphis Grizzlies,Cleveland Cavaliers,126,142
+2026-04-06,2026,Orlando Magic,Detroit Pistons,123,107
+2026-04-06,2026,San Antonio Spurs,Philadelphia 76ers,115,102
+2026-04-07,2026,Boston Celtics,Charlotte Hornets,113,102
+2026-04-07,2026,Brooklyn Nets,Milwaukee Bucks,96,90
+2026-04-07,2026,Golden State Warriors,Sacramento Kings,110,105
+2026-04-07,2026,Indiana Pacers,Minnesota Timberwolves,104,124
+2026-04-07,2026,LA Clippers,Dallas Mavericks,116,103
+2026-04-07,2026,Los Angeles Lakers,Oklahoma City Thunder,87,123
+2026-04-07,2026,New Orleans Pelicans,Utah Jazz,156,137
+2026-04-07,2026,Phoenix Suns,Houston Rockets,105,119
+2026-04-07,2026,Toronto Raptors,Miami Heat,121,95
+2026-04-07,2026,Washington Wizards,Chicago Bulls,98,129
+2026-04-08,2026,Cleveland Cavaliers,Atlanta Hawks,122,116
+2026-04-08,2026,Denver Nuggets,Memphis Grizzlies,136,119
+2026-04-08,2026,Detroit Pistons,Milwaukee Bucks,137,111
+2026-04-08,2026,LA Clippers,Oklahoma City Thunder,110,128
+2026-04-08,2026,Orlando Magic,Minnesota Timberwolves,132,120
+2026-04-08,2026,Phoenix Suns,Dallas Mavericks,112,107
+2026-04-08,2026,San Antonio Spurs,Portland Trail Blazers,112,101
+2026-04-09,2026,Brooklyn Nets,Indiana Pacers,94,123
+2026-04-09,2026,Golden State Warriors,Los Angeles Lakers,103,119
+2026-04-09,2026,Houston Rockets,Philadelphia 76ers,113,102
+2026-04-09,2026,New York Knicks,Boston Celtics,112,106
+2026-04-09,2026,Toronto Raptors,Miami Heat,128,114
+2026-04-09,2026,Washington Wizards,Chicago Bulls,108,119
+2026-04-10,2026,Atlanta Hawks,Cleveland Cavaliers,124,102
+2026-04-10,2026,Boston Celtics,New Orleans Pelicans,144,118
+2026-04-10,2026,Charlotte Hornets,Detroit Pistons,100,118
+2026-04-10,2026,Chicago Bulls,Orlando Magic,103,127
+2026-04-10,2026,Denver Nuggets,Oklahoma City Thunder,127,107
+2026-04-10,2026,Houston Rockets,Minnesota Timberwolves,132,136
+2026-04-10,2026,Indiana Pacers,Philadelphia 76ers,94,105
+2026-04-10,2026,Los Angeles Lakers,Phoenix Suns,101,73
+2026-04-10,2026,Milwaukee Bucks,Brooklyn Nets,125,108
+2026-04-10,2026,New York Knicks,Toronto Raptors,112,95
+2026-04-10,2026,Portland Trail Blazers,LA Clippers,116,97
+2026-04-10,2026,Sacramento Kings,Golden State Warriors,124,118
+2026-04-10,2026,San Antonio Spurs,Dallas Mavericks,139,120
+2026-04-10,2026,Utah Jazz,Memphis Grizzlies,147,101
+2026-04-10,2026,Washington Wizards,Miami Heat,117,140
+2026-04-12,2026,Boston Celtics,Orlando Magic,113,108
+2026-04-12,2026,Cleveland Cavaliers,Washington Wizards,130,117
+2026-04-12,2026,Dallas Mavericks,Chicago Bulls,149,128
+2026-04-12,2026,Houston Rockets,Memphis Grizzlies,132,101
+2026-04-12,2026,Indiana Pacers,Detroit Pistons,121,133
+2026-04-12,2026,LA Clippers,Golden State Warriors,115,110
+2026-04-12,2026,Los Angeles Lakers,Utah Jazz,131,107
+2026-04-12,2026,Miami Heat,Atlanta Hawks,143,117
+2026-04-12,2026,Minnesota Timberwolves,New Orleans Pelicans,132,126
+2026-04-12,2026,New York Knicks,Charlotte Hornets,96,110
+2026-04-12,2026,Oklahoma City Thunder,Phoenix Suns,103,135
+2026-04-12,2026,Philadelphia 76ers,Milwaukee Bucks,126,106
+2026-04-12,2026,Portland Trail Blazers,Sacramento Kings,122,110
+2026-04-12,2026,San Antonio Spurs,Denver Nuggets,118,128
+2026-04-12,2026,Toronto Raptors,Brooklyn Nets,136,101
+2026-04-14,2026,Charlotte Hornets,Miami Heat,127,126
+2026-04-14,2026,Phoenix Suns,Portland Trail Blazers,110,114
+2026-04-15,2026,LA Clippers,Golden State Warriors,121,126
+2026-04-15,2026,Philadelphia 76ers,Orlando Magic,109,97
+2026-04-17,2026,Orlando Magic,Charlotte Hornets,121,90
+2026-04-17,2026,Phoenix Suns,Golden State Warriors,111,96
+2026-04-18,2026,Cleveland Cavaliers,Toronto Raptors,126,113
+2026-04-18,2026,Denver Nuggets,Minnesota Timberwolves,116,105
+2026-04-18,2026,Los Angeles Lakers,Houston Rockets,107,98
+2026-04-18,2026,New York Knicks,Atlanta Hawks,113,102
+2026-04-19,2026,Boston Celtics,Philadelphia 76ers,123,91
+2026-04-19,2026,Detroit Pistons,Orlando Magic,101,112
+2026-04-19,2026,Oklahoma City Thunder,Phoenix Suns,119,84
+2026-04-19,2026,San Antonio Spurs,Portland Trail Blazers,111,98
+2026-04-20,2026,Cleveland Cavaliers,Toronto Raptors,115,105
+2026-04-20,2026,Denver Nuggets,Minnesota Timberwolves,114,119
+2026-04-20,2026,New York Knicks,Atlanta Hawks,106,107
+2026-04-21,2026,Boston Celtics,Philadelphia 76ers,97,111
+2026-04-21,2026,Los Angeles Lakers,Houston Rockets,101,94
+2026-04-21,2026,San Antonio Spurs,Portland Trail Blazers,103,106
+2026-04-22,2026,Detroit Pistons,Orlando Magic,98,83
+2026-04-22,2026,Oklahoma City Thunder,Phoenix Suns,120,107
+2026-04-23,2026,Atlanta Hawks,New York Knicks,109,108
+2026-04-23,2026,Minnesota Timberwolves,Denver Nuggets,113,96
+2026-04-23,2026,Toronto Raptors,Cleveland Cavaliers,126,104
+2026-04-24,2026,Houston Rockets,Los Angeles Lakers,108,112
+2026-04-24,2026,Philadelphia 76ers,Boston Celtics,100,108
+2026-04-24,2026,Portland Trail Blazers,San Antonio Spurs,108,120
+2026-04-25,2026,Atlanta Hawks,New York Knicks,98,114
+2026-04-25,2026,Minnesota Timberwolves,Denver Nuggets,112,96
+2026-04-25,2026,Orlando Magic,Detroit Pistons,113,105
+2026-04-25,2026,Phoenix Suns,Oklahoma City Thunder,109,121
+2026-04-26,2026,Houston Rockets,Los Angeles Lakers,115,96
+2026-04-26,2026,Philadelphia 76ers,Boston Celtics,96,128
+2026-04-26,2026,Portland Trail Blazers,San Antonio Spurs,93,114
+2026-04-26,2026,Toronto Raptors,Cleveland Cavaliers,93,89
+2026-04-27,2026,Denver Nuggets,Minnesota Timberwolves,125,113
+2026-04-27,2026,Orlando Magic,Detroit Pistons,94,88
+2026-04-27,2026,Phoenix Suns,Oklahoma City Thunder,122,131
+2026-04-28,2026,Boston Celtics,Philadelphia 76ers,97,113
+2026-04-28,2026,New York Knicks,Atlanta Hawks,126,97
+2026-04-28,2026,San Antonio Spurs,Portland Trail Blazers,114,95
+2026-04-29,2026,Cleveland Cavaliers,Toronto Raptors,125,120
+2026-04-29,2026,Detroit Pistons,Orlando Magic,116,109
+2026-04-29,2026,Los Angeles Lakers,Houston Rockets,93,99
+2026-04-30,2026,Atlanta Hawks,New York Knicks,89,140
+2026-04-30,2026,Minnesota Timberwolves,Denver Nuggets,110,98
+2026-04-30,2026,Philadelphia 76ers,Boston Celtics,106,93
+2026-05-01,2026,Houston Rockets,Los Angeles Lakers,78,98
+2026-05-01,2026,Orlando Magic,Detroit Pistons,79,93
+2026-05-01,2026,Toronto Raptors,Cleveland Cavaliers,112,110
+2026-05-02,2026,Boston Celtics,Philadelphia 76ers,100,109
+2026-05-03,2026,Cleveland Cavaliers,Toronto Raptors,114,102
+2026-05-03,2026,Detroit Pistons,Orlando Magic,116,94
+2026-05-04,2026,New York Knicks,Philadelphia 76ers,137,98
+2026-05-04,2026,San Antonio Spurs,Minnesota Timberwolves,102,104
+2026-05-05,2026,Detroit Pistons,Cleveland Cavaliers,111,101
+2026-05-05,2026,Oklahoma City Thunder,Los Angeles Lakers,108,90
+2026-05-06,2026,New York Knicks,Philadelphia 76ers,108,102
+2026-05-06,2026,San Antonio Spurs,Minnesota Timberwolves,133,95
+2026-05-07,2026,Detroit Pistons,Cleveland Cavaliers,107,97
+2026-05-07,2026,Oklahoma City Thunder,Los Angeles Lakers,125,107
+2026-05-08,2026,Minnesota Timberwolves,San Antonio Spurs,108,115
+2026-05-08,2026,Philadelphia 76ers,New York Knicks,94,108
+2026-05-09,2026,Cleveland Cavaliers,Detroit Pistons,116,109
+2026-05-09,2026,Los Angeles Lakers,Oklahoma City Thunder,108,131
+2026-05-10,2026,Minnesota Timberwolves,San Antonio Spurs,114,109
+2026-05-10,2026,Philadelphia 76ers,New York Knicks,114,144
+2026-05-11,2026,Cleveland Cavaliers,Detroit Pistons,112,103
+2026-05-11,2026,Los Angeles Lakers,Oklahoma City Thunder,110,115
+2026-05-12,2026,San Antonio Spurs,Minnesota Timberwolves,126,97
+2026-05-13,2026,Detroit Pistons,Cleveland Cavaliers,113,117
+2026-05-15,2026,Cleveland Cavaliers,Detroit Pistons,94,115
+2026-05-15,2026,Minnesota Timberwolves,San Antonio Spurs,109,139
+2026-05-17,2026,Detroit Pistons,Cleveland Cavaliers,94,125
+2026-05-18,2026,Oklahoma City Thunder,San Antonio Spurs,115,122
+2026-05-19,2026,New York Knicks,Cleveland Cavaliers,115,104
+2026-05-20,2026,Oklahoma City Thunder,San Antonio Spurs,122,113
+2026-05-21,2026,New York Knicks,Cleveland Cavaliers,109,93
+2026-05-22,2026,San Antonio Spurs,Oklahoma City Thunder,108,123
+2026-05-23,2026,Cleveland Cavaliers,New York Knicks,108,121
+2026-05-24,2026,San Antonio Spurs,Oklahoma City Thunder,103,82
+2026-05-25,2026,Cleveland Cavaliers,New York Knicks,93,130
+2026-05-26,2026,Oklahoma City Thunder,San Antonio Spurs,127,114
+2026-05-28,2026,San Antonio Spurs,Oklahoma City Thunder,118,91
+2026-05-30,2026,Oklahoma City Thunder,San Antonio Spurs,103,111
+2026-06-03,2026,San Antonio Spurs,New York Knicks,95,105
+2026-06-05,2026,San Antonio Spurs,New York Knicks,104,105
+2026-06-08,2026,New York Knicks,San Antonio Spurs,111,115
+2026-06-10,2026,New York Knicks,San Antonio Spurs,107,106
+2026-06-13,2026,San Antonio Spurs,New York Knicks,90,94
+2026-10-20,2027,Detroit Pistons,Boston Celtics,121,113
+2026-10-20,2027,New York Knicks,Philadelphia 76ers,100,106
+2026-10-20,2027,San Antonio Spurs,Oklahoma City Thunder,104,116
+2026-10-21,2027,Brooklyn Nets,Charlotte Hornets,103,110
+2026-10-21,2027,Houston Rockets,Dallas Mavericks,128,110
+2026-10-21,2027,LA Clippers,Sacramento Kings,121,96
+2026-10-21,2027,Los Angeles Lakers,Golden State Warriors,127,105
+2026-10-21,2027,Memphis Grizzlies,Utah Jazz,123,103
+2026-10-21,2027,Miami Heat,Minnesota Timberwolves,106,131
+2026-10-21,2027,New Orleans Pelicans,Indiana Pacers,120,123
+2026-10-21,2027,Orlando Magic,Atlanta Hawks,125,132
+2026-10-21,2027,Portland Trail Blazers,Phoenix Suns,124,83
+2026-10-21,2027,Toronto Raptors,Chicago Bulls,135,92
+2026-10-21,2027,Washington Wizards,Milwaukee Bucks,128,116
+2026-10-22,2027,Oklahoma City Thunder,Denver Nuggets,96,84
+2026-10-22,2027,Philadelphia 76ers,Cleveland Cavaliers,114,106
+2026-10-23,2027,Boston Celtics,New York Knicks,107,103
+2026-10-23,2027,Charlotte Hornets,Atlanta Hawks,81,128
+2026-10-23,2027,Golden State Warriors,Memphis Grizzlies,108,111
+2026-10-23,2027,Indiana Pacers,Dallas Mavericks,105,121
+2026-10-23,2027,Los Angeles Lakers,LA Clippers,125,117
+2026-10-23,2027,Miami Heat,Detroit Pistons,111,128
+2026-10-23,2027,Milwaukee Bucks,Chicago Bulls,125,132
+2026-10-23,2027,Orlando Magic,Minnesota Timberwolves,93,115
+2026-10-23,2027,Sacramento Kings,Portland Trail Blazers,120,128
+2026-10-23,2027,San Antonio Spurs,Houston Rockets,110,114
+2026-10-23,2027,Utah Jazz,New Orleans Pelicans,120,119
+2026-10-23,2027,Washington Wizards,Toronto Raptors,102,112
+2026-10-24,2027,Atlanta Hawks,Houston Rockets,114,121
+2026-10-24,2027,Charlotte Hornets,Miami Heat,115,110
+2026-10-24,2027,Chicago Bulls,Washington Wizards,120,124
+2026-10-24,2027,Cleveland Cavaliers,Brooklyn Nets,125,121
+2026-10-24,2027,Dallas Mavericks,San Antonio Spurs,106,122
+2026-10-24,2027,Denver Nuggets,New Orleans Pelicans,141,135
+2026-10-24,2027,Philadelphia 76ers,Milwaukee Bucks,127,116
+2026-10-24,2027,Phoenix Suns,Golden State Warriors,131,122
+2026-10-25,2027,Brooklyn Nets,Indiana Pacers,109,136
+2026-10-25,2027,Minnesota Timberwolves,Toronto Raptors,117,94
+2026-10-25,2027,New York Knicks,Orlando Magic,102,111
+2026-10-25,2027,Oklahoma City Thunder,LA Clippers,108,101
+2026-10-25,2027,Philadelphia 76ers,Detroit Pistons,93,106
+2026-10-25,2027,Sacramento Kings,Memphis Grizzlies,112,123
+2026-10-25,2027,Utah Jazz,Los Angeles Lakers,123,132
+2026-10-26,2027,Boston Celtics,Chicago Bulls,134,99
+2026-10-26,2027,Charlotte Hornets,Washington Wizards,110,103
+2026-10-26,2027,Cleveland Cavaliers,Minnesota Timberwolves,127,125
+2026-10-26,2027,Denver Nuggets,Golden State Warriors,114,134
+2026-10-26,2027,Houston Rockets,Atlanta Hawks,120,110
+2026-10-26,2027,Miami Heat,Dallas Mavericks,109,113
+2026-10-26,2027,Milwaukee Bucks,Indiana Pacers,110,102
+2026-10-26,2027,Oklahoma City Thunder,Phoenix Suns,125,114
+2026-10-26,2027,Utah Jazz,Memphis Grizzlies,105,110
+2026-10-27,2027,Boston Celtics,Brooklyn Nets,125,124
+2026-10-27,2027,Los Angeles Lakers,Portland Trail Blazers,129,136
+2026-10-27,2027,New York Knicks,Detroit Pistons,111,97
+2026-10-27,2027,San Antonio Spurs,Sacramento Kings,130,103
+2026-10-28,2027,Atlanta Hawks,Miami Heat,117,129
+2026-10-28,2027,Chicago Bulls,New York Knicks,127,133
+2026-10-28,2027,Cleveland Cavaliers,Washington Wizards,121,111
+2026-10-28,2027,Dallas Mavericks,Oklahoma City Thunder,120,96
+2026-10-28,2027,Detroit Pistons,Charlotte Hornets,97,89
+2026-10-28,2027,Indiana Pacers,Philadelphia 76ers,109,114
+2026-10-28,2027,LA Clippers,Los Angeles Lakers,87,103
+2026-10-28,2027,Milwaukee Bucks,Houston Rockets,100,132
+2026-10-28,2027,Minnesota Timberwolves,Golden State Warriors,114,119
+2026-10-28,2027,New Orleans Pelicans,Denver Nuggets,91,104
+2026-10-28,2027,Toronto Raptors,Orlando Magic,129,99
+2026-10-28,2027,Utah Jazz,San Antonio Spurs,111,117
+2026-10-29,2027,Atlanta Hawks,Cleveland Cavaliers,114,111
+2026-10-29,2027,New Orleans Pelicans,Sacramento Kings,132,120
+2026-10-29,2027,Portland Trail Blazers,Memphis Grizzlies,103,124
+2026-10-30,2027,Boston Celtics,Chicago Bulls,125,111
+2026-10-30,2027,Brooklyn Nets,Detroit Pistons,94,110
+2026-10-30,2027,Dallas Mavericks,Houston Rockets,116,111
+2026-10-30,2027,Golden State Warriors,Los Angeles Lakers,112,95
+2026-10-30,2027,Miami Heat,Indiana Pacers,145,125
+2026-10-30,2027,Minnesota Timberwolves,LA Clippers,127,101
+2026-10-30,2027,Philadelphia 76ers,New York Knicks,98,93
+2026-10-30,2027,Phoenix Suns,Denver Nuggets,120,127
+2026-10-30,2027,Toronto Raptors,Orlando Magic,114,121
+2026-10-30,2027,Washington Wizards,Charlotte Hornets,95,79
+2026-10-31,2027,Charlotte Hornets,Philadelphia 76ers,104,109
+2026-10-31,2027,Houston Rockets,Oklahoma City Thunder,119,98
+2026-10-31,2027,Memphis Grizzlies,Sacramento Kings,136,105
+2026-10-31,2027,Milwaukee Bucks,Cleveland Cavaliers,111,136
+2026-10-31,2027,New Orleans Pelicans,Atlanta Hawks,121,99
+2026-10-31,2027,San Antonio Spurs,Minnesota Timberwolves,121,111
+2026-10-31,2027,Utah Jazz,Portland Trail Blazers,90,112
+2026-11-01,2027,Golden State Warriors,LA Clippers,124,112
+2026-11-01,2027,Indiana Pacers,Brooklyn Nets,90,98
+2026-11-01,2027,Los Angeles Lakers,Toronto Raptors,131,125
+2026-11-01,2027,Orlando Magic,Boston Celtics,97,108
+2026-11-02,2027,Charlotte Hornets,Detroit Pistons,91,124
+2026-11-02,2027,Cleveland Cavaliers,Oklahoma City Thunder,112,117
+2026-11-02,2027,Dallas Mavericks,Sacramento Kings,100,115
+2026-11-02,2027,Denver Nuggets,Portland Trail Blazers,110,118
+2026-11-02,2027,Golden State Warriors,Phoenix Suns,116,113
+2026-11-02,2027,Houston Rockets,Boston Celtics,109,93
+2026-11-02,2027,Indiana Pacers,Atlanta Hawks,104,108
+2026-11-02,2027,LA Clippers,Toronto Raptors,118,125
+2026-11-02,2027,Los Angeles Lakers,Miami Heat,138,117
+2026-11-02,2027,Memphis Grizzlies,New Orleans Pelicans,134,135
+2026-11-02,2027,Minnesota Timberwolves,Milwaukee Bucks,112,100
+2026-11-02,2027,New York Knicks,Brooklyn Nets,103,90
+2026-11-02,2027,Orlando Magic,Washington Wizards,94,103
+2026-11-02,2027,Philadelphia 76ers,Chicago Bulls,126,107
+2026-11-02,2027,San Antonio Spurs,Utah Jazz,119,97
+2026-11-04,2027,Boston Celtics,Milwaukee Bucks,109,102
+2026-11-04,2027,Brooklyn Nets,Charlotte Hornets,114,104
+2026-11-04,2027,Denver Nuggets,Toronto Raptors,128,109
+2026-11-04,2027,Detroit Pistons,Philadelphia 76ers,106,112
+2026-11-04,2027,Houston Rockets,Minnesota Timberwolves,107,117
+2026-11-04,2027,LA Clippers,Miami Heat,116,117
+2026-11-04,2027,Memphis Grizzlies,Indiana Pacers,103,107
+2026-11-04,2027,New Orleans Pelicans,Utah Jazz,120,113
+2026-11-04,2027,New York Knicks,Chicago Bulls,135,105
+2026-11-04,2027,Oklahoma City Thunder,Cleveland Cavaliers,124,116
+2026-11-04,2027,Phoenix Suns,Portland Trail Blazers,119,132
+2026-11-04,2027,Sacramento Kings,Los Angeles Lakers,103,116
+2026-11-04,2027,San Antonio Spurs,Dallas Mavericks,112,111
+2026-11-04,2027,Washington Wizards,Atlanta Hawks,105,120
+2026-11-05,2027,Golden State Warriors,Miami Heat,120,100
+2026-11-05,2027,Phoenix Suns,Orlando Magic,117,104
+2026-11-06,2027,Atlanta Hawks,Washington Wizards,139,132
+2026-11-06,2027,Charlotte Hornets,Boston Celtics,80,119
+2026-11-06,2027,Cleveland Cavaliers,Philadelphia 76ers,119,95
+2026-11-06,2027,Dallas Mavericks,Utah Jazz,112,100
+2026-11-06,2027,Los Angeles Lakers,Portland Trail Blazers,124,118
+2026-11-06,2027,Memphis Grizzlies,Oklahoma City Thunder,97,128
+2026-11-06,2027,Milwaukee Bucks,Toronto Raptors,107,121
+2026-11-06,2027,New Orleans Pelicans,Minnesota Timberwolves,109,115
+2026-11-06,2027,Sacramento Kings,San Antonio Spurs,109,124
+2026-11-07,2027,Atlanta Hawks,Brooklyn Nets,124,121
+2026-11-07,2027,Cleveland Cavaliers,New York Knicks,97,109
+2026-11-07,2027,Golden State Warriors,Orlando Magic,126,119
+2026-11-07,2027,Indiana Pacers,Denver Nuggets,102,114
+2026-11-07,2027,Oklahoma City Thunder,Washington Wizards,114,75
+2026-11-07,2027,Phoenix Suns,Houston Rockets,102,99
+2026-11-07,2027,Portland Trail Blazers,San Antonio Spurs,103,125
+2026-11-08,2027,Chicago Bulls,Philadelphia 76ers,121,127

@@ -118,7 +118,7 @@
       <li>Injury impact goes a step further, weighting status severity and estimated absence length so a star out for a week reads differently than a role player out for a day.</li>
     </ul>
     <blockquote class="callout">
-      The benchmark for the current training window: home-court baseline accuracy
+      In the original benchmark, evaluated on held-out 2024–25 games, home-court baseline accuracy was
       {{ "%.1f"|format(benchmark.home_baseline_accuracy * 100) }}%, logistic
       {{ "%.1f"|format(benchmark.logistic_accuracy * 100) }}%, random forest
       {{ "%.1f"|format(benchmark.random_forest_accuracy * 100) }}%. The linear model edges
@@ -131,16 +131,15 @@
   <article class="card math-card">
     <h2>3. Game scraper</h2>
     <p>
-      The Basketball-Reference scraper walks every month page in each requested season, so the
-      raw CSV gets full regular-season coverage rather than just October and November. It parses
-      the box-score tables directly and writes one row per game with date, season, away team,
-      away points, home team, and home points.
+      The automatic refresh checks ESPN’s NBA scoreboard for final scores. The Scrape page
+      also offers Basketball-Reference season-range exports. Each game row records the date,
+      season, teams, and final score.
     </p>
     <ul class="feature-list">
       <li>The season-range input fans out across multiple years in one run, so you can pull 2016 through 2025 in a single submit.</li>
       <li>Raw rows are normalized into the consistent game dataset both the Elo model and the predictor consume, with team names mapped to NBA abbreviations and win/margin columns stamped on.</li>
       <li>For the current season, the scraper stops at the latest completed game so a scheduled result never leaks into the ratings as a played one.</li>
-      <li>Re-running a season overwrites that season's slice of the raw CSV, so refreshing mid-season doesn't duplicate old games.</li>
+      <li>Automatic refreshes merge new finals and score corrections into the saved game history.</li>
     </ul>
   </article>
 

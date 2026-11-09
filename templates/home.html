@@ -6,8 +6,8 @@
     <p class="eyebrow">NBA scraper and rating dashboard</p>
     <h1>NBA Odds Predictor</h1>
     <p class="lede">
-      Scrape Basketball-Reference, run an Elo model over the results, and get a live
-      leaderboard plus a matchup predictor in the browser.
+      Follow the NBA Elo leaderboard and predict matchups using completed games.
+      The game data refreshes automatically every three hours.
     </p>
     <p class="lede">
       The app does one thing end to end: pull games, clean them, update ratings, and show
@@ -45,7 +45,7 @@
       <strong>{{ stats.latest_season_games or 0 }}</strong>
     </div>
     <div class="metric metric-accent">
-      <span>Last updated</span>
+      <span>Games through</span>
       <strong>{{ stats.last_updated or "N/A" }}</strong>
     </div>
     <div class="home-actions">
@@ -53,7 +53,7 @@
         method="post"
         action="{{ url_for('reset_data') }}"
         data-show-loading="true"
-        data-confirm="Reset all scraped data, processed data, and saved results?"
+        data-confirm="Reset generated scrape exports, caches, and saved results?"
       >
         <button type="submit" class="button-danger">Reset data</button>
       </form>
@@ -64,11 +64,11 @@
 <section class="grid pipeline-grid">
   <article class="card pipeline-card">
     <h2>Scraping</h2>
-    <p>The scraper walks every month page of each requested season, so the raw CSV gets full regular-season coverage instead of just the opening month. It parses Basketball-Reference's box-score tables directly, not a third-party feed.</p>
+    <p>Live updates use ESPN’s NBA scoreboard. The Scrape page offers separate Basketball-Reference exports by season range.</p>
     <ul class="feature-list">
       <li>Only games with a final score are written. Postponed, suspended, or not-yet-played rows are dropped at parse time.</li>
       <li>For the current season, the import stops at the most recent completed game, so a scheduled result never gets fed to the model as a played one.</li>
-      <li>Each scrape writes one CSV per season range under <code>data/raw/</code>, and a copy is downloadable straight from the Scrape page.</li>
+      <li>Season-range exports are downloadable from the Scrape page.</li>
       <li>Season-range input lets you pull 2016 through 2025 in a single run; the scraper fans out across years and merges the results.</li>
     </ul>
   </article>
@@ -91,7 +91,7 @@
       <li>Every team starts at 1500 at the start of the first season in the dataset, and is carried forward season to season with a mild regression toward that prior.</li>
       <li>Home court shows up as a fixed additive term in the expected-win formula, so a home underdog can still be favored in the model.</li>
       <li>Margin of victory multiplies the base K-factor update: a 30-point blowout moves ratings meaningfully more than a one-point win, while a narrow favorite win barely shifts anything.</li>
-      <li>Refresh the leaderboard from the latest scrape whenever you want; the updater reads the processed CSV and replays the full game history into the current ratings.</li>
+      <li>Refresh the leaderboard to check for new final scores and replay the latest season into the ratings.</li>
     </ul>
   </article>
 
@@ -101,7 +101,7 @@
     <ul class="feature-list">
       <li>The leaderboard reflects the live current-season ratings, or the most recent completed season if the current one hasn't tipped off yet.</li>
       <li>The predictor takes a home/away matchup and returns a winner with a home-win probability from both the logistic and random forest models side by side.</li>
-      <li>A reset button wipes the raw, processed, and results files in one go, useful when a scrape goes sideways or you want to rebuild the model from scratch.</li>
+      <li>Reset data clears generated exports, caches, and results. The bundled game snapshot stays available.</li>
       <li>Every CSV the app produces is also available for direct download, so you can pull the data out and work on it elsewhere.</li>
     </ul>
   </article>
@@ -143,7 +143,7 @@
         <strong>Season {{ stats.latest_season }}</strong>
         <span>{{ stats.latest_season_games }} games in the live season dataset.</span>
         <span>The leaderboard reflects the live Elo state for that season, replayed from the processed CSV.</span>
-        <span>Last refreshed {{ stats.last_updated or "N/A" }}.</span>
+        <span>Games through {{ stats.last_updated or "N/A" }}.</span>
       </div>
     {% else %}
       <p class="muted">No processed data has been loaded yet. Use the Scrape page to import games, then refresh the leaderboard.</p>

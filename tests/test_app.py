@@ -117,7 +117,7 @@ def test_leaderboard_uses_live_season_only(monkeypatch):
     assert "LAL" not in body
 
 
-def test_leaderboard_route_renders():
+def test_leaderboard_route_renders(monkeypatch):
     import app as app_module
 
     games = app_module.pd.DataFrame(
@@ -135,10 +135,11 @@ def test_leaderboard_route_renders():
         ]
     )
 
-    app_module.PROCESSED_FILE = Path("README.md")
-    app_module.get_latest_live_games = lambda: games
-    app_module.build_leaderboard_frame = lambda frame: app_module.pd.DataFrame(
-        [{"rank": 1, "team": "DEN", "rating": 1700.0}]
+    monkeypatch.setattr(app_module, "get_latest_live_games", lambda: games)
+    monkeypatch.setattr(
+        app_module,
+        "build_leaderboard_frame",
+        lambda frame: app_module.pd.DataFrame([{"rank": 1, "team": "DEN", "rating": 1700.0}]),
     )
 
     app = create_app()

@@ -9,7 +9,7 @@
       Pick a home team and an away team, and the app turns recent form, team strength, rest, and the latest official injury report into a predicted winner and a home-win probability. It trains two models on the same engineered feature set and shows them side by side, because a linear model and a tree model can read the same features differently on a given matchup.
     </p>
     <p class="lede">
-      The training window is fixed to the {{ predictor_start_season }}-{{ predictor_end_season }} seasons automatically, so you don't tune it per request. The predictor trains on every completed game before the target date and then builds one matchup row from the home and away teams you pick.
+      The predictor trains on completed games from {{ predictor_start_season }} through the latest season, using games before the target date to estimate the matchup you pick.
     </p>
   </div>
 </section>
@@ -18,7 +18,7 @@
   <article class="card">
     <div class="section-header">
       <h2>Matchup inputs</h2>
-      <p>Training window {{ predictor_start_season }}-{{ predictor_end_season }}, fixed.</p>
+      <p>Training window {{ predictor_start_season }}-{{ predictor_end_season }}.</p>
     </div>
 
     {% if error %}
@@ -44,7 +44,7 @@
         <button type="submit" class="button-secondary">Refresh predictor data</button>
       </form>
     </div>
-    <p class="muted">The first full refresh can take 20+ minutes: it rebuilds the game and injury training data from scratch. Later refreshes reuse cached CSVs and finish much faster.</p>
+    <p class="muted">Completed games refresh automatically. A manual refresh also rebuilds the latest-season evaluation.</p>
 
     <form method="post" class="form" data-show-loading="true">
       <div class="form-columns">
