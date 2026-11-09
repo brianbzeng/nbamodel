@@ -20,6 +20,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from cleaner import TEAM_MAP_BREF
+from game_updates import GAME_KEY
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -1262,6 +1263,8 @@ def predict_slate(
         raise ValueError("No completed games exist before the requested game date.")
 
     training = merge_injury_features(build_pregame_features(completed), injury_df)
+    # Keep the forest's seeded bootstrap consistent across data refreshes and replays.
+    training = training.sort_values(GAME_KEY, ignore_index=True)
     fitted_model = fitters[model](training)
     matchup_injuries = None
     if injury_df is not None and not injury_df.empty:

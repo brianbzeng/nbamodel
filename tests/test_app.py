@@ -264,6 +264,8 @@ def test_predictor_reports_the_injury_inputs_used_for_a_saved_pick(monkeypatch, 
     slate["away_injury_report_utc"] = pd.NaT
     slate["home_out_count"] = [2, None, None, None, None]
     slate["away_out_count"] = None
+    slate["model"] = [app_module.PLAYER_IMPACT_MODEL, None, None, None, None]
+    slate["home_player_impact_pp"] = [-2.14, None, None, None, None]
 
     response = create_app().test_client().get("/predictor")
     body = response.get_data(as_text=True)
@@ -271,6 +273,8 @@ def test_predictor_reports_the_injury_inputs_used_for_a_saved_pick(monkeypatch, 
     assert response.status_code == 200
     assert "Inputs for this pick" in body
     assert "with 1 earlier final" in body
+    assert "Saved pregame · Random forest + player impact" in body
+    assert "moved the home win chance by -2.1 percentage points" in body
     assert "Injury-Report_2026-11-08_08_15PM.pdf" in body
     assert "LAC · 2 out" in body
     assert "NOP · No official report available" in body

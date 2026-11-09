@@ -80,6 +80,9 @@
           {% if game.saved_at %}
             <p>Saved {{ game.saved_at }} with {{ game.same_day_finals }} earlier {{ 'final' if game.same_day_finals == 1 else 'finals' }} from this game day.</p>
           {% endif %}
+          {% if game.player_impact %}
+            <p>Player availability moved the home win chance by {{ game.player_impact }} percentage points.</p>
+          {% endif %}
           <ul>
             {% for injury in game.injuries %}
             <li>

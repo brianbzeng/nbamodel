@@ -26,12 +26,14 @@ DEFAULT_PREDICTION_MODEL = "random_forest"
 MATCHUP_KEY = ["game_date", "home_team", "away_team"]
 PROVENANCE_TIMES = ["home_injury_report_utc", "away_injury_report_utc"]
 PROVENANCE_COUNTS = ["same_day_finals", "home_out_count", "away_out_count"]
-PICK_VALUES = ["home_win_probability", "model", *PROVENANCE_COUNTS, *PROVENANCE_TIMES]
+PLAYER_IMPACT_COLUMN = "home_player_impact_pp"
+PICK_VALUES = ["home_win_probability", "model", *PROVENANCE_COUNTS, *PROVENANCE_TIMES, PLAYER_IMPACT_COLUMN]
 PICK_COLUMNS = [*PICK_VALUES, "predicted_at_utc"]
 PREDICTION_COLUMNS = [
     "game_id", "game_date", "tipoff_utc", "season", "home_team", "away_team", "status",
     "home_win_probability", "predicted_at_utc", "same_day_finals",
     "home_injury_report_utc", "away_injury_report_utc", "home_out_count", "away_out_count", "model",
+    PLAYER_IMPACT_COLUMN,
 ]
 STATUS_NAMES = {
     "STATUS_SCHEDULED": "scheduled",
@@ -52,6 +54,7 @@ def _typed_predictions(frame: pd.DataFrame) -> pd.DataFrame:
     for column in PROVENANCE_COUNTS:
         frame[column] = frame[column].astype("Int64")
     frame["home_win_probability"] = frame["home_win_probability"].astype(float)
+    frame[PLAYER_IMPACT_COLUMN] = frame[PLAYER_IMPACT_COLUMN].astype(float)
     # Saved picks from before the model switch were all logistic regression.
     frame["model"] = frame["model"].astype("string").fillna("logistic").where(frame["home_win_probability"].notna())
     return frame
@@ -160,11 +163,12 @@ def _final_games(events: list[dict], slate: list[dict], as_of: datetime) -> pd.D
 
 
 def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) -> dict[str, dict]:
+    from player_impact import PLAYER_IMPACT_MODEL, player_adjusted_picks
     from predictor import load_optional_team_injuries, predict_slate
 
     history = normalize_team_names(clean_games(pd.read_csv(BASELINE_GAMES_FILE)))
     updates = finals.rename(columns={"game_date": "date"})
-    games = pd.concat([history, updates], ignore_index=True)
+    games = pd.concat([history, updates], ignore_index=True) if not updates.empty else history
     eastern_as_of = as_of.astimezone(NBA_TIMEZONE).replace(tzinfo=None)
     injuries = load_optional_team_injuries(games, as_of=eastern_as_of)
 
@@ -177,6 +181,7 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
         probabilities = predict_slate(
             games, slate, injuries, game_date, same_day_finals=same_day_finals, model=DEFAULT_PREDICTION_MODEL
         )
+        adjusted_picks = player_adjusted_picks(slate, probabilities, injuries)
         reports = {}
         if injuries is not None:
             day_reports = injuries.loc[
@@ -185,7 +190,7 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
             reports = day_reports.set_index("team").to_dict("index")
         for matchup in slate:
             game_id = matchup["game_id"]
-            probability = float(probabilities[game_id])
+            probability = float(adjusted_picks[game_id])
             if not 0 <= probability <= 1:
                 raise ValueError(f"Invalid home win probability for ESPN game {game_id}.")
             values = {
@@ -194,6 +199,9 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
                 "model": DEFAULT_PREDICTION_MODEL,
                 "same_day_finals": len(same_day_finals),
             }
+            if probability != probabilities[game_id]:
+                values["model"] = PLAYER_IMPACT_MODEL
+                values[PLAYER_IMPACT_COLUMN] = round(100 * (probability - probabilities[game_id]), 2)
             for side in ("home", "away"):
                 report = reports.get(matchup[f"{side}_team"])
                 if report is not None:

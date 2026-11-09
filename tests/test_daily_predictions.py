@@ -174,3 +174,32 @@ def test_final_scores_include_fresh_corrections_but_exclude_future_games(monkeyp
     finals = daily_predictions._final_games(events, slate, now)
 
     assert finals[["home_team", "home_pts"]].to_records(index=False).tolist() == [("SAS", 118), ("BOS", 110)]
+
+
+def test_daily_pick_records_the_player_adjustment_with_exact_report_provenance(monkeypatch):
+    as_of = datetime.fromisoformat("2026-11-09T00:15:00Z")
+    slate = daily_predictions.scheduled_games(
+        [event("1", "2026-11-09T00:30:00Z")], date(2026, 11, 8), date(2026, 11, 8)
+    )
+    day = slate[0]["game_date"]
+    reports = pd.DataFrame([{
+        "game_date": day, "team": "BOS", "latest_report_datetime": pd.Timestamp("2026-11-08 19:00"),
+        "out_count": 1,
+    }])
+    monkeypatch.setattr("predictor.load_optional_team_injuries", lambda games, *, as_of: reports)
+    monkeypatch.setattr("predictor.predict_slate", lambda *args, **kwargs: {"1": 0.55})
+
+    def adjust(matchups, probabilities, team_reports):
+        assert matchups == slate
+        assert probabilities == {"1": 0.55}
+        assert team_reports is reports
+        return {"1": 0.51}
+
+    monkeypatch.setattr("player_impact.player_adjusted_picks", adjust)
+
+    pick = daily_predictions._predict_games(slate, as_of, pd.DataFrame(columns=["game_date"]))["1"]
+
+    assert pick["home_win_probability"] == 0.51
+    assert pick["model"] == "random_forest_player_impact"
+    assert pick["home_player_impact_pp"] == -4.0
+    assert pick["home_injury_report_utc"] == pd.Timestamp("2026-11-09T00:00:00Z")

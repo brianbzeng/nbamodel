@@ -26,7 +26,8 @@ The predictor uses pre-game context only:
 - team strength from season win percentage and scoring margin
 - recent form from rolling five-game performance
 - rest days between games
-- injury counts and injury impact when official reports are available
+- injury counts and estimated absence duration when official reports are available
+- a random forest adjustment for player availability, using up to 30 earlier box scores per player, shrunk toward replacement-level production and weighted by official status
 
 ## Controls
 
@@ -38,7 +39,9 @@ The predictor uses pre-game context only:
 GitHub Actions checks every hour at :17 from noon through 3 a.m. Eastern, with a
 6:17 a.m. reconciliation. It saves ESPN finals and score corrections to
 `data/raw/nba_game_updates.csv` and official NBA team injury features to
-`data/raw/official_nba_injuries_by_team_live.csv`. The leaderboard rates the latest
+`data/raw/official_nba_injuries_by_team_live.csv`. It saves the corresponding
+individual statuses in `data/raw/official_nba_injuries_players_live.csv` and adds
+completed ESPN box scores to `data/raw/nba_player_game_stats.csv`. The leaderboard rates the latest
 season. The predictor trains on the full game history and joins injury features
 by team and game date using reports published before tipoff. Reports for upcoming
 games can feed matchup predictions before the final score is available.
@@ -51,14 +54,21 @@ before tipoff, update as inputs change, and freeze at tipoff. History prefers ea
 saved pregame pick and labels replays separately. Replays train only on games from
 earlier dates and live accuracy counts only saved pregame picks.
 
+The player adjustment uses the same pregame report as the team features. Ratings
+use only earlier game dates. Missing reports or players without box-score history
+contribute no player adjustment. The coefficient was calibrated on 2025–26 games.
+Run `python evaluate_player_impact.py` to compare both versions of the forest
+on the latest held-out season. Use `--through YYYY-MM-DD` to limit game dates.
+
 Render deploys changes to the snapshots. If injury retrieval fails, the workflow
 can still publish finals and retry injuries on the next run. A verification commit
 after 45 idle days keeps the offseason schedule active without redeploying Render.
 
-Run `python game_updates.py`, `python injury_updates.py`, `python daily_predictions.py`,
+Run `python game_updates.py`, `python injury_updates.py`, `python player_stats.py`, `python daily_predictions.py`,
 and `python prediction_replay.py` in order to refresh a local checkout, or run
 **Refresh NBA games** from the repository’s Actions tab. Use
-`python injury_updates.py --since YYYY-MM-DD` to backfill older reports.
+`python injury_updates.py --since YYYY-MM-DD` to backfill older reports and
+`python player_stats.py --backfill` to load historical player box scores.
 
 ## Run it
 

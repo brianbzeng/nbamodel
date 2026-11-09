@@ -112,7 +112,8 @@
       <li>Recent form is a rolling window over the last few games, capturing whether a team is hot or cold right now.</li>
       <li>Rest days count the gap since each team's last game, since a team on a back-to-back plays differently than one on three days' rest.</li>
       <li>Injury features count out, doubtful, questionable, and probable players per team.</li>
-      <li>Injury impact goes a step further, weighting status severity and estimated absence length so a star out for a week reads differently than a role player out for a day.</li>
+      <li>Team injury features also account for status severity and estimated absence length.</li>
+      <li>The player adjustment estimates production lost from the latest official statuses and each player's earlier box scores. Losing a player with a higher rating has a larger effect on the team's win chance.</li>
     </ul>
     <blockquote class="callout">
       In the original benchmark, evaluated on held-out 2024–25 games, home-court baseline accuracy was
@@ -143,7 +144,7 @@
     <h2>4. Injury scraper</h2>
     <p>
       The automatic refresh checks official NBA injury reports alongside the scoreboard.
-      It saves team features from reports published before each game's tipoff. The Scrape
+      It saves individual statuses and team features from reports published before each game's tipoff. The Scrape
       page also offers exports by report, date range, or season.
     </p>
     <ul class="feature-list">

@@ -9,19 +9,22 @@ from filelock import FileLock
 from cleaner import clean_games, normalize_team_names
 from daily_predictions import BASELINE_GAMES_FILE, read_daily_predictions
 from game_updates import GAME_KEY, LIVE_GAMES_FILE, NBA_TIMEZONE, read_game_updates, write_snapshot
+from player_impact import PLAYER_IMPACT_MODEL, player_adjusted_picks
 from predictor import LIVE_INJURIES_FILE, load_optional_team_injuries, predict_slate
 
 REPLAY_FILE = LIVE_GAMES_FILE.with_name("nba_prediction_replay.csv")
 MATCHUP_COLUMNS = ["season", "home_team", "away_team"]
 REPLAY_KEY = ["game_date", *MATCHUP_COLUMNS]
-REPLAY_COLUMNS = [*REPLAY_KEY, "home_win_probability"]
+REPLAY_COLUMNS = [*REPLAY_KEY, "home_win_probability", "model"]
 
 
 def read_prediction_replay(path: Path = REPLAY_FILE) -> pd.DataFrame:
     try:
-        return pd.read_csv(path, parse_dates=["game_date"])
+        frame = pd.read_csv(path, parse_dates=["game_date"]).reindex(columns=REPLAY_COLUMNS)
     except FileNotFoundError:
         return pd.DataFrame(columns=REPLAY_COLUMNS)
+    frame["model"] = frame["model"].fillna("random_forest")
+    return frame
 
 
 def _load_replay_injuries(games: pd.DataFrame, first_game: pd.Timestamp) -> pd.DataFrame | None:
@@ -48,16 +51,20 @@ def build_prediction_replay(
         matchups = slate[MATCHUP_COLUMNS].to_dict("records")
         for game_id, matchup in enumerate(matchups):
             matchup["game_id"] = str(game_id)
+            matchup["game_date"] = game_date
 
         # Historical results are dated, so only earlier dates have a verified ordering here.
         prior = games[games["date"] < game_date]
         eligible_reports = injuries[injuries["game_date"] <= game_date] if injuries is not None else None
         probabilities = predict_slate(prior, matchups, eligible_reports, game_date, model="random_forest")
+        adjusted_picks = player_adjusted_picks(matchups, probabilities, eligible_reports)
         for matchup in matchups:
-            probability = float(probabilities[matchup["game_id"]])
+            game_id = matchup["game_id"]
+            probability = float(adjusted_picks[game_id])
             if not 0 <= probability <= 1:
                 raise ValueError(f"Invalid replay probability for {matchup['away_team']} at {matchup['home_team']} on {game_date:%Y-%m-%d}.")
-            rows.append({"game_date": game_date, **matchup, "home_win_probability": round(probability, 6)})
+            model = PLAYER_IMPACT_MODEL if probability != probabilities[game_id] else "random_forest"
+            rows.append({**matchup, "home_win_probability": round(probability, 6), "model": model})
 
     return pd.DataFrame(rows, columns=REPLAY_COLUMNS)
 

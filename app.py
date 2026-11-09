@@ -22,6 +22,9 @@ from game_updates import LIVE_GAMES_FILE, NBA_TIMEZONE, read_game_updates, refre
 from injury_reports import report_pdf_url
 from injury_updates import refresh_injury_updates
 from model import run_elo
+from player_impact import PLAYER_IMPACT_MODEL
+from player_injuries import LIVE_PLAYER_INJURIES_FILE
+from player_stats import PLAYER_STATS_FILE
 from prediction_replay import REPLAY_FILE, read_prediction_replay
 from predictor import (
     LIVE_INJURIES_FILE,
@@ -55,7 +58,11 @@ PREDICTOR_PROCESSED_FILE = (
 )
 PREDICTION_DISPLAY_TZ = ZoneInfo("America/Los_Angeles")
 PREDICTION_HISTORY_PAGE_SIZE = 25
-PREDICTION_MODEL_NAMES = {"random_forest": "Random forest", "logistic": "Logistic regression"}
+PREDICTION_MODEL_NAMES = {
+    "random_forest": "Random forest",
+    PLAYER_IMPACT_MODEL: "Random forest + player impact",
+    "logistic": "Logistic regression",
+}
 PREDICTION_TEAM_NAMES = {}
 for team_name, team_code in TEAM_MAP_BREF.items():
     PREDICTION_TEAM_NAMES.setdefault(team_code, team_name)
@@ -206,7 +213,7 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
         for game in read_game_updates().itertuples(index=False)
     }
     replays = {
-        (game.game_date, game.home_team, game.away_team): game.home_win_probability
+        (game.game_date, game.home_team, game.away_team): game
         for game in read_prediction_replay().itertuples(index=False)
     }
     scheduled = {
@@ -248,12 +255,15 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
             probability = None
             replay_visible = final is not None or (local_tipoff is not None and local_tipoff <= now)
             if replay_visible and key in replays:
-                probability, source, model = replays[key], "replay", "random_forest"
+                replay = replays[key]
+                probability, source = replay.home_win_probability, "replay"
+                model = getattr(replay, "model", "random_forest")
         has_pick = pd.notna(probability)
         pick = (home if probability > 0.5 else away) if has_pick else None
         winner = (home if final.home_pts > final.away_pts else away) if history and final is not None else None
         same_day_finals = getattr(game, "same_day_finals", None)
         has_inputs = has_live_pick and pd.notna(same_day_finals)
+        player_impact = getattr(game, "home_player_impact_pp", None)
         saved_at = predicted_at.tz_convert(PREDICTION_DISPLAY_TZ) if has_inputs else None
         display_date = local_tipoff if local_tipoff is not None else game_date
         rows.append({
@@ -272,6 +282,7 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
             "model": PREDICTION_MODEL_NAMES.get(model),
             "same_day_finals": int(same_day_finals) if has_inputs else None,
             "saved_at": saved_at.strftime("%I:%M %p PT").lstrip("0") if saved_at is not None else None,
+            "player_impact": f"{player_impact:+.1f}" if has_live_pick and pd.notna(player_impact) and round(player_impact, 1) else None,
             "injuries": prediction_injury_details(game, saved_reports, has_inputs) if has_inputs or not history else [],
         })
     return rows
@@ -584,6 +595,8 @@ def clear_generated_data() -> dict[str, int]:
         LIVE_GAMES_FILE.with_suffix(".lock"),
         LIVE_INJURIES_FILE,
         LIVE_INJURIES_FILE.with_suffix(".lock"),
+        LIVE_PLAYER_INJURIES_FILE,
+        PLAYER_STATS_FILE,
         DAILY_PREDICTIONS_FILE,
         DAILY_PREDICTIONS_FILE.with_suffix(".lock"),
         REPLAY_FILE,

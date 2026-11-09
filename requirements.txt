@@ -5,6 +5,7 @@ beautifulsoup4
 Flask
 gunicorn
 scikit-learn
+scipy
 pytest
 pylatex
 httpx

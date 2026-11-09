@@ -20,7 +20,14 @@ from injury_reports import (
     fetch_report_index,
     prepare_report_parser,
 )
-from predictor import LIVE_INJURIES_FILE, STATUS_IMPACT_MULTIPLIERS, aggregate_team_injuries
+from player_injuries import (
+    LIVE_PLAYER_INJURIES_FILE,
+    PLAYER_INJURY_COLUMNS,
+    PLAYER_INJURY_KEY,
+    read_live_player_injury_reports,
+    submitted_injury_rows,
+)
+from predictor import LIVE_INJURIES_FILE, aggregate_team_injuries
 
 INJURY_KEY = ["game_date", "team"]
 EXCLUDED_GAMES = {"STATUS_POSTPONED", "STATUS_CANCELED", "STATUS_SUSPENDED"}
@@ -72,9 +79,10 @@ def _report_features(report: pd.DataFrame) -> dict:
     if report.empty:
         return {}
 
-    player_rows = report[report["status"].str.upper().isin(STATUS_IMPACT_MULTIPLIERS)]
+    submitted = submitted_injury_rows(report)
+    player_rows = submitted[submitted["status"].ne("")]
     features = aggregate_team_injuries(player_rows)
-    empty_reports = report[report["reason"].str.upper().isin({"NO INJURIES TO REPORT", "NO INJURIES REPORTED"})]
+    empty_reports = submitted[submitted["status"].eq("")]
     if not empty_reports.empty:
         healthy = empty_reports[[*INJURY_KEY, "report_datetime"]].drop_duplicates().rename(
             columns={"report_datetime": "latest_report_datetime"}
@@ -82,28 +90,43 @@ def _report_features(report: pd.DataFrame) -> dict:
         metrics = features.columns.difference(healthy.columns)
         healthy = healthy.assign(**dict.fromkeys(metrics, 0)).reindex(columns=features.columns)
         features = pd.concat([healthy, features], ignore_index=True).drop_duplicates(INJURY_KEY, keep="last")
-    return {key: row for key, row in features.set_index(INJURY_KEY).iterrows()}
+    player_reports = {key: rows for key, rows in submitted[PLAYER_INJURY_COLUMNS].groupby(INJURY_KEY)}
+    return {key: (row, player_reports[key]) for key, row in features.set_index(INJURY_KEY).iterrows()}
 
 
-def collect_injuries(teams: dict, existing: pd.DataFrame, now: datetime, indexes: dict) -> pd.DataFrame:
+def collect_injuries(
+    teams: dict,
+    existing: pd.DataFrame,
+    player_reports: pd.DataFrame,
+    now: datetime,
+    indexes: dict,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     saved = existing.set_index(INJURY_KEY)["latest_report_datetime"].to_dict()
-    pending = {
-        key: iter(report_candidates(tipoff, now, indexes[season]))
-        for key, (tipoff, season) in teams.items()
-        if key not in saved or key[0].date() >= now.date() - timedelta(days=1)
-    }
+    detail_keys = set(player_reports[PLAYER_INJURY_KEY].itertuples(index=False, name=None))
+    recover = {key for key, stamp in saved.items() if (*key, stamp) not in detail_keys}
+    pending = {}
+    for key, (tipoff, season) in teams.items():
+        if key in saved and key not in recover and key[0].date() < now.date() - timedelta(days=1):
+            continue
+        candidates = set(report_candidates(tipoff, now, indexes[season]))
+        if key in recover and saved[key] < tipoff and saved[key] <= now:
+            candidates.add(saved[key])
+        pending[key] = iter(sorted(candidates, reverse=True))
+
     if not pending:
-        return existing.iloc[:0]
+        return existing.iloc[:0], player_reports.iloc[:0]
 
     prepare_report_parser()
     selected = {}
+    player_details = []
     cache = {}
     with ThreadPoolExecutor(max_workers=4) as pool:
         while pending:
             batches = defaultdict(list)
             for key, candidates in list(pending.items()):
                 stamp = next(candidates, None)
-                if stamp is None or (key in saved and stamp <= saved[key]):
+                previous = saved.get(key, datetime.min)
+                if stamp is None or stamp < previous or (stamp == previous and key not in recover):
                     del pending[key]
                     continue
                 batches[stamp].append(key)
@@ -114,28 +137,65 @@ def collect_injuries(teams: dict, existing: pd.DataFrame, now: datetime, indexes
 
             for stamp, keys in batches.items():
                 for key in keys:
-                    row = cache[stamp].get(key)
-                    if row is None:
+                    report = cache[stamp].get(key)
+                    if report is None:
                         continue
+                    row, details = report
                     published = row["latest_report_datetime"]
-                    if saved.get(key, datetime.min) < published < teams[key][0] and published <= now:
+                    previous = saved.get(key, datetime.min)
+                    new_publication = previous < published or (previous == published and key in recover)
+                    if new_publication and published < teams[key][0] and published <= now:
                         selected[key] = row
+                        player_details.append(details)
                         del pending[key]
 
     if not selected:
-        return existing.iloc[:0]
+        return existing.iloc[:0], player_reports.iloc[:0]
     fresh = pd.DataFrame.from_dict(selected, orient="index")
     fresh.index = pd.MultiIndex.from_tuples(fresh.index, names=INJURY_KEY)
-    return fresh.reset_index().reindex(columns=existing.columns)
+    return fresh.reset_index().reindex(columns=existing.columns), pd.concat(player_details, ignore_index=True)
+
+
+def _player_lists(reports: pd.DataFrame) -> dict:
+    lists = defaultdict(set)
+    for game_date, team, player_name, status, stamp in reports[PLAYER_INJURY_COLUMNS].itertuples(index=False, name=None):
+        lists[(game_date, team, stamp)].add((player_name, status))
+    return lists
+
+
+def _changed_team_reports(
+    fresh: pd.DataFrame,
+    existing: pd.DataFrame,
+    fresh_players: pd.DataFrame,
+    saved_players: pd.DataFrame,
+) -> pd.DataFrame:
+    if fresh.empty or existing.empty:
+        return fresh
+
+    metrics = existing.columns.difference([*INJURY_KEY, "latest_report_datetime"])
+    previous = existing.set_index(INJURY_KEY).reindex(pd.MultiIndex.from_frame(fresh[INJURY_KEY]))
+    changed_metrics = fresh[metrics].ne(previous[metrics].reset_index(drop=True)).any(axis=1)
+    player_lists = _player_lists(fresh_players)
+    previous_lists = _player_lists(saved_players)
+    changed_players = [
+        player_lists[(game_date, team, stamp)] != previous_lists.get((game_date, team, earlier_stamp))
+        for (game_date, team, stamp), earlier_stamp in zip(
+            fresh[[*INJURY_KEY, "latest_report_datetime"]].itertuples(index=False, name=None),
+            previous["latest_report_datetime"],
+        )
+    ]
+    return fresh.loc[changed_metrics | pd.Series(changed_players, index=fresh.index)]
 
 
 def refresh_injury_updates(path: Path = LIVE_INJURIES_FILE, since: date | None = None) -> dict[str, object]:
     path.parent.mkdir(parents=True, exist_ok=True)
+    player_path = path.with_name(LIVE_PLAYER_INJURIES_FILE.name)
     with FileLock(path.with_suffix(".lock"), timeout=120):
         existing = (
             pd.read_csv(path, parse_dates=["game_date", "latest_report_datetime"])
             if path.exists() else aggregate_team_injuries(pd.DataFrame())
         )
+        player_reports = read_live_player_injury_reports(player_path)
         now = datetime.now(NBA_TIMEZONE).replace(tzinfo=None)
         today = now.date()
         start = today - timedelta(days=2)
@@ -158,25 +218,28 @@ def refresh_injury_updates(path: Path = LIVE_INJURIES_FILE, since: date | None =
             except (requests.RequestException, ValueError) as exc:
                 print(f"Official report index unavailable for {season}. Trying the NBA archive. {exc}")
                 indexes[season] = []
-        fresh = collect_injuries(teams, existing, now, indexes)
-
-        if not fresh.empty and not existing.empty:
-            # A reissued PDF with the same features does not trigger a redeploy.
-            metrics = existing.columns.difference([*INJURY_KEY, "latest_report_datetime"])
-            previous = existing.set_index(INJURY_KEY).reindex(pd.MultiIndex.from_frame(fresh[INJURY_KEY]))
-            changed = fresh[metrics].ne(previous[metrics].reset_index(drop=True)).any(axis=1)
-            fresh = fresh.loc[changed]
+        fresh, fresh_players = collect_injuries(teams, existing, player_reports, now, indexes)
+        fresh = _changed_team_reports(fresh, existing, fresh_players, player_reports)
         updated = existing
         if not fresh.empty:
             combined = fresh if existing.empty else pd.concat([existing, fresh], ignore_index=True)
             updated = combined.drop_duplicates(INJURY_KEY, keep="last").sort_values(INJURY_KEY).reset_index(drop=True)
-            write_snapshot(updated, path)
 
         saved = set(updated[INJURY_KEY].itertuples(index=False, name=None))
         yesterday = today - timedelta(days=1)
         yesterday_teams = {key for key in teams if key[0].date() == yesterday}
         if yesterday_teams and not (yesterday_teams & saved):
             raise RuntimeError(f"No official pregame injury reports were saved for {yesterday}.")
+
+        if not fresh.empty:
+            new_players = fresh_players.merge(fresh[INJURY_KEY], on=INJURY_KEY, how="inner")
+            details = new_players if player_reports.empty else pd.concat([player_reports, new_players], ignore_index=True)
+            detail_key = [*PLAYER_INJURY_KEY, "player_name"]
+            details = details.drop_duplicates(detail_key, keep="last").sort_values(detail_key)
+            # Publish detail first so the previous aggregate timestamp stays readable if interrupted.
+            write_snapshot(details, player_path)
+            write_snapshot(updated, path)
+
         completed_tipoffs = {key for key, (tipoff, _) in teams.items() if tipoff <= now}
         state = "Updated" if not fresh.empty else "Checked"
         return {

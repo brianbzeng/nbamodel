@@ -27,6 +27,7 @@ def test_replay_scores_each_date_using_only_earlier_finals(monkeypatch):
         return {matchup["game_id"]: 0.61 for matchup in matchups}
 
     monkeypatch.setattr(replay, "predict_slate", score)
+    monkeypatch.setattr(replay, "player_adjusted_picks", lambda matchups, probabilities, reports: probabilities)
     result = replay.build_prediction_replay(games, reports, games[games["season"] == 2027])
 
     assert training_sizes == [1, 3]
