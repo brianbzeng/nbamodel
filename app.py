@@ -6,6 +6,7 @@ import logging
 import os
 from threading import Lock, Thread
 from datetime import date, datetime
+from hashlib import sha256
 from pathlib import Path
 from shutil import rmtree
 from uuid import uuid4
@@ -17,7 +18,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 from cleaner import TEAM_MAP_BREF, clean_games, normalize_team_names
 from daily_predictions import DAILY_PREDICTIONS_FILE, read_daily_predictions
-from game_updates import LIVE_GAMES_FILE, read_game_updates, refresh_game_updates
+from game_updates import LIVE_GAMES_FILE, NBA_TIMEZONE, read_game_updates, refresh_game_updates
+from injury_reports import report_pdf_url
 from injury_updates import refresh_injury_updates
 from model import run_elo
 from predictor import (
@@ -172,6 +174,28 @@ def load_predictor_games() -> pd.DataFrame:
     return pd.concat([baseline, normalize_team_names(clean_games(updates))], ignore_index=True)
 
 
+def prediction_injury_details(game, saved_reports: dict, used_reports: bool) -> list[dict]:
+    details = []
+    for side in ("away", "home"):
+        team = getattr(game, f"{side}_team")
+        if used_reports:
+            report = getattr(game, f"{side}_injury_report_utc")
+            out_count = getattr(game, f"{side}_out_count")
+        else:
+            report, out_count = saved_reports.get((game.game_date, team), (None, None))
+        entry = {"team": team}
+        if pd.notna(report):
+            local = report.tz_convert(PREDICTION_DISPLAY_TZ)
+            eastern = report.tz_convert(NBA_TIMEZONE).tz_localize(None)
+            entry.update(
+                out_count=int(out_count),
+                published=local.strftime("%b %d, %I:%M %p PT").replace(" 0", " "),
+                url=report_pdf_url(eastern),
+            )
+        details.append(entry)
+    return details
+
+
 def load_prediction_rows(today: date, history: bool) -> list[dict]:
     slate = read_daily_predictions()
     if slate.empty:
@@ -181,6 +205,16 @@ def load_prediction_rows(today: date, history: bool) -> list[dict]:
         (game.date, TEAM_MAP_BREF[game.home_team], TEAM_MAP_BREF[game.away_team]): game
         for game in read_game_updates().itertuples(index=False)
     }
+    saved_reports = {}
+    if not history and LIVE_INJURIES_FILE.exists():
+        injuries = pd.read_csv(LIVE_INJURIES_FILE, parse_dates=["game_date", "latest_report_datetime"])
+        saved_reports = {
+            (row.game_date, row.team): (
+                row.latest_report_datetime.tz_localize(NBA_TIMEZONE, ambiguous=False, nonexistent="shift_forward"),
+                row.out_count,
+            )
+            for row in injuries.itertuples(index=False)
+        }
     rows = []
     for game in slate.sort_values("tipoff_utc", ascending=not history).itertuples(index=False):
         local_tipoff = game.tipoff_utc.tz_convert(PREDICTION_DISPLAY_TZ)
@@ -194,6 +228,9 @@ def load_prediction_rows(today: date, history: bool) -> list[dict]:
         away, home = game.away_team, game.home_team
         pick = (home if game.home_win_probability > 0.5 else away) if has_pick else None
         winner = (home if final.home_pts > final.away_pts else away) if final is not None else None
+        same_day_finals = getattr(game, "same_day_finals", None)
+        has_inputs = has_pick and pd.notna(same_day_finals)
+        saved_at = game.predicted_at_utc.tz_convert(PREDICTION_DISPLAY_TZ) if has_inputs else None
         rows.append({
             "day": local_tipoff.strftime("%a, %b %d").replace(" 0", " "),
             "tipoff": local_tipoff.strftime("%I:%M %p").lstrip("0") + " PT",
@@ -208,6 +245,9 @@ def load_prediction_rows(today: date, history: bool) -> list[dict]:
             "pick": PREDICTION_TEAM_NAMES.get(pick, pick),
             "winner": PREDICTION_TEAM_NAMES.get(winner, winner),
             "correct": pick == winner if has_pick and winner is not None else None,
+            "same_day_finals": int(same_day_finals) if has_inputs else None,
+            "saved_at": saved_at.strftime("%I:%M %p PT").lstrip("0") if saved_at is not None else None,
+            "injuries": prediction_injury_details(game, saved_reports, has_inputs) if has_inputs or not history else [],
         })
     # Keep the upcoming picks at the top of today's board.
     return rows if history else sorted(rows, key=lambda row: row["status"] != "scheduled")
@@ -546,6 +586,10 @@ def clear_generated_data() -> dict[str, int]:
 def create_app() -> Flask:
     ensure_data_dirs()
     app = Flask(__name__)
+    static_versions = {
+        name: sha256((Path(app.static_folder) / name).read_bytes()).hexdigest()[:12]
+        for name in ("styles.css", "app.js")
+    }
     app.secret_key = os.environ.get("SECRET_KEY", "nbamodel-local-dev")
     app.config["TEMPLATES_AUTO_RELOAD"] = os.environ.get("FLASK_DEBUG") == "1"
     app.wsgi_app = ProxyFix(
@@ -559,6 +603,10 @@ def create_app() -> Flask:
     @app.context_processor
     def inject_nav():
         return {"nav_items": NAV_ITEMS, "app_title": APP_TITLE}
+
+    @app.template_global()
+    def static_asset_url(filename: str) -> str:
+        return url_for("static", filename=filename, v=static_versions[filename])
 
     @app.get("/")
     def home():

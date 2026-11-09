@@ -182,7 +182,10 @@ def get_exact_injury_dataset_path(games: pd.DataFrame) -> Optional[Path]:
     return exact_path if exact_path.exists() else None
 
 
-def load_optional_team_injuries(games: pd.DataFrame) -> Optional[pd.DataFrame]:
+def load_optional_team_injuries(
+    games: pd.DataFrame, *, as_of: Optional[datetime] = None,
+) -> Optional[pd.DataFrame]:
+    """Load the latest team reports available by the optional naive Eastern-time cutoff."""
     if games.empty:
         return None
 
@@ -198,6 +201,8 @@ def load_optional_team_injuries(games: pd.DataFrame) -> Optional[pd.DataFrame]:
     injury_df["game_date"] = pd.to_datetime(injury_df["game_date"]).dt.normalize()
     injury_df["latest_report_datetime"] = pd.to_datetime(injury_df["latest_report_datetime"], format="mixed")
     injury_df["team"] = injury_df["team"].map(TEAM_MAP_BREF).fillna(injury_df["team"])
+    if as_of is not None:
+        injury_df = injury_df[injury_df["latest_report_datetime"] <= as_of]
     injury_df = injury_df.sort_values(
         ["game_date", "latest_report_datetime", "team"]
     ).drop_duplicates(
@@ -1107,11 +1112,14 @@ def _compute_state_snapshot(
     game_date: pd.Timestamp,
     home_team: str,
     away_team: str,
+    *,
+    include_same_day_finals: bool = False,
 ) -> dict[str, object]:
     # Normalize once instead of calling pd.to_datetime per-row in the mask.
     dates = pd.to_datetime(games["date"])
+    completed = dates <= game_date if include_same_day_finals else dates < game_date
     season_games = games[
-        (games["season"] == season) & (dates < game_date)
+        (games["season"] == season) & completed
     ].sort_values("date")
 
     states = defaultdict(_team_state)
@@ -1207,8 +1215,12 @@ def build_matchup_features(
     away_team: str,
     injury_df: Optional[pd.DataFrame] = None,
     injury_overrides: Optional[dict[str, float]] = None,
+    *,
+    include_same_day_finals: bool = False,
 ) -> pd.DataFrame:
-    snapshot = _compute_state_snapshot(games, season, game_date, home_team, away_team)
+    snapshot = _compute_state_snapshot(
+        games, season, game_date, home_team, away_team, include_same_day_finals=include_same_day_finals
+    )
     matchup_df = pd.DataFrame([snapshot])
     matchup_df = merge_latest_injury_snapshot(matchup_df, injury_df, game_date)
 
@@ -1223,21 +1235,42 @@ def predict_slate(
     matchups: list[dict[str, object]],
     injury_df: Optional[pd.DataFrame],
     game_date: pd.Timestamp,
+    *,
+    same_day_finals: Optional[pd.DataFrame] = None,
 ) -> dict[str, float]:
-    """Fit once for a game date and return the home-win probability for each game ID."""
+    """Fit once per date, using same-day finals only when verified by the caller."""
     if not matchups:
         return {}
 
     game_date = pd.Timestamp(game_date).normalize()
     completed = games[pd.to_datetime(games["date"]) < game_date]
+    if same_day_finals is not None and not same_day_finals.empty:
+        matchup_keys = ["season", "home_team", "away_team"]
+        targets = pd.MultiIndex.from_frame(pd.DataFrame(matchups)[matchup_keys])
+        final_keys = pd.MultiIndex.from_frame(same_day_finals[matchup_keys])
+        day_finals = same_day_finals.loc[
+            pd.to_datetime(same_day_finals["date"]).eq(game_date) & ~final_keys.isin(targets)
+        ].drop_duplicates(matchup_keys, keep="last")
+        completed = pd.concat([completed, day_finals], ignore_index=True)
     if completed.empty:
         raise ValueError("No completed games exist before the requested game date.")
 
     training = merge_injury_features(build_pregame_features(completed), injury_df)
     model = _fit_logistic_regression(training)
+    matchup_injuries = None
+    if injury_df is not None and not injury_df.empty:
+        matchup_injuries = injury_df.loc[
+            injury_df["game_date"].eq(game_date) & injury_df["latest_report_datetime"].notna()
+        ]
     slate_features = pd.concat([
         build_matchup_features(
-            completed, matchup["season"], game_date, matchup["home_team"], matchup["away_team"], injury_df
+            completed,
+            matchup["season"],
+            game_date,
+            matchup["home_team"],
+            matchup["away_team"],
+            matchup_injuries,
+            include_same_day_finals=same_day_finals is not None,
         )
         for matchup in matchups
     ], ignore_index=True)

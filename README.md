@@ -43,9 +43,12 @@ season. The predictor trains on the full game history and joins injury features
 by team and game date using reports published before tipoff. Reports for upcoming
 games can feed matchup predictions before the final score is available.
 
-The workflow also batches logistic regression predictions for today and tomorrow
-into `data/raw/nba_daily_predictions.csv`. It updates picks before tipoff and saves
-them for comparison with final scores. The Predictor page reads the saved data.
+The workflow saves the schedule and picks in `data/raw/nba_daily_predictions.csv`.
+It adds pregame checks between hourly runs when a game tips within 60 minutes.
+Those checks pull new finals and official injury reports before fitting logistic
+regression, including completed games already observed that day. Picks start in
+the hour before tipoff, update as inputs change, and freeze at tipoff. The Predictor
+page shows the reports used and pairs saved picks with final scores in History.
 
 Render deploys changes to the snapshots. If injury retrieval fails, the workflow
 can still publish finals and retry injuries on the next run. A verification commit

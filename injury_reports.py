@@ -86,10 +86,15 @@ def _parse_pdf(content: bytes, filename: str, timestamp: datetime) -> pd.DataFra
             return injury.get_reportdata(parser_timestamp, local=True, localdir=directory, return_df=True)
 
 
+def report_pdf_url(timestamp: datetime) -> str:
+    """Build the official PDF URL for an Eastern report timestamp."""
+    suffix = "%I_%M%p" if timestamp >= QUARTER_HOUR_REPORTS_START else "%I%p"
+    return REPORT_PDF_URL.format(stamp=timestamp.strftime("%Y-%m-%d_" + suffix))
+
+
 def fetch_report(timestamp: datetime) -> pd.DataFrame:
     """Download one PDF and return its actual publication time in Eastern time."""
-    suffix = "%I_%M%p" if timestamp >= QUARTER_HOUR_REPORTS_START else "%I%p"
-    url = REPORT_PDF_URL.format(stamp=timestamp.strftime("%Y-%m-%d_" + suffix))
+    url = report_pdf_url(timestamp)
     response = _get(url)
     # The CDN also uses 403 for nonexistent PDF object keys.
     if response.status_code in (403, 404):

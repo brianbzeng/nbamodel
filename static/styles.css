@@ -550,6 +550,7 @@ td, .metric strong, .info-row strong { font-variant-numeric: tabular-nums; }
 .prediction-columns > div { display: flex; justify-content: space-between; gap: 8px; }
 
 .prediction-games { margin: 0; padding: 0; list-style: none; }
+.prediction-game { row-gap: 6px; }
 .prediction-game + .prediction-game { border-top: 1px solid var(--rule); }
 
 .prediction-status {
@@ -582,6 +583,12 @@ td, .metric strong, .info-row strong { font-variant-numeric: tabular-nums; }
 .prediction-mobile-label { display: none; }
 .prediction-correct { color: var(--win); font-weight: 700; }
 .prediction-missed { color: var(--loss); font-weight: 700; }
+.prediction-inputs { grid-column: 2 / -1; color: var(--ink-soft); font-size: 0.82rem; }
+.prediction-inputs summary { width: fit-content; cursor: pointer; }
+.prediction-inputs p { margin: 4px 0; }
+.prediction-inputs ul { margin: 4px 0 0; padding: 0; list-style: none; }
+.prediction-inputs li { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.prediction-inputs a { color: var(--accent-ink); text-decoration: underline; }
 .prediction-empty { margin: 0; padding: 16px 24px; color: var(--ink-soft); border-top: 1px solid var(--rule); }
 .prediction-pagination { border-top: 1px solid var(--rule); justify-content: flex-end; }
 
@@ -592,6 +599,7 @@ td, .metric strong, .info-row strong { font-variant-numeric: tabular-nums; }
   .prediction-game:first-child { border-top: 1px solid var(--rule); }
   .prediction-pick { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
   .prediction-mobile-label { display: inline; }
+  .prediction-inputs { grid-column: 1 / -1; }
 }
 
 .query-field {

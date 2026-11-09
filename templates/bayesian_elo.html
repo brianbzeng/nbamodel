@@ -98,9 +98,9 @@
   <article class="card math-card">
     <h2>2. Home-win predictor</h2>
     <p>
-      The daily predictor trains logistic regression on completed games before each slate’s date,
-      then scores the scheduled matchups together. It saves each prediction before tipoff and
-      pairs the saved pick with the final score in History.
+      The daily predictor trains logistic regression on completed games, including any finals
+      already available that day. It scores each matchup in the hour before tipoff using the
+      latest official reports for that game, then pairs the saved pick with the final score in History.
     </p>
     <p>
       The original benchmark compares logistic regression with random forest on the same

@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: '17 0-3,6,12-23 * * *'
       timezone: America/New_York
+    - cron: '12,27,42,57 10-23 * * *'
+      timezone: America/New_York
   workflow_dispatch:
 
 jobs:
@@ -25,11 +27,22 @@ jobs:
           python-version: '3.12'
       - name: Install scraper dependencies
         run: python -m pip install pandas requests filelock nbainjuries==1.1.1 scikit-learn
+      - name: Check for a game within the pregame window
+        id: pregame
+        if: github.event_name == 'schedule' && github.event.schedule == '12,27,42,57 10-23 * * *'
+        run: |
+          window_open=$(python daily_predictions.py --pregame-window-open)
+          case "$window_open" in
+            true|false) echo "open=$window_open" >> "$GITHUB_OUTPUT" ;;
+            *) echo '::error::Unexpected pregame window result.'; exit 1 ;;
+          esac
       - name: Refresh completed NBA games
         id: games
+        if: steps.pregame.outcome == 'skipped' || steps.pregame.outputs.open == 'true'
         run: python game_updates.py
       - name: Refresh official NBA injury reports
         id: injuries
+        if: steps.games.outcome == 'success'
         run: |
           export JAVA_HOME="$JAVA_HOME_17_X64"
           export PATH="$JAVA_HOME/bin:$PATH"

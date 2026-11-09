@@ -5,7 +5,7 @@
   <div>
     <p class="eyebrow">NBA game predictions</p>
     <h1>Predictor</h1>
-    <p class="lede">Pregame win probabilities from the logistic regression model.</p>
+    <p class="lede">Picks appear in the hour before tipoff and refresh as new finals and injury reports come in.</p>
   </div>
 </section>
 
@@ -65,11 +65,32 @@
               <span class="{{ 'prediction-correct' if game.correct else 'prediction-missed' }}">{{ 'Correct' if game.correct else 'Missed' }}</span>
             {% endif %}
           {% elif game.status == 'scheduled' %}
-            <span class="prediction-pick-label">Prediction pending</span>
+            <span class="prediction-pick-label">Pick due in the final hour</span>
           {% else %}
             <span class="prediction-pick-label">No saved pregame pick</span>
           {% endif %}
         </div>
+
+        {% if game.injuries %}
+        <details class="prediction-inputs">
+          <summary>{{ 'Inputs for this pick' if game.saved_at else 'Injury reports' }}</summary>
+          {% if game.saved_at %}
+            <p>Saved {{ game.saved_at }} with {{ game.same_day_finals }} earlier {{ 'final' if game.same_day_finals == 1 else 'finals' }} from this game day.</p>
+          {% endif %}
+          <ul>
+            {% for injury in game.injuries %}
+            <li>
+              {% if injury.url %}
+                <a href="{{ injury.url }}" target="_blank" rel="noopener">{{ injury.team }} · {{ injury.out_count }} out</a>
+                <span>{{ injury.published }}</span>
+              {% else %}
+                <span>{{ injury.team }} · No official report available</span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
       </li>
       {% endfor %}
     </ul>

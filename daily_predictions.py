@@ -1,5 +1,6 @@
 """Build and save pregame probabilities for the upcoming NBA slate."""
 
+import argparse
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
@@ -8,13 +9,28 @@ import pandas as pd
 from filelock import FileLock
 
 from cleaner import TEAM_MAP_BREF, clean_games, normalize_team_names
-from game_updates import LIVE_GAMES_FILE, NBA_TIMEZONE, fetch_scoreboard, nba_competition, read_game_updates, write_snapshot
+from game_updates import (
+    LIVE_GAMES_FILE,
+    NBA_TIMEZONE,
+    completed_games,
+    fetch_scoreboard,
+    nba_competition,
+    read_game_updates,
+    write_snapshot,
+)
 
 DAILY_PREDICTIONS_FILE = LIVE_GAMES_FILE.with_name("nba_daily_predictions.csv")
 BASELINE_GAMES_FILE = LIVE_GAMES_FILE.with_name("bref_games_2022_2025.csv")
+PREGAME_WINDOW = timedelta(minutes=60)
+MATCHUP_KEY = ["game_date", "home_team", "away_team"]
+PROVENANCE_TIMES = ["home_injury_report_utc", "away_injury_report_utc"]
+PROVENANCE_COUNTS = ["same_day_finals", "home_out_count", "away_out_count"]
+PICK_VALUES = ["home_win_probability", *PROVENANCE_COUNTS, *PROVENANCE_TIMES]
+PICK_COLUMNS = [*PICK_VALUES, "predicted_at_utc"]
 PREDICTION_COLUMNS = [
     "game_id", "game_date", "tipoff_utc", "season", "home_team", "away_team", "status",
-    "home_win_probability", "predicted_at_utc",
+    "home_win_probability", "predicted_at_utc", "same_day_finals",
+    "home_injury_report_utc", "away_injury_report_utc", "home_out_count", "away_out_count",
 ]
 STATUS_NAMES = {
     "STATUS_SCHEDULED": "scheduled",
@@ -28,9 +44,12 @@ STATUS_NAMES = {
 
 
 def _typed_predictions(frame: pd.DataFrame) -> pd.DataFrame:
+    frame = frame.reindex(columns=PREDICTION_COLUMNS)
     frame["game_date"] = pd.to_datetime(frame["game_date"])
-    frame["tipoff_utc"] = pd.to_datetime(frame["tipoff_utc"], format="mixed", utc=True)
-    frame["predicted_at_utc"] = pd.to_datetime(frame["predicted_at_utc"], format="mixed", utc=True)
+    for column in ("tipoff_utc", "predicted_at_utc", *PROVENANCE_TIMES):
+        frame[column] = pd.to_datetime(frame[column], format="mixed", utc=True)
+    for column in PROVENANCE_COUNTS:
+        frame[column] = frame[column].astype("Int64")
     frame["home_win_probability"] = frame["home_win_probability"].astype(float)
     return frame
 
@@ -79,8 +98,7 @@ def scheduled_games(events: list[dict], first_date: date, last_date: date) -> li
             "home_team": home_team,
             "away_team": away_team,
             "status": status,
-            "home_win_probability": None,
-            "predicted_at_utc": None,
+            **dict.fromkeys(PICK_COLUMNS),
         }
     return list(games.values())
 
@@ -89,30 +107,105 @@ def _utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-def _load_model_games() -> pd.DataFrame:
-    history = pd.read_csv(BASELINE_GAMES_FILE)
-    updates = read_game_updates()
-    if not updates.empty:
-        history = pd.concat([history, updates], ignore_index=True)
-    return normalize_team_names(clean_games(history))
+def _fetch_slate(as_of: datetime) -> tuple[list[dict], list[dict]]:
+    today = as_of.astimezone(NBA_TIMEZONE).date()
+    yesterday, tomorrow = today - timedelta(days=1), today + timedelta(days=1)
+    periods = [day.strftime("%Y%m%d") for day in (yesterday, today, tomorrow)]
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        boards = list(pool.map(fetch_scoreboard, periods))
+    events = [event for board in boards for event in board]
+    return scheduled_games(events, yesterday, tomorrow), events
 
 
-def _predict_games(matchups: list[dict], as_of: datetime) -> dict[str, float]:
+def _within_pregame_window(tipoff: datetime, as_of: datetime) -> bool:
+    return timedelta(0) < tipoff - as_of <= PREGAME_WINDOW
+
+
+def _can_predict(game: dict, as_of: datetime) -> bool:
+    return game["status"] == "scheduled" and _within_pregame_window(game["tipoff_utc"], as_of)
+
+
+def pregame_window_open() -> bool:
+    slate, _ = _fetch_slate(_utc_now())
+    as_of = _utc_now()
+    return any(_can_predict(game, as_of) for game in slate)
+
+
+def _final_games(events: list[dict], slate: list[dict], as_of: datetime) -> pd.DataFrame:
+    today = as_of.astimezone(NBA_TIMEZONE).date()
+    final_ids = {
+        game["game_id"] for game in slate
+        if game["status"] == "final" and game["tipoff_utc"] < as_of
+    }
+    fresh = completed_games(
+        [event for event in events if str(event["id"]) in final_ids],
+        today - timedelta(days=1),
+        today,
+    )
+    saved = read_game_updates()
+    saved = saved[saved["date"] <= pd.Timestamp(today)]
+    frames = [frame for frame in (saved, fresh) if not frame.empty]
+    scores = pd.concat(frames, ignore_index=True) if frames else fresh
+    finals = normalize_team_names(clean_games(scores)).rename(columns={"date": "game_date"})
+    future_games = {
+        tuple(game[column] for column in MATCHUP_KEY)
+        for game in slate if game["tipoff_utc"] >= as_of
+    }
+    if future_games:
+        finals = finals[~pd.MultiIndex.from_frame(finals[MATCHUP_KEY]).isin(future_games)]
+    return finals.drop_duplicates(MATCHUP_KEY, keep="last")
+
+
+def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) -> dict[str, dict]:
     from predictor import load_optional_team_injuries, predict_slate
 
-    games = _load_model_games()
-    injuries = load_optional_team_injuries(games)
-    if injuries is not None:
-        eastern_as_of = as_of.astimezone(NBA_TIMEZONE).replace(tzinfo=None)
-        injuries = injuries[injuries["latest_report_datetime"] <= eastern_as_of]
+    history = normalize_team_names(clean_games(pd.read_csv(BASELINE_GAMES_FILE)))
+    updates = finals.rename(columns={"game_date": "date"})
+    games = pd.concat([history, updates], ignore_index=True)
+    eastern_as_of = as_of.astimezone(NBA_TIMEZONE).replace(tzinfo=None)
+    injuries = load_optional_team_injuries(games, as_of=eastern_as_of)
 
     slates = {}
     for matchup in matchups:
         slates.setdefault(matchup["game_date"], []).append(matchup)
-    probabilities = {}
+    predictions = {}
     for game_date, slate in sorted(slates.items()):
-        probabilities.update(predict_slate(games, slate, injuries, game_date))
-    return probabilities
+        same_day_finals = updates[updates["date"] == game_date]
+        probabilities = predict_slate(games, slate, injuries, game_date, same_day_finals=same_day_finals)
+        reports = {}
+        if injuries is not None:
+            day_reports = injuries.loc[
+                (injuries["game_date"] == game_date) & injuries["latest_report_datetime"].notna()
+            ]
+            reports = day_reports.set_index("team").to_dict("index")
+        for matchup in slate:
+            game_id = matchup["game_id"]
+            probability = float(probabilities[game_id])
+            if not 0 <= probability <= 1:
+                raise ValueError(f"Invalid home win probability for ESPN game {game_id}.")
+            values = {
+                **dict.fromkeys(PICK_VALUES),
+                "home_win_probability": round(probability, 6),
+                "same_day_finals": len(same_day_finals),
+            }
+            for side in ("home", "away"):
+                report = reports.get(matchup[f"{side}_team"])
+                if report is not None:
+                    stamp = report["latest_report_datetime"].tz_localize(
+                        NBA_TIMEZONE, ambiguous=False, nonexistent="shift_forward"
+                    )
+                    values[f"{side}_injury_report_utc"] = stamp.tz_convert("UTC")
+                    values[f"{side}_out_count"] = report["out_count"]
+            predictions[game_id] = values
+    return predictions
+
+
+def _same_pick(previous: dict, values: dict) -> bool:
+    return all(
+        (pd.isna(previous[column]) and pd.isna(value))
+        or (pd.notna(previous[column]) and pd.notna(value) and previous[column] == value)
+        for column, value in values.items()
+    )
 
 
 def refresh_daily_predictions(path: Path = DAILY_PREDICTIONS_FILE) -> tuple[pd.DataFrame, bool]:
@@ -120,12 +213,10 @@ def refresh_daily_predictions(path: Path = DAILY_PREDICTIONS_FILE) -> tuple[pd.D
     with FileLock(path.with_suffix(".lock"), timeout=120):
         existing = read_daily_predictions(path)
         records = {row["game_id"]: row for row in existing.to_dict("records")}
-        today = _utc_now().astimezone(NBA_TIMEZONE).date()
-        yesterday, tomorrow = today - timedelta(days=1), today + timedelta(days=1)
-        periods = [day.strftime("%Y%m%d") for day in (yesterday, today, tomorrow)]
-        with ThreadPoolExecutor(max_workers=3) as pool:
-            boards = list(pool.map(fetch_scoreboard, periods))
-        slate = scheduled_games([event for board in boards for event in board], yesterday, tomorrow)
+        slate, events = _fetch_slate(_utc_now())
+        as_of = _utc_now()
+        finals = _final_games(events, slate, as_of)
+        final_matchups = set(finals[MATCHUP_KEY].itertuples(index=False, name=None))
 
         for game in slate:
             previous = records.get(game["game_id"])
@@ -137,29 +228,33 @@ def refresh_daily_predictions(path: Path = DAILY_PREDICTIONS_FILE) -> tuple[pd.D
                 if same_matchup and previous["status"] == "in_progress" and game["status"] == "scheduled":
                     continue
                 if same_matchup and pd.notna(previous["predicted_at_utc"]) and previous["predicted_at_utc"] < game["tipoff_utc"]:
-                    game["home_win_probability"] = previous["home_win_probability"]
-                    game["predicted_at_utc"] = previous["predicted_at_utc"]
+                    game.update({column: previous[column] for column in PICK_COLUMNS})
             records[game["game_id"]] = game
 
-        as_of = _utc_now()
+        for game in records.values():
+            matchup = tuple(game[column] for column in MATCHUP_KEY)
+            if matchup in final_matchups:
+                game["status"] = "final"
+            if (
+                game["status"] == "scheduled"
+                and pd.notna(game["predicted_at_utc"])
+                and not _within_pregame_window(game["tipoff_utc"], game["predicted_at_utc"])
+            ):
+                game.update(dict.fromkeys(PICK_COLUMNS))
+
         matchups = [
-            records[game["game_id"]] for game in slate
-            if records[game["game_id"]]["status"] == "scheduled"
-            and as_of < records[game["game_id"]]["tipoff_utc"]
+            records[game["game_id"]] for game in slate if _can_predict(records[game["game_id"]], as_of)
         ]
         if matchups:
-            probabilities = _predict_games(matchups, as_of)
+            predictions = _predict_games(matchups, as_of, finals)
             generated_at = _utc_now()
             for game in matchups:
                 # The slate can tip off while the batch is fitting.
                 if generated_at >= game["tipoff_utc"]:
                     continue
-                probability = float(probabilities[game["game_id"]])
-                if not 0 <= probability <= 1:
-                    raise ValueError(f"Invalid home win probability for ESPN game {game['game_id']}.")
-                probability = round(probability, 6)
-                if probability != game["home_win_probability"]:
-                    game["home_win_probability"] = probability
+                values = predictions[game["game_id"]]
+                if not _same_pick(game, values):
+                    game.update(values)
                     game["predicted_at_utc"] = generated_at.replace(microsecond=0)
 
         updated = _typed_predictions(pd.DataFrame(records.values(), columns=PREDICTION_COLUMNS))
@@ -171,6 +266,11 @@ def refresh_daily_predictions(path: Path = DAILY_PREDICTIONS_FILE) -> tuple[pd.D
 
 
 if __name__ == "__main__":
-    snapshot, changed = refresh_daily_predictions()
-    print(f"{'Saved' if changed else 'Verified'} {len(snapshot):,} scheduled NBA games and "
-          f"{snapshot['home_win_probability'].count():,} pregame predictions.")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--pregame-window-open", action="store_true")
+    if parser.parse_args().pregame_window_open:
+        print("true" if pregame_window_open() else "false")
+    else:
+        snapshot, changed = refresh_daily_predictions()
+        print(f"{'Saved' if changed else 'Verified'} {len(snapshot):,} scheduled NBA games and "
+              f"{snapshot['home_win_probability'].count():,} pregame predictions.")

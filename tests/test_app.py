@@ -184,6 +184,7 @@ def set_prediction_data(monkeypatch):
     monkeypatch.setattr(app_module, "datetime", FixedDateTime)
     monkeypatch.setattr(app_module, "read_daily_predictions", lambda: slate)
     monkeypatch.setattr(app_module, "read_game_updates", lambda: finals)
+    return slate
 
 
 def test_predictor_shows_the_pacific_slate_and_saved_picks(monkeypatch):
@@ -218,6 +219,35 @@ def test_prediction_history_only_compares_saved_picks_with_finals(monkeypatch):
     assert "65.0%" in body
     assert "Philadelphia 76ers" not in body
     assert "New Orleans Pelicans" not in body
+
+
+def test_predictor_reports_the_injury_inputs_used_for_a_saved_pick(monkeypatch, tmp_path):
+    import app as app_module
+
+    slate = set_prediction_data(monkeypatch)
+    report_file = tmp_path / "reports.csv"
+    report_file.write_text(
+        "game_date,team,latest_report_datetime,out_count\n2026-11-08,NOP,2026-11-08 20:45:00,3\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(app_module, "LIVE_INJURIES_FILE", report_file)
+    slate["predicted_at_utc"] = pd.to_datetime(["2026-11-09T01:20:00Z", None, None, None], utc=True)
+    slate["same_day_finals"] = [1, None, None, None]
+    slate["home_injury_report_utc"] = pd.to_datetime(["2026-11-09T01:15:00Z", None, None, None], utc=True)
+    slate["away_injury_report_utc"] = pd.NaT
+    slate["home_out_count"] = [2, None, None, None]
+    slate["away_out_count"] = None
+
+    response = create_app().test_client().get("/predictor")
+    body = response.get_data(as_text=True)
+
+    assert response.status_code == 200
+    assert "Inputs for this pick" in body
+    assert "with 1 earlier final" in body
+    assert "Injury-Report_2026-11-08_08_15PM.pdf" in body
+    assert "LAC · 2 out" in body
+    assert "NOP · No official report available" in body
+    assert "NOP · 3 out" not in body
 
 
 def test_bayesian_page_renders():
