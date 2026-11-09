@@ -94,16 +94,29 @@
           {% endif %}
         </div>
 
-        {% if game.context %}
+        {% if game.context or game.logistic_comparison %}
         <details class="prediction-inputs">
           <summary>Context</summary>
           {% if game.saved_at %}
             <p>Saved {{ game.saved_at }} with {{ game.same_day_finals }} earlier {{ 'final' if game.same_day_finals == 1 else 'finals' }} from this game day.</p>
           {% endif %}
           {% if game.player_impact %}
-            <p>Player availability moved the home win chance by {{ game.player_impact }} percentage points.</p>
+            <p>Player availability moved the random forest’s home win chance by {{ game.player_impact }} percentage points.</p>
           {% endif %}
           <div class="prediction-context-grid">
+            {% if game.logistic_comparison %}
+            <div>
+              <p><strong>Logistic regression</strong></p>
+              <ul>
+                <li><span>{{ game.team_codes[0] }}</span><span>{{ game.logistic_comparison.away_chance }}</span></li>
+                <li><span>{{ game.team_codes[1] }}</span><span>{{ game.logistic_comparison.home_chance }}</span></li>
+              </ul>
+              {% if game.logistic_comparison.different_pick %}
+                <p><strong>Models disagree.</strong> Logistic regression favors {{ game.logistic_comparison.different_pick }}.</p>
+              {% endif %}
+            </div>
+            {% endif %}
+            {% if game.context %}
             <div>
               <p><strong>Rest days</strong></p>
               <ul>
@@ -138,6 +151,7 @@
                 {% endfor %}
               </ul>
             </div>
+            {% endif %}
           </div>
         </details>
         {% endif %}

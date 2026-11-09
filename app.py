@@ -274,6 +274,15 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
                 model = getattr(replay, "model", "random_forest")
         has_pick = pd.notna(probability)
         pick = (home if probability > 0.5 else away) if has_pick else None
+        logistic_probability = getattr(game, "logistic_home_win_probability", None)
+        logistic_comparison = None
+        if has_live_pick and pd.notna(logistic_probability):
+            logistic_pick = home if logistic_probability > 0.5 else away
+            logistic_comparison = {
+                "away_chance": f"{1 - logistic_probability:.1%}",
+                "home_chance": f"{logistic_probability:.1%}",
+                "different_pick": PREDICTION_TEAM_NAMES.get(logistic_pick, logistic_pick) if logistic_pick != pick else None,
+            }
         winner = (home if final.home_pts > final.away_pts else away) if history and final is not None else None
         same_day_finals = getattr(game, "same_day_finals", None)
         has_inputs = has_live_pick and pd.notna(same_day_finals)
@@ -304,6 +313,7 @@ def load_prediction_rows(now: datetime, history: bool) -> list[dict]:
             "same_day_finals": int(same_day_finals) if has_inputs else None,
             "saved_at": saved_label,
             "player_impact": f"{player_impact:+.1f}" if has_live_pick and pd.notna(player_impact) and round(player_impact, 1) else None,
+            "logistic_comparison": logistic_comparison,
             "context": prediction_context(game, saved_reports, has_inputs, team_game_dates) if has_inputs or not history else [],
         })
     return rows

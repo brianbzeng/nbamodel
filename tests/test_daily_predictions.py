@@ -31,6 +31,7 @@ def pick(probability, finals=0):
     return {
         **dict.fromkeys(daily_predictions.PICK_VALUES),
         "home_win_probability": probability,
+        "logistic_home_win_probability": 0.48,
         "model": daily_predictions.DEFAULT_PREDICTION_MODEL,
         "same_day_finals": finals,
     }
@@ -61,6 +62,7 @@ def test_unchanged_pregame_pick_does_not_republish_and_final_pick_is_frozen(tmp_
     assert first["game_date"].dt.strftime("%Y-%m-%d").tolist() == ["2026-11-08"] * 2
     assert fits == [["1"]]
     assert first.iloc[0]["home_win_probability"] == 0.61
+    assert first.iloc[0]["logistic_home_win_probability"] == 0.48
     assert first.iloc[0]["model"] == "random_forest"
     assert pd.isna(first.iloc[1]["home_win_probability"])
 
@@ -88,6 +90,7 @@ def test_unchanged_pregame_pick_does_not_republish_and_final_pick_is_frozen(tmp_
     assert changed
     assert final.iloc[0]["status"] == "final"
     assert final.iloc[0]["home_win_probability"] == 0.72
+    assert final.iloc[0]["logistic_home_win_probability"] == 0.48
     assert final.iloc[0]["predicted_at_utc"] == updated.iloc[0]["predicted_at_utc"]
     assert fits == [["1"], ["1"], ["1"], ["1"]]
 
@@ -148,6 +151,7 @@ def test_legacy_early_picks_are_removed_for_scheduled_games_only(tmp_path, monke
     assert rows.loc["1", "predicted_at_utc"] == now.replace(microsecond=0)
     assert rows.loc["2", "home_win_probability"] == 0.71
     assert rows.loc["2", "model"] == "logistic"
+    assert pd.isna(rows.loc["2", "logistic_home_win_probability"])
     assert pd.isna(rows.loc["2", "same_day_finals"])
     assert pd.isna(rows.loc["3", "home_win_probability"])
 
@@ -224,7 +228,11 @@ def test_daily_pick_records_the_player_adjustment_with_exact_report_provenance(m
         "out_count": 1,
     }])
     monkeypatch.setattr("predictor.load_optional_team_injuries", lambda games, *, as_of: reports)
-    monkeypatch.setattr("predictor.predict_slate_with_context", lambda *args, **kwargs: ({"1": 0.55}, {"1": (0, 2)}))
+    def score(*args, models, **kwargs):
+        assert models == ("random_forest", "logistic")
+        return {"random_forest": {"1": 0.55}, "logistic": {"1": 0.42}}, {"1": (0, 2)}
+
+    monkeypatch.setattr("predictor.predict_slate_models", score)
 
     def adjust(matchups, probabilities, team_reports):
         assert matchups == slate
@@ -237,6 +245,7 @@ def test_daily_pick_records_the_player_adjustment_with_exact_report_provenance(m
     pick = daily_predictions._predict_games(slate, as_of, pd.DataFrame(columns=["game_date"]))["1"]
 
     assert pick["home_win_probability"] == 0.51
+    assert pick["logistic_home_win_probability"] == 0.42
     assert pick["model"] == "random_forest_player_impact"
     assert pick["home_player_impact_pp"] == -4.0
     assert pick["home_injury_report_utc"] == pd.Timestamp("2026-11-09T00:00:00Z")

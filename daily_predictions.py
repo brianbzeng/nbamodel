@@ -26,18 +26,23 @@ PREGAME_WINDOW = timedelta(minutes=60)
 PREDICTION_DISPLAY_TZ = ZoneInfo("America/Los_Angeles")
 NEXT_SLATE_OPENS = time(23, 30)
 DEFAULT_PREDICTION_MODEL = "random_forest"
+COMPARISON_MODEL = "logistic"
 MATCHUP_KEY = ["game_date", "home_team", "away_team"]
 PROVENANCE_TIMES = ["home_injury_report_utc", "away_injury_report_utc"]
 REST_DAY_COLUMNS = ["home_rest_days", "away_rest_days"]
 PROVENANCE_COUNTS = ["same_day_finals", "home_out_count", "away_out_count", *REST_DAY_COLUMNS]
 PLAYER_IMPACT_COLUMN = "home_player_impact_pp"
-PICK_VALUES = ["home_win_probability", "model", *PROVENANCE_COUNTS, *PROVENANCE_TIMES, PLAYER_IMPACT_COLUMN]
+LOGISTIC_PROBABILITY_COLUMN = "logistic_home_win_probability"
+PICK_VALUES = [
+    "home_win_probability", "model", *PROVENANCE_COUNTS, *PROVENANCE_TIMES,
+    PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN,
+]
 PICK_COLUMNS = [*PICK_VALUES, "predicted_at_utc"]
 PREDICTION_COLUMNS = [
     "game_id", "game_date", "tipoff_utc", "season", "home_team", "away_team", "status",
     "home_win_probability", "predicted_at_utc", "same_day_finals",
     "home_injury_report_utc", "away_injury_report_utc", "home_out_count", "away_out_count", "model",
-    PLAYER_IMPACT_COLUMN, *REST_DAY_COLUMNS,
+    PLAYER_IMPACT_COLUMN, *REST_DAY_COLUMNS, LOGISTIC_PROBABILITY_COLUMN,
 ]
 STATUS_NAMES = {
     "STATUS_SCHEDULED": "scheduled",
@@ -57,8 +62,8 @@ def _typed_predictions(frame: pd.DataFrame) -> pd.DataFrame:
         frame[column] = pd.to_datetime(frame[column], format="mixed", utc=True)
     for column in PROVENANCE_COUNTS:
         frame[column] = frame[column].astype("Int64")
-    frame["home_win_probability"] = frame["home_win_probability"].astype(float)
-    frame[PLAYER_IMPACT_COLUMN] = frame[PLAYER_IMPACT_COLUMN].astype(float)
+    for column in ("home_win_probability", PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN):
+        frame[column] = frame[column].astype(float)
     # Saved picks from before the model switch were all logistic regression.
     frame["model"] = frame["model"].astype("string").fillna("logistic").where(frame["home_win_probability"].notna())
     return frame
@@ -180,7 +185,7 @@ def _final_games(events: list[dict], slate: list[dict], as_of: datetime) -> pd.D
 
 def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) -> dict[str, dict]:
     from player_impact import PLAYER_IMPACT_MODEL, player_adjusted_picks
-    from predictor import load_optional_team_injuries, predict_slate_with_context
+    from predictor import load_optional_team_injuries, predict_slate_models
 
     history = normalize_team_names(clean_games(pd.read_csv(BASELINE_GAMES_FILE)))
     updates = finals.rename(columns={"game_date": "date"})
@@ -194,9 +199,11 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
     predictions = {}
     for game_date, slate in sorted(slates.items()):
         same_day_finals = updates[updates["date"] == game_date]
-        probabilities, rest_days = predict_slate_with_context(
-            games, slate, injuries, game_date, same_day_finals=same_day_finals, model=DEFAULT_PREDICTION_MODEL
+        model_probabilities, rest_days = predict_slate_models(
+            games, slate, injuries, game_date, same_day_finals=same_day_finals,
+            models=(DEFAULT_PREDICTION_MODEL, COMPARISON_MODEL),
         )
+        probabilities = model_probabilities[DEFAULT_PREDICTION_MODEL]
         adjusted_picks = player_adjusted_picks(slate, probabilities, injuries)
         reports = {}
         if injuries is not None:
@@ -207,11 +214,13 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
         for matchup in slate:
             game_id = matchup["game_id"]
             probability = float(adjusted_picks[game_id])
-            if not 0 <= probability <= 1:
+            logistic_probability = model_probabilities[COMPARISON_MODEL][game_id]
+            if not (0 <= probability <= 1 and 0 <= logistic_probability <= 1):
                 raise ValueError(f"Invalid home win probability for ESPN game {game_id}.")
             values = {
                 **dict.fromkeys(PICK_VALUES),
                 "home_win_probability": round(probability, 6),
+                LOGISTIC_PROBABILITY_COLUMN: round(logistic_probability, 6),
                 "model": DEFAULT_PREDICTION_MODEL,
                 "same_day_finals": len(same_day_finals),
                 **dict(zip(REST_DAY_COLUMNS, rest_days[game_id])),

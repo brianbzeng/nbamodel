@@ -317,13 +317,35 @@ def test_predictor_reports_the_injury_inputs_used_for_a_saved_pick(monkeypatch, 
     assert "<summary>Context</summary>" in body
     assert "with 1 earlier final" in body
     assert 'prediction-pick-label">Random forest + player impact</span>' in body
-    assert "moved the home win chance by -2.1 percentage points" in body
+    assert "moved the random forest’s home win chance by -2.1 percentage points" in body
     assert "Injury-Report_2026-11-08_08_15PM.pdf" in body
     assert "LAC · 2 out" in body
     assert "NOP · No official report available" in body
     assert "NOP · 3 out" not in body
     assert "0 days · Back-to-back" in body
     assert "7+ days" in body
+
+
+def test_predictor_shows_logistic_odds_in_context_without_changing_the_official_pick(monkeypatch):
+    slate = set_prediction_data(monkeypatch)
+    slate["model"] = ["random_forest", None, "random_forest", None, None]
+    slate["logistic_home_win_probability"] = [0.58, None, 0.42, None, 0.8]
+    client = create_app().test_client()
+
+    today = client.get("/predictor").get_data(as_text=True)
+    assert "<strong>New Orleans Pelicans</strong>" in today
+    assert "54.0%" in today and "46.0%" in today
+    assert today.count("<strong>Logistic regression</strong>") == 1
+    assert "<span>NOP</span><span>42.0%</span>" in today
+    assert "<span>LAC</span><span>58.0%</span>" in today
+    assert "<strong>Models disagree.</strong> Logistic regression favors LA Clippers." in today
+
+    history = client.get("/predictor?view=history").get_data(as_text=True)
+    assert "<strong>Atlanta Hawks</strong>" in history and "65.0%" in history
+    assert "2 / 3 correct" in history and "1 of 1 live picks correct" in history
+    assert "<span>BRK</span><span>58.0%</span>" in history
+    assert "<span>ATL</span><span>42.0%</span>" in history
+    assert "<strong>Models disagree.</strong> Logistic regression favors Brooklyn Nets." in history
 
 
 def test_predictor_rolls_the_slate_over_at_pacific_midnight(monkeypatch):

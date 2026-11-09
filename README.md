@@ -50,10 +50,11 @@ The workflow saves the schedule and picks in `data/raw/nba_daily_predictions.csv
 At 11:35 and 11:50 p.m. Pacific it prepares the next day's slate so the Today board
 can switch at midnight. Picks refresh during the day, with extra checks in the
 final hour before tipoff. Each run pulls new finals and official injury reports
-before fitting the random forest. Picks freeze at tipoff. Context shows the rest
-days used for the pick and links to available official injury reports. History
-labels archived replays separately and counts only picks saved before tipoff in
-the live record.
+before fitting the random forest and logistic regression on the same pregame
+features. Random forest supplies the official pick, and Context shows the logistic
+comparison, rest days, and links to official injury reports. Picks freeze at
+tipoff. History labels archived replays separately and counts only picks saved
+before tipoff in the live record.
 
 The player adjustment uses the same pregame report as the team features. Ratings
 use only earlier game dates. Missing reports or players without box-score history

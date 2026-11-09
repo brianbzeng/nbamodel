@@ -5,7 +5,7 @@ import pytest
 import predictor
 
 
-def test_daily_slate_fits_and_scores_once_using_only_prior_games(monkeypatch):
+def test_daily_slate_fits_each_model_once_on_shared_pregame_features(monkeypatch):
     games = pd.DataFrame(
         [
             ("2026-11-06", 2027, "BOS", "LAL", 100, 90, 1, 10),
@@ -26,26 +26,32 @@ def test_daily_slate_fits_and_scores_once_using_only_prior_games(monkeypatch):
     class Model:
         feature_names_in_ = ["home_games_played", "away_games_played", "home_rest_days", "away_rest_days"]
 
+        def __init__(self, name, home_probabilities):
+            self.name = name
+            self.home_probabilities = np.array(home_probabilities)
+
         def predict_proba(self, features):
-            calls.append("score")
+            calls.append((self.name, "score"))
             assert features.to_numpy().tolist() == [[1, 1, 1, 0], [1, 1, 0, 1], [0, 0, 7, 7]]
-            return np.array([[0.25, 0.75], [0.6, 0.4], [0.5, 0.5]])
+            return np.column_stack([1 - self.home_probabilities, self.home_probabilities])
 
-    def fit(training):
-        calls.append("fit")
+    def fit(training, name, home_probabilities):
+        calls.append((name, "fit"))
         assert training["date"].tolist() == games["date"].tolist()[:2]
-        return Model()
+        return Model(name, home_probabilities)
 
-    monkeypatch.setattr(predictor, "_fit_logistic_regression", fit)
+    monkeypatch.setattr(predictor, "_fit_logistic_regression", lambda training: fit(training, "logistic", [0.6, 0.7, 0.5]))
+    monkeypatch.setattr(predictor, "_fit_random_forest", lambda training: fit(training, "random_forest", [0.75, 0.4, 0.5]))
 
-    probabilities, rest_days = predictor.predict_slate_with_context(games, matchups, None, pd.Timestamp("2026-11-08"))
+    probabilities, rest_days = predictor.predict_slate_models(
+        games, matchups, None, pd.Timestamp("2026-11-08"), models=("random_forest", "logistic")
+    )
     assert probabilities == {
-        "first": 0.75,
-        "second": 0.4,
-        "third": 0.5,
+        "random_forest": {"first": 0.75, "second": 0.4, "third": 0.5},
+        "logistic": {"first": 0.6, "second": 0.7, "third": 0.5},
     }
     assert rest_days == {"first": (1, 0), "second": (0, 1), "third": (None, None)}
-    assert calls == ["fit", "score"]
+    assert calls == [("random_forest", "fit"), ("random_forest", "score"), ("logistic", "fit"), ("logistic", "score")]
 
 
 @pytest.mark.parametrize(
