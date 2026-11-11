@@ -15721,12 +15721,19 @@ game_date,team,player_name,status,report_datetime
 2026-11-10,LAC,"Martinelli, Nick",OUT,2026-11-10 19:00:00
 2026-11-10,LAC,"Miller, Jordan",OUT,2026-11-10 19:00:00
 2026-11-10,LAC,"Niederhauser, Yanic Konan",OUT,2026-11-10 19:00:00
+2026-11-10,LAC,"Beal, Bradley",OUT,2026-11-10 20:15:00
+2026-11-10,LAC,"Christie, Cam",OUT,2026-11-10 20:15:00
+2026-11-10,LAC,"Ingram, Brandon",OUT,2026-11-10 20:15:00
+2026-11-10,LAC,"Martinelli, Nick",OUT,2026-11-10 20:15:00
+2026-11-10,LAC,"Miller, Jordan",OUT,2026-11-10 20:15:00
+2026-11-10,LAC,"Niederhauser, Yanic Konan",OUT,2026-11-10 20:15:00
 2026-11-10,MIA,"Antetokounmpo, Giannis",PROBABLE,2026-11-09 18:45:00
 2026-11-10,MIA,"Antetokounmpo, Giannis",PROBABLE,2026-11-09 21:00:00
 2026-11-10,MIA,"Antetokounmpo, Giannis",PROBABLE,2026-11-10 04:45:00
 2026-11-10,MIA,"Antetokounmpo, Giannis",PROBABLE,2026-11-10 10:30:00
 2026-11-10,MIA,"Antetokounmpo, Giannis",PROBABLE,2026-11-10 13:30:00
 2026-11-10,MIA,"Antetokounmpo, Giannis",PROBABLE,2026-11-10 19:00:00
+2026-11-10,MIA,"Antetokounmpo, Giannis",AVAILABLE,2026-11-10 20:15:00
 2026-11-10,MIL,"Herro, Tyler",QUESTIONABLE,2026-11-09 18:45:00
 2026-11-10,MIL,"Herro, Tyler",QUESTIONABLE,2026-11-10 13:30:00
 2026-11-10,MIL,"Ware, Kel'el",QUESTIONABLE,2026-11-10 13:30:00
@@ -15790,6 +15797,13 @@ game_date,team,player_name,status,report_datetime
 2026-11-10,UTA,"Jackson Jr., Jaren",OUT,2026-11-10 13:30:00
 2026-11-10,UTA,"Markkanen, Lauri",OUT,2026-11-10 13:30:00
 2026-11-10,UTA,"Nurkic, Jusuf",OUT,2026-11-10 13:30:00
+2026-11-10,UTA,"Alexander, Trey",OUT,2026-11-10 20:15:00
+2026-11-10,UTA,"Bufkin, Kobe",AVAILABLE,2026-11-10 20:15:00
+2026-11-10,UTA,"George, Keyonte",OUT,2026-11-10 20:15:00
+2026-11-10,UTA,"Ingram, Harrison",AVAILABLE,2026-11-10 20:15:00
+2026-11-10,UTA,"Jackson Jr., Jaren",OUT,2026-11-10 20:15:00
+2026-11-10,UTA,"Markkanen, Lauri",OUT,2026-11-10 20:15:00
+2026-11-10,UTA,"Nurkic, Jusuf",OUT,2026-11-10 20:15:00
 2026-11-11,BRK,"Bilodeau, Tyler",OUT,2026-11-10 19:00:00
 2026-11-11,BRK,"Demin, Egor",PROBABLE,2026-11-10 19:00:00
 2026-11-11,BRK,"Jefferson, Joshua",OUT,2026-11-10 19:00:00
