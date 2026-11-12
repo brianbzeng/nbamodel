@@ -170,3 +170,37 @@ def test_scorecard_scores_new_challengers_on_separate_cohorts(capsys):
         assert "Random forest baseline 0/1 correct" in output
         assert f"{label} 1/1 correct" in output
         assert all(other not in output for _, other in variants if other != version)
+
+
+def test_scorecard_compares_hybrid_parents_on_the_same_pregame_games(capsys):
+    hybrid = {
+        "impact_blend_experiment_version": "rf_player_impact_logistic_blend_v1",
+        "impact_blend_home_win_probability": 0.58,
+    }
+    blend = {
+        "blend_experiment_version": "rf_logistic_blend_v1",
+        "blend_home_win_probability": 0.53,
+    }
+    predictions = pd.DataFrame([
+        forecast("before-hybrid", "2026-11-09", **blend),
+        forecast("matched", "2026-11-10", **hybrid, **blend),
+        forecast("missing-blend", "2026-11-11", **hybrid),
+        forecast("late", "2026-11-12", **hybrid, **blend, predicted_at_utc=pd.Timestamp("2026-11-12T23:00Z")),
+    ])
+    finals = pd.DataFrame([
+        (pd.Timestamp(f"2026-11-{day:02}"), 2027, "Boston Celtics", "New York Knicks", 110, 109)
+        for day in range(9, 13)
+    ], columns=GAME_COLUMNS)
+
+    report_experiments(predictions, finals, version=hybrid["impact_blend_experiment_version"])
+
+    output = " ".join(capsys.readouterr().out.split())
+    full, partial = output.split("Matched Random forest + logistic blend comparison on 1 game:")
+    assert "rf_player_impact_logistic_blend_v1 | 2 completed games" in full
+    assert "Random forest baseline 0/2 correct" in full
+    assert "Player impact + logistic blend 2/2 correct" in full
+    assert "Random forest + player impact 2/2 correct" in full
+    assert "Logistic regression 2/2 correct" in full
+    assert "Random forest + logistic blend" not in full
+    assert "Random forest + logistic blend 1/1 correct" in partial
+    assert "Player impact + logistic blend 1/1 correct" in partial

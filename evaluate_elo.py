@@ -10,6 +10,7 @@ from cleaner import clean_games, normalize_team_names
 from daily_predictions import BASELINE_GAMES_FILE
 from elo_features import ELO_DIFF_COLUMN, build_elo_features
 from game_updates import FIRST_UPDATE_DATE, GAME_KEY, read_game_updates
+from player_impact import PLAYER_IMPACT_WEIGHT, adjust_win_probabilities, matchup_player_losses
 from prediction_replay import _load_replay_injuries
 from predictor import (
     _fit_elo_random_forest,
@@ -30,6 +31,7 @@ CHALLENGERS = {
     "no-rest": ("No rest", _fit_no_rest_random_forest),
     "margin": ("Point margin", _fit_margin_random_forest),
     "blend": ("RF/logistic blend", _fit_logistic_regression),
+    "impact-blend": ("Impact/logistic blend", _fit_logistic_regression),
     "recent-form": ("Weighted form", _fit_random_forest),
     "schedule-density": ("Schedule density", _fit_schedule_density_random_forest),
 }
@@ -56,10 +58,17 @@ def score_holdout(
         variant_features = features
     _, fit_challenger = CHALLENGERS[challenger]
     variant_probabilities = predict_holdout(variant_features, season, fit_challenger)
-    if challenger == "blend":
-        variant_probabilities = (baseline_probabilities + variant_probabilities) / 2
     results = features.loc[features["season"] == season, ["date", "season", "home_win"]].copy()
     results["baseline"] = np.round(baseline_probabilities, 6)
+    if challenger == "blend":
+        variant_probabilities = (baseline_probabilities + variant_probabilities) / 2
+    elif challenger == "impact-blend":
+        loss_difference = variant_features.loc[variant_features["season"] == season, "player_loss_difference"]
+        impact_probabilities = adjust_win_probabilities(baseline_probabilities, loss_difference, PLAYER_IMPACT_WEIGHT)
+        results["player_impact"] = np.round(impact_probabilities, 6)
+        results["logistic"] = np.round(variant_probabilities, 6)
+        results["blend"] = np.round((baseline_probabilities + variant_probabilities) / 2, 6)
+        variant_probabilities = (impact_probabilities + variant_probabilities) / 2
     results[challenger] = np.round(variant_probabilities, 6)
     return results
 
@@ -96,10 +105,14 @@ def report(label: str, results: pd.DataFrame, challenger: str = "elo") -> None:
     loss_low, loss_high = paired_date_interval(results, loss_delta)
     challenger_name, _ = CHALLENGERS[challenger]
     print(f"{label} | {len(results):,} games")
-    for name, column, correct in (
-        ("Baseline", "baseline", baseline_correct), (challenger_name, challenger, variant_correct),
-    ):
+    models = [("Baseline", "baseline")]
+    if challenger == "impact-blend":
+        models.extend((("Player impact", "player_impact"), ("Logistic regression", "logistic"),
+                       ("RF/logistic blend", "blend")))
+    models.append((challenger_name, challenger))
+    for name, column in models:
         odds = results[column]
+        correct = (odds.to_numpy() > 0.5) == actual
         print(f"  {name:<18} {correct.sum():,}/{len(results):,} correct ({correct.mean():.2%})"
               f"   Brier {brier_score_loss(actual, odds):.5f}   Log loss {log_loss(actual, odds, labels=[0, 1]):.5f}")
     print(f"  {challenger_name} flips {(correct_delta > 0).sum():,} to correct and {(correct_delta < 0).sum():,} to incorrect")
@@ -147,6 +160,11 @@ def evaluate(through: pd.Timestamp | None, challenger: str = "elo") -> None:
     injuries = _load_replay_injuries(games, first_holdout)
     features = merge_injury_features(build_pregame_features(games), injuries)
     features = features.sort_values(GAME_KEY, ignore_index=True)
+    if challenger == "impact-blend":
+        holdout_rows = features["season"].isin(holdouts)
+        matchups = features.loc[holdout_rows, GAME_KEY].rename(columns={"date": "game_date"})
+        features.loc[holdout_rows, "player_loss_difference"] = matchup_player_losses(matchups, injuries)
+        print("The existing player-impact weight was calibrated on 2025–26. Its scores for that season overlap calibration.")
     challengers = NEW_CHALLENGERS if challenger == "all-new" else (challenger,)
     baseline = {season: predict_holdout(features, season, _fit_random_forest) for season in holdouts}
 

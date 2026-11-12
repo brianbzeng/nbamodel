@@ -84,7 +84,7 @@ The `rf_no_rest_v1` challenger uses the same games and random forest settings as
 the baseline and omits the three explicit rest inputs. The official model keeps
 its rest inputs while the scorecard tracks whether they improve predictions.
 
-Four more challengers run on the same pregame slate:
+Additional challengers run on the same pregame slate:
 
 - `rf_margin_v1` predicts the home team's signed score margin with a random
   forest regressor. Its probability mapping was fit on 2024–25 forecasts from
@@ -98,6 +98,8 @@ Four more challengers run on the same pregame slate:
   Last-five win rates stay in the model.
 - `rf_schedule_density_v1` adds each team's completed games in the previous
   four and seven calendar days, excluding the matchup date.
+- `rf_player_impact_logistic_blend_v1` averages the player-impact forest and
+  logistic probabilities with fixed 50/50 weights.
 
 Run `python evaluate_live_models.py` for the paired accuracy, Brier score, and
 log loss of saved pregame predictions against completed games. Each challenger
@@ -106,7 +108,7 @@ is compared with the baseline on the same games, excluding replays. Use a
 for Elo or `python evaluate_elo.py --challenger all-new` for the four new
 experiments on two forward season holdouts, each trained on all earlier saved
 seasons. `--challenger` also accepts `no-rest`, `margin`, `blend`, `recent-form`,
-and `schedule-density`. Run
+`schedule-density`, and `impact-blend`. Run
 `python evaluate_player_impact.py` for the historical injury experiment. Both
 backtests accept `--through YYYY-MM-DD`.
 

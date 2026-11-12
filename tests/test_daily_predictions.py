@@ -286,6 +286,10 @@ def test_daily_pick_keeps_the_baseline_and_records_player_impact_separately(monk
     assert pick["no_rest_experiment_version"] == "rf_no_rest_v1"
     assert pick["margin_home_win_probability"] == 0.54
     assert pick["blend_home_win_probability"] == 0.485
+    assert pick["impact_blend_home_win_probability"] == (0.465 if experiment_available else None)
+    assert pick["impact_blend_experiment_version"] == (
+        "rf_player_impact_logistic_blend_v1" if experiment_available else None
+    )
     assert pick["weighted_form_home_win_probability"] == 0.56
     assert pick["schedule_density_home_win_probability"] == 0.58
     assert pick["home_injury_report_utc"] == pd.Timestamp("2026-11-09T00:00:00Z")

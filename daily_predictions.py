@@ -60,6 +60,7 @@ def _shadow_experiment(key: str, column_prefix: str, version: str, label: str) -
 
 PLAYER_IMPACT_KEY = "player_impact"
 BLEND_KEY = "rf_logistic_blend"
+IMPACT_BLEND_KEY = "player_impact_logistic_blend"
 SHADOW_EXPERIMENTS = (
     ShadowExperiment(PLAYER_IMPACT_KEY, PLAYER_IMPACT_PROBABILITY_COLUMN, EXPERIMENT_VERSION_COLUMN,
                      PLAYER_IMPACT_EXPERIMENT, "Random forest + player impact"),
@@ -71,6 +72,8 @@ SHADOW_EXPERIMENTS = (
     _shadow_experiment(BLEND_KEY, "blend", "rf_logistic_blend_v1", "Random forest + logistic blend"),
     _shadow_experiment("random_forest_weighted_form", "weighted_form", "rf_weighted_form_v1", "Weighted recent form"),
     _shadow_experiment("random_forest_schedule_density", "schedule_density", "rf_schedule_density_v1", "Schedule density"),
+    _shadow_experiment(IMPACT_BLEND_KEY, "impact_blend", "rf_player_impact_logistic_blend_v1",
+                       "Player impact + logistic blend"),
 )
 SHADOW_COLUMNS = [column for spec in SHADOW_EXPERIMENTS for column in (spec.probability_column, spec.version_column)]
 PICK_VALUES = [
@@ -240,7 +243,9 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
     for matchup in matchups:
         slates.setdefault(matchup["game_date"], []).append(matchup)
     predictions = {}
-    shadow_models = tuple(spec.key for spec in SHADOW_EXPERIMENTS if spec.key not in (PLAYER_IMPACT_KEY, BLEND_KEY))
+    shadow_models = tuple(
+        spec.key for spec in SHADOW_EXPERIMENTS if spec.key not in (PLAYER_IMPACT_KEY, BLEND_KEY, IMPACT_BLEND_KEY)
+    )
     for game_date, slate in sorted(slates.items()):
         same_day_finals = updates[updates["date"] == game_date]
         model_probabilities, rest_days = predict_slate_models(
@@ -254,10 +259,14 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
             model_probabilities[PLAYER_IMPACT_KEY] = player_adjusted_picks(slate, probabilities, injuries)
         except (KeyError, OSError, ValueError):
             logging.getLogger(__name__).exception("Could not score player impact for %s", game_date.date())
-        model_probabilities[BLEND_KEY] = {
-            game_id: (probability + logistic_picks[game_id]) / 2
-            for game_id, probability in probabilities.items()
-        }
+        for blend, forest_picks in (
+            (BLEND_KEY, probabilities), (IMPACT_BLEND_KEY, model_probabilities.get(PLAYER_IMPACT_KEY, {})),
+        ):
+            model_probabilities[blend] = {
+                game_id: (probability + logistic_picks[game_id]) / 2
+                for game_id, probability in forest_picks.items()
+                if probability is not None and 0 <= probability <= 1 and game_id in logistic_picks
+            }
         experiments = [(spec, model_probabilities[spec.key]) for spec in SHADOW_EXPERIMENTS if spec.key in model_probabilities]
         reports = {}
         if injuries is not None:

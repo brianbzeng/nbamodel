@@ -7,10 +7,12 @@ from sklearn.metrics import brier_score_loss, log_loss
 
 from cleaner import clean_games, normalize_team_names
 from daily_predictions import (
+    BLEND_KEY,
     DEFAULT_PREDICTION_MODEL,
     ELO_EXPERIMENT_VERSION_COLUMN,
     ELO_PROBABILITY_COLUMN,
     EXPERIMENT_VERSION_COLUMN,
+    IMPACT_BLEND_KEY,
     LOGISTIC_PROBABILITY_COLUMN,
     NO_REST_EXPERIMENT_VERSION_COLUMN,
     NO_REST_PROBABILITY_COLUMN,
@@ -26,6 +28,12 @@ FORECAST_KEY = ["game_date", *GAME_KEY[1:]]
 BASELINE_MODEL = ("Random forest baseline", BASELINE_PROBABILITY_COLUMN)
 PLAYER_IMPACT_MODEL = ("Random forest + player impact", PLAYER_IMPACT_PROBABILITY_COLUMN)
 LOGISTIC_MODEL = ("Logistic regression", LOGISTIC_PROBABILITY_COLUMN)
+FOREST_LOGISTIC_BLEND = next(
+    (experiment.label, experiment.probability_column)
+    for experiment in SHADOW_EXPERIMENTS
+    if experiment.key == BLEND_KEY
+)
+HYBRID_COMPARATORS = (PLAYER_IMPACT_MODEL, LOGISTIC_MODEL, FOREST_LOGISTIC_BLEND)
 
 
 def paired_results(
@@ -74,12 +82,12 @@ def report(
     *,
     version_column: str = EXPERIMENT_VERSION_COLUMN,
     challenger: tuple[str, str] = PLAYER_IMPACT_MODEL,
+    comparators: tuple[tuple[str, str], ...] = (LOGISTIC_MODEL,),
 ) -> None:
     if results.empty:
         print("No completed games with paired pregame predictions yet.")
         return
 
-    models = (BASELINE_MODEL, challenger, LOGISTIC_MODEL)
     _, probability_column = challenger
     for version, games in results.groupby(version_column):
         baseline = games[BASELINE_PROBABILITY_COLUMN]
@@ -87,16 +95,24 @@ def report(
         odds_changed = int(variant.ne(baseline).sum())
         pick_changed = int(variant.gt(0.5).ne(baseline.gt(0.5)).sum())
         print(f"{version} | {len(games)} completed games | {odds_changed} changed odds | {pick_changed} changed picks")
-        logistic = games.iloc[:0]
-        if LOGISTIC_PROBABILITY_COLUMN in games:
-            logistic = games.loc[games[LOGISTIC_PROBABILITY_COLUMN].between(0, 1)]
-        if len(logistic) == len(games):
-            print_metrics(games, models)
-        else:
-            print_metrics(games, models[:2])
-            if not logistic.empty:
-                print(f"  Matched logistic comparison on {len(logistic)} games:")
-                print_metrics(logistic, models)
+        models = (BASELINE_MODEL, challenger)
+        partial = []
+        for comparator in comparators:
+            _, column = comparator
+            if column not in games:
+                continue
+            matched = games.loc[games[column].between(0, 1)]
+            if len(matched) == len(games):
+                models += (comparator,)
+            elif not matched.empty:
+                partial.append((comparator, matched))
+
+        print_metrics(games, models)
+        for comparator, matched in partial:
+            name = "logistic" if comparator == LOGISTIC_MODEL else comparator[0]
+            games_label = "game" if len(matched) == 1 else "games"
+            print(f"  Matched {name} comparison on {len(matched)} {games_label}:")
+            print_metrics(matched, (*models, comparator))
 
 
 def report_experiments(
@@ -124,6 +140,7 @@ def report_experiments(
             report(
                 results, version_column=experiment.version_column,
                 challenger=(experiment.label, experiment.probability_column),
+                comparators=HYBRID_COMPARATORS if experiment.key == IMPACT_BLEND_KEY else (LOGISTIC_MODEL,),
             )
             found_results = True
 
