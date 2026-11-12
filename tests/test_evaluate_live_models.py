@@ -1,6 +1,13 @@
 import pandas as pd
+import pytest
 
-from daily_predictions import SHADOW_EXPERIMENTS
+from daily_predictions import (
+    BASELINE_PROBABILITY_COLUMN,
+    IMPACT_BLEND_HIGH_KEY,
+    IMPACT_BLEND_KEY,
+    IMPACT_BLEND_LOW_KEY,
+    SHADOW_EXPERIMENTS,
+)
 from evaluate_live_models import (
     ELO_EXPERIMENT_VERSION_COLUMN,
     ELO_PROBABILITY_COLUMN,
@@ -14,6 +21,7 @@ from evaluate_live_models import (
     report_experiments,
 )
 from game_updates import GAME_COLUMNS
+from player_impact import PLAYER_IMPACT_MODEL
 
 
 def forecast(game_id, game_date="2026-11-09", **changes):
@@ -58,6 +66,31 @@ def test_scorecard_matches_latest_valid_pregame_forecast_to_final_once():
     results = paired_results(predictions, finals)
 
     assert results[["game_id", "home_win"]].values.tolist() == [["valid", 1]]
+
+
+def test_scorecard_keeps_baseline_distinct_when_player_impact_becomes_official(capsys):
+    predictions = pd.DataFrame([
+        forecast("legacy"),
+        forecast("promoted", "2026-11-10", model=PLAYER_IMPACT_MODEL, home_win_probability=0.55,
+                 **{BASELINE_PROBABILITY_COLUMN: 0.4}),
+        forecast("missing-baseline", "2026-11-11", model=PLAYER_IMPACT_MODEL, home_win_probability=0.55),
+        forecast("legacy-logistic", "2026-11-12", model="logistic_regression", home_win_probability=0.61),
+    ])
+    finals = pd.DataFrame([
+        (pd.Timestamp(f"2026-11-{day:02}"), 2027, "Boston Celtics", "New York Knicks", 110, 109)
+        for day in range(9, 13)
+    ], columns=GAME_COLUMNS)
+
+    results = paired_results(predictions, finals)
+
+    assert results[["game_id", BASELINE_PROBABILITY_COLUMN]].values.tolist() == [
+        ["legacy", 0.45],
+        ["promoted", 0.4],
+    ]
+    report(results)
+    output = " ".join(capsys.readouterr().out.split())
+    assert "Random forest baseline 0/2 correct" in output
+    assert "Random forest + player impact 2/2 correct" in output
 
 
 def test_scorecard_reports_matched_cohorts_by_version(capsys):
@@ -172,10 +205,12 @@ def test_scorecard_scores_new_challengers_on_separate_cohorts(capsys):
         assert all(other not in output for _, other in variants if other != version)
 
 
-def test_scorecard_compares_hybrid_parents_on_the_same_pregame_games(capsys):
+@pytest.mark.parametrize("experiment_key", (IMPACT_BLEND_KEY, IMPACT_BLEND_LOW_KEY, IMPACT_BLEND_HIGH_KEY))
+def test_scorecard_compares_hybrid_parents_on_the_same_pregame_games(capsys, experiment_key):
+    experiment = next(experiment for experiment in SHADOW_EXPERIMENTS if experiment.key == experiment_key)
     hybrid = {
-        "impact_blend_experiment_version": "rf_player_impact_logistic_blend_v1",
-        "impact_blend_home_win_probability": 0.58,
+        experiment.version_column: experiment.version,
+        experiment.probability_column: 0.58,
     }
     blend = {
         "blend_experiment_version": "rf_logistic_blend_v1",
@@ -192,15 +227,15 @@ def test_scorecard_compares_hybrid_parents_on_the_same_pregame_games(capsys):
         for day in range(9, 13)
     ], columns=GAME_COLUMNS)
 
-    report_experiments(predictions, finals, version=hybrid["impact_blend_experiment_version"])
+    report_experiments(predictions, finals, version=experiment.version)
 
     output = " ".join(capsys.readouterr().out.split())
     full, partial = output.split("Matched Random forest + logistic blend comparison on 1 game:")
-    assert "rf_player_impact_logistic_blend_v1 | 2 completed games" in full
+    assert f"{experiment.version} | 2 completed games" in full
     assert "Random forest baseline 0/2 correct" in full
-    assert "Player impact + logistic blend 2/2 correct" in full
+    assert f"{experiment.label} 2/2 correct" in full
     assert "Random forest + player impact 2/2 correct" in full
     assert "Logistic regression 2/2 correct" in full
     assert "Random forest + logistic blend" not in full
     assert "Random forest + logistic blend 1/1 correct" in partial
-    assert "Player impact + logistic blend 1/1 correct" in partial
+    assert f"{experiment.label} 1/1 correct" in partial

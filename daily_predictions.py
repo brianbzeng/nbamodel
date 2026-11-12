@@ -34,6 +34,7 @@ PROVENANCE_TIMES = ["home_injury_report_utc", "away_injury_report_utc"]
 REST_DAY_COLUMNS = ["home_rest_days", "away_rest_days"]
 PROVENANCE_COUNTS = ["same_day_finals", "home_out_count", "away_out_count", *REST_DAY_COLUMNS]
 PLAYER_IMPACT_COLUMN = "home_player_impact_pp"
+BASELINE_PROBABILITY_COLUMN = "baseline_home_win_probability"
 LOGISTIC_PROBABILITY_COLUMN = "logistic_home_win_probability"
 PLAYER_IMPACT_PROBABILITY_COLUMN = "player_impact_home_win_probability"
 EXPERIMENT_VERSION_COLUMN = "experiment_version"
@@ -61,6 +62,13 @@ def _shadow_experiment(key: str, column_prefix: str, version: str, label: str) -
 PLAYER_IMPACT_KEY = "player_impact"
 BLEND_KEY = "rf_logistic_blend"
 IMPACT_BLEND_KEY = "player_impact_logistic_blend"
+IMPACT_BLEND_LOW_KEY = "player_impact_logistic_blend_30"
+IMPACT_BLEND_HIGH_KEY = "player_impact_logistic_blend_70"
+IMPACT_BLEND_WEIGHTS = {
+    IMPACT_BLEND_LOW_KEY: 0.3,
+    IMPACT_BLEND_KEY: 0.5,
+    IMPACT_BLEND_HIGH_KEY: 0.7,
+}
 SHADOW_EXPERIMENTS = (
     ShadowExperiment(PLAYER_IMPACT_KEY, PLAYER_IMPACT_PROBABILITY_COLUMN, EXPERIMENT_VERSION_COLUMN,
                      PLAYER_IMPACT_EXPERIMENT, "Random forest + player impact"),
@@ -74,11 +82,15 @@ SHADOW_EXPERIMENTS = (
     _shadow_experiment("random_forest_schedule_density", "schedule_density", "rf_schedule_density_v1", "Schedule density"),
     _shadow_experiment(IMPACT_BLEND_KEY, "impact_blend", "rf_player_impact_logistic_blend_v1",
                        "Player impact + logistic blend"),
+    _shadow_experiment(IMPACT_BLEND_LOW_KEY, "impact_blend_30", "rf_player_impact_logistic_blend_30_v1",
+                       "Player impact 30% + logistic 70%"),
+    _shadow_experiment(IMPACT_BLEND_HIGH_KEY, "impact_blend_70", "rf_player_impact_logistic_blend_70_v1",
+                       "Player impact 70% + logistic 30%"),
 )
 SHADOW_COLUMNS = [column for spec in SHADOW_EXPERIMENTS for column in (spec.probability_column, spec.version_column)]
 PICK_VALUES = [
     "home_win_probability", "model", *PROVENANCE_COUNTS, *PROVENANCE_TIMES,
-    PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN, *SHADOW_COLUMNS,
+    PLAYER_IMPACT_COLUMN, BASELINE_PROBABILITY_COLUMN, LOGISTIC_PROBABILITY_COLUMN, *SHADOW_COLUMNS,
 ]
 PICK_COLUMNS = [*PICK_VALUES, "predicted_at_utc"]
 PREDICTION_COLUMNS = [
@@ -86,6 +98,7 @@ PREDICTION_COLUMNS = [
     "home_win_probability", "predicted_at_utc", "same_day_finals",
     "home_injury_report_utc", "away_injury_report_utc", "home_out_count", "away_out_count", "model",
     PLAYER_IMPACT_COLUMN, *REST_DAY_COLUMNS, LOGISTIC_PROBABILITY_COLUMN, *SHADOW_COLUMNS,
+    BASELINE_PROBABILITY_COLUMN,
 ]
 STATUS_NAMES = {
     "STATUS_SCHEDULED": "scheduled",
@@ -105,7 +118,7 @@ def _typed_predictions(frame: pd.DataFrame) -> pd.DataFrame:
         frame[column] = pd.to_datetime(frame[column], format="mixed", utc=True)
     for column in PROVENANCE_COUNTS:
         frame[column] = frame[column].astype("Int64")
-    for column in ("home_win_probability", PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN):
+    for column in ("home_win_probability", BASELINE_PROBABILITY_COLUMN, PLAYER_IMPACT_COLUMN, LOGISTIC_PROBABILITY_COLUMN):
         frame[column] = frame[column].astype(float)
     for spec in SHADOW_EXPERIMENTS:
         frame[spec.probability_column] = frame[spec.probability_column].astype(float)
@@ -230,7 +243,7 @@ def _final_games(events: list[dict], slate: list[dict], as_of: datetime) -> pd.D
 
 
 def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) -> dict[str, dict]:
-    from player_impact import player_adjusted_picks
+    from player_impact import PLAYER_IMPACT_MODEL, player_adjusted_picks
     from predictor import load_optional_team_injuries, predict_slate_models
 
     history = normalize_team_names(clean_games(pd.read_csv(BASELINE_GAMES_FILE)))
@@ -243,9 +256,8 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
     for matchup in matchups:
         slates.setdefault(matchup["game_date"], []).append(matchup)
     predictions = {}
-    shadow_models = tuple(
-        spec.key for spec in SHADOW_EXPERIMENTS if spec.key not in (PLAYER_IMPACT_KEY, BLEND_KEY, IMPACT_BLEND_KEY)
-    )
+    derived_models = (PLAYER_IMPACT_KEY, BLEND_KEY, *IMPACT_BLEND_WEIGHTS)
+    shadow_models = tuple(spec.key for spec in SHADOW_EXPERIMENTS if spec.key not in derived_models)
     for game_date, slate in sorted(slates.items()):
         same_day_finals = updates[updates["date"] == game_date]
         model_probabilities, rest_days = predict_slate_models(
@@ -259,11 +271,12 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
             model_probabilities[PLAYER_IMPACT_KEY] = player_adjusted_picks(slate, probabilities, injuries)
         except (KeyError, OSError, ValueError):
             logging.getLogger(__name__).exception("Could not score player impact for %s", game_date.date())
-        for blend, forest_picks in (
-            (BLEND_KEY, probabilities), (IMPACT_BLEND_KEY, model_probabilities.get(PLAYER_IMPACT_KEY, {})),
-        ):
+        impact_picks = model_probabilities.get(PLAYER_IMPACT_KEY, {})
+        blends = [(BLEND_KEY, probabilities, 0.5)]
+        blends.extend((key, impact_picks, weight) for key, weight in IMPACT_BLEND_WEIGHTS.items())
+        for blend, forest_picks, weight in blends:
             model_probabilities[blend] = {
-                game_id: (probability + logistic_picks[game_id]) / 2
+                game_id: weight * probability + (1 - weight) * logistic_picks[game_id]
                 for game_id, probability in forest_picks.items()
                 if probability is not None and 0 <= probability <= 1 and game_id in logistic_picks
             }
@@ -283,11 +296,17 @@ def _predict_games(matchups: list[dict], as_of: datetime, finals: pd.DataFrame) 
             values = {
                 **dict.fromkeys(PICK_VALUES),
                 "home_win_probability": round(probability, 6),
+                BASELINE_PROBABILITY_COLUMN: round(probability, 6),
                 LOGISTIC_PROBABILITY_COLUMN: round(logistic_probability, 6),
                 "model": DEFAULT_PREDICTION_MODEL,
                 "same_day_finals": len(same_day_finals),
                 **dict(zip(REST_DAY_COLUMNS, rest_days[game_id])),
             }
+            impact_probability = impact_picks.get(game_id)
+            if impact_probability is not None and 0 <= impact_probability <= 1:
+                values["home_win_probability"] = round(impact_probability, 6)
+                values["model"] = PLAYER_IMPACT_MODEL
+                values[PLAYER_IMPACT_COLUMN] = round(100 * (impact_probability - probability), 2)
             for spec, picks in experiments:
                 experiment_probability = picks.get(game_id)
                 if experiment_probability is not None and 0 <= experiment_probability <= 1:

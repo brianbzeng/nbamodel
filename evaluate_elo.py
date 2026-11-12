@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.metrics import brier_score_loss, log_loss
 
 from cleaner import clean_games, normalize_team_names
-from daily_predictions import BASELINE_GAMES_FILE
+from daily_predictions import BASELINE_GAMES_FILE, IMPACT_BLEND_KEY, IMPACT_BLEND_WEIGHTS
 from elo_features import ELO_DIFF_COLUMN, build_elo_features
 from game_updates import FIRST_UPDATE_DATE, GAME_KEY, read_game_updates
 from player_impact import PLAYER_IMPACT_WEIGHT, adjust_win_probabilities, matchup_player_losses
@@ -32,10 +32,17 @@ CHALLENGERS = {
     "margin": ("Point margin", _fit_margin_random_forest),
     "blend": ("RF/logistic blend", _fit_logistic_regression),
     "impact-blend": ("Impact/logistic blend", _fit_logistic_regression),
+    "impact-blend-weights": ("Impact/logistic blend weights", _fit_logistic_regression),
     "recent-form": ("Weighted form", _fit_random_forest),
     "schedule-density": ("Schedule density", _fit_schedule_density_random_forest),
 }
 NEW_CHALLENGERS = ("margin", "blend", "recent-form", "schedule-density")
+IMPACT_BLEND_COMPARATORS = (
+    ("Baseline", "baseline"),
+    ("Player impact", "player_impact"),
+    ("Logistic regression", "logistic"),
+    ("RF/logistic blend", "blend"),
+)
 
 
 def predict_holdout(features: pd.DataFrame, season: int, fit_model) -> np.ndarray:
@@ -62,13 +69,18 @@ def score_holdout(
     results["baseline"] = np.round(baseline_probabilities, 6)
     if challenger == "blend":
         variant_probabilities = (baseline_probabilities + variant_probabilities) / 2
-    elif challenger == "impact-blend":
+    elif challenger in ("impact-blend", "impact-blend-weights"):
         loss_difference = variant_features.loc[variant_features["season"] == season, "player_loss_difference"]
         impact_probabilities = adjust_win_probabilities(baseline_probabilities, loss_difference, PLAYER_IMPACT_WEIGHT)
         results["player_impact"] = np.round(impact_probabilities, 6)
         results["logistic"] = np.round(variant_probabilities, 6)
         results["blend"] = np.round((baseline_probabilities + variant_probabilities) / 2, 6)
-        variant_probabilities = (impact_probabilities + variant_probabilities) / 2
+        weights = IMPACT_BLEND_WEIGHTS if challenger == "impact-blend-weights" else {
+            challenger: IMPACT_BLEND_WEIGHTS[IMPACT_BLEND_KEY],
+        }
+        for column, weight in weights.items():
+            results[column] = np.round(weight * impact_probabilities + (1 - weight) * variant_probabilities, 6)
+        return results
     results[challenger] = np.round(variant_probabilities, 6)
     return results
 
@@ -92,7 +104,24 @@ def accuracy_interval(results: pd.DataFrame, correct_delta: np.ndarray) -> tuple
     return paired_date_interval(results, correct_delta * 100)
 
 
+def print_metrics(results: pd.DataFrame, models: tuple[tuple[str, str], ...]) -> None:
+    actual = results["home_win"].to_numpy()
+    for name, column in models:
+        odds = results[column]
+        correct = (odds.to_numpy() > 0.5) == actual
+        print(f"  {name:<18} {correct.sum():,}/{len(results):,} correct ({correct.mean():.2%})"
+              f"   Brier {brier_score_loss(actual, odds):.5f}   Log loss {log_loss(actual, odds, labels=[0, 1]):.5f}")
+
+
 def report(label: str, results: pd.DataFrame, challenger: str = "elo") -> None:
+    print(f"{label} | {len(results):,} games")
+    if challenger == "impact-blend-weights":
+        blends = tuple(
+            (f"{weight:.0%} impact / {1 - weight:.0%} logistic", column)
+            for column, weight in IMPACT_BLEND_WEIGHTS.items()
+        )
+        print_metrics(results, (*IMPACT_BLEND_COMPARATORS, *blends))
+        return
     actual = results["home_win"].to_numpy()
     baseline_correct = (results["baseline"].to_numpy() > 0.5) == actual
     variant_correct = (results[challenger].to_numpy() > 0.5) == actual
@@ -104,17 +133,8 @@ def report(label: str, results: pd.DataFrame, challenger: str = "elo") -> None:
     loss_delta = np.log(baseline_actual.clip(eps, 1)) - np.log(variant_actual.clip(eps, 1))
     loss_low, loss_high = paired_date_interval(results, loss_delta)
     challenger_name, _ = CHALLENGERS[challenger]
-    print(f"{label} | {len(results):,} games")
-    models = [("Baseline", "baseline")]
-    if challenger == "impact-blend":
-        models.extend((("Player impact", "player_impact"), ("Logistic regression", "logistic"),
-                       ("RF/logistic blend", "blend")))
-    models.append((challenger_name, challenger))
-    for name, column in models:
-        odds = results[column]
-        correct = (odds.to_numpy() > 0.5) == actual
-        print(f"  {name:<18} {correct.sum():,}/{len(results):,} correct ({correct.mean():.2%})"
-              f"   Brier {brier_score_loss(actual, odds):.5f}   Log loss {log_loss(actual, odds, labels=[0, 1]):.5f}")
+    models = IMPACT_BLEND_COMPARATORS if challenger == "impact-blend" else (("Baseline", "baseline"),)
+    print_metrics(results, (*models, (challenger_name, challenger)))
     print(f"  {challenger_name} flips {(correct_delta > 0).sum():,} to correct and {(correct_delta < 0).sum():,} to incorrect")
     print(f"  Paired accuracy difference {correct_delta.mean() * 100:+.2f} pp"
           f"   95% date-bootstrap interval [{low:+.2f}, {high:+.2f}] pp")
@@ -160,7 +180,7 @@ def evaluate(through: pd.Timestamp | None, challenger: str = "elo") -> None:
     injuries = _load_replay_injuries(games, first_holdout)
     features = merge_injury_features(build_pregame_features(games), injuries)
     features = features.sort_values(GAME_KEY, ignore_index=True)
-    if challenger == "impact-blend":
+    if challenger in ("impact-blend", "impact-blend-weights"):
         holdout_rows = features["season"].isin(holdouts)
         matchups = features.loc[holdout_rows, GAME_KEY].rename(columns={"date": "game_date"})
         features.loc[holdout_rows, "player_loss_difference"] = matchup_player_losses(matchups, injuries)

@@ -50,8 +50,8 @@ At 11:35 and 11:50 p.m. Pacific it prepares the next day's slate so the Today bo
 can switch at midnight. Picks refresh during the day, with extra checks in the
 final hour before tipoff. Each run pulls new finals and official injury reports
 before fitting the random forest and logistic regression on the same pregame
-features. Random forest supplies the official pick, and Context shows the logistic
-comparison, rest days, and links to official injury reports. Picks freeze at
+features. The player-impact forest supplies the official pick, and Context shows
+the logistic comparison, rest days, and links to official injury reports. Picks freeze at
 tipoff. History labels archived replays separately and counts only picks saved
 before tipoff in the live record.
 
@@ -67,9 +67,9 @@ and `python daily_predictions.py` in order to refresh a local checkout, or run
 
 ## Model experiments
 
-The official baseline is the random forest with team-level injury features. Each
-pregame run also records `rf_player_impact_v1` beside the baseline in the same
-snapshot. This version adds a player-availability adjustment using the same
+Each pregame run records the original random forest as the baseline in
+`baseline_home_win_probability` and the official `rf_player_impact_v1` forecast
+in the same snapshot. This version adds a player-availability adjustment using the same
 pregame report and up to 30 earlier box scores per player. The adjustment is
 weighted by official status and shrunk toward replacement-level production. The
 coefficient was calibrated on 2025–26 games. When the experiment changes, use a
@@ -100,6 +100,9 @@ Additional challengers run on the same pregame slate:
   four and seven calendar days, excluding the matchup date.
 - `rf_player_impact_logistic_blend_v1` averages the player-impact forest and
   logistic probabilities with fixed 50/50 weights.
+- `rf_player_impact_logistic_blend_30_v1` and
+  `rf_player_impact_logistic_blend_70_v1` give the player-impact forest 30% and
+  70% weight, respectively, with the remaining weight given to logistic.
 
 Run `python evaluate_live_models.py` for the paired accuracy, Brier score, and
 log loss of saved pregame predictions against completed games. Each challenger
@@ -108,7 +111,7 @@ is compared with the baseline on the same games, excluding replays. Use a
 for Elo or `python evaluate_elo.py --challenger all-new` for the four new
 experiments on two forward season holdouts, each trained on all earlier saved
 seasons. `--challenger` also accepts `no-rest`, `margin`, `blend`, `recent-form`,
-`schedule-density`, and `impact-blend`. Run
+`schedule-density`, `impact-blend`, and `impact-blend-weights`. Run
 `python evaluate_player_impact.py` for the historical injury experiment. Both
 backtests accept `--through YYYY-MM-DD`.
 

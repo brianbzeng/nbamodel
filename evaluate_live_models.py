@@ -7,12 +7,15 @@ from sklearn.metrics import brier_score_loss, log_loss
 
 from cleaner import clean_games, normalize_team_names
 from daily_predictions import (
+    BASELINE_PROBABILITY_COLUMN,
     BLEND_KEY,
     DEFAULT_PREDICTION_MODEL,
     ELO_EXPERIMENT_VERSION_COLUMN,
     ELO_PROBABILITY_COLUMN,
     EXPERIMENT_VERSION_COLUMN,
+    IMPACT_BLEND_HIGH_KEY,
     IMPACT_BLEND_KEY,
+    IMPACT_BLEND_LOW_KEY,
     LOGISTIC_PROBABILITY_COLUMN,
     NO_REST_EXPERIMENT_VERSION_COLUMN,
     NO_REST_PROBABILITY_COLUMN,
@@ -21,9 +24,9 @@ from daily_predictions import (
     read_daily_predictions,
 )
 from game_updates import GAME_KEY, read_game_updates
+from player_impact import PLAYER_IMPACT_MODEL as OFFICIAL_PLAYER_IMPACT_MODEL
 
 
-BASELINE_PROBABILITY_COLUMN = "home_win_probability"
 FORECAST_KEY = ["game_date", *GAME_KEY[1:]]
 BASELINE_MODEL = ("Random forest baseline", BASELINE_PROBABILITY_COLUMN)
 PLAYER_IMPACT_MODEL = ("Random forest + player impact", PLAYER_IMPACT_PROBABILITY_COLUMN)
@@ -33,6 +36,7 @@ FOREST_LOGISTIC_BLEND = next(
     for experiment in SHADOW_EXPERIMENTS
     if experiment.key == BLEND_KEY
 )
+HYBRID_EXPERIMENTS = (IMPACT_BLEND_KEY, IMPACT_BLEND_LOW_KEY, IMPACT_BLEND_HIGH_KEY)
 HYBRID_COMPARATORS = (PLAYER_IMPACT_MODEL, LOGISTIC_MODEL, FOREST_LOGISTIC_BLEND)
 
 
@@ -47,14 +51,17 @@ def paired_results(
     if predictions.empty or finals.empty or not {version_column, probability_column}.issubset(predictions.columns):
         return predictions.iloc[:0].assign(home_win=pd.Series(dtype=int))
 
+    legacy_baseline = predictions["home_win_probability"].where(predictions["model"].eq(DEFAULT_PREDICTION_MODEL))
+    baseline = predictions.get(BASELINE_PROBABILITY_COLUMN, legacy_baseline).fillna(legacy_baseline)
     valid = (
         predictions["predicted_at_utc"].lt(predictions["tipoff_utc"])
-        & predictions["model"].eq(DEFAULT_PREDICTION_MODEL)
+        & predictions["model"].isin((DEFAULT_PREDICTION_MODEL, OFFICIAL_PLAYER_IMPACT_MODEL))
         & predictions[version_column].notna()
-        & predictions[BASELINE_PROBABILITY_COLUMN].between(0, 1)
+        & baseline.between(0, 1)
         & predictions[probability_column].between(0, 1)
     )
-    picks = predictions.loc[valid].sort_values("predicted_at_utc", kind="stable")
+    picks = predictions.loc[valid].assign(**{BASELINE_PROBABILITY_COLUMN: baseline.loc[valid]})
+    picks = picks.sort_values("predicted_at_utc", kind="stable")
     picks = picks.drop_duplicates(FORECAST_KEY, keep="last")
     if picks.empty:
         return picks.iloc[:0].assign(home_win=pd.Series(dtype=int))
@@ -88,14 +95,17 @@ def report(
         print("No completed games with paired pregame predictions yet.")
         return
 
+    baseline_model = BASELINE_MODEL
+    if BASELINE_PROBABILITY_COLUMN not in results:
+        baseline_model = (BASELINE_MODEL[0], "home_win_probability")
     _, probability_column = challenger
     for version, games in results.groupby(version_column):
-        baseline = games[BASELINE_PROBABILITY_COLUMN]
+        baseline = games[baseline_model[1]]
         variant = games[probability_column]
         odds_changed = int(variant.ne(baseline).sum())
         pick_changed = int(variant.gt(0.5).ne(baseline.gt(0.5)).sum())
         print(f"{version} | {len(games)} completed games | {odds_changed} changed odds | {pick_changed} changed picks")
-        models = (BASELINE_MODEL, challenger)
+        models = (baseline_model, challenger)
         partial = []
         for comparator in comparators:
             _, column = comparator
@@ -140,7 +150,7 @@ def report_experiments(
             report(
                 results, version_column=experiment.version_column,
                 challenger=(experiment.label, experiment.probability_column),
-                comparators=HYBRID_COMPARATORS if experiment.key == IMPACT_BLEND_KEY else (LOGISTIC_MODEL,),
+                comparators=HYBRID_COMPARATORS if experiment.key in HYBRID_EXPERIMENTS else (LOGISTIC_MODEL,),
             )
             found_results = True
 

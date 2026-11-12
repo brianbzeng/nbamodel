@@ -101,7 +101,7 @@
       The daily predictor trains a random forest on completed games, including any finals
       already available that day. It prepares the next slate before midnight Pacific and
       refreshes the picks with the latest results and official injury reports until tipoff.
-      The official random forest uses team-level injury features. Context shows the
+      The official random forest adjusts for the estimated impact of players on the injury report. Context shows the
       logistic regression comparison, and History pairs each saved pick with the actual winner.
     </p>
     <p>

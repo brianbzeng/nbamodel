@@ -274,10 +274,11 @@ def test_daily_pick_keeps_the_baseline_and_records_player_impact_separately(monk
 
     pick = daily_predictions._predict_games(slate, as_of, pd.DataFrame(columns=["game_date"]))["1"]
 
-    assert pick["home_win_probability"] == 0.55
+    assert pick["home_win_probability"] == (0.51 if experiment_available else 0.55)
+    assert pick["baseline_home_win_probability"] == 0.55
     assert pick["logistic_home_win_probability"] == 0.42
-    assert pick["model"] == "random_forest"
-    assert pick["home_player_impact_pp"] is None
+    assert pick["model"] == ("random_forest_player_impact" if experiment_available else "random_forest")
+    assert pick["home_player_impact_pp"] == (-4.0 if experiment_available else None)
     assert pick["player_impact_home_win_probability"] == (0.51 if experiment_available else None)
     assert pick["experiment_version"] == ("rf_player_impact_v1" if experiment_available else None)
     assert pick["elo_home_win_probability"] == 0.53
@@ -290,6 +291,8 @@ def test_daily_pick_keeps_the_baseline_and_records_player_impact_separately(monk
     assert pick["impact_blend_experiment_version"] == (
         "rf_player_impact_logistic_blend_v1" if experiment_available else None
     )
+    assert pick["impact_blend_30_home_win_probability"] == (0.447 if experiment_available else None)
+    assert pick["impact_blend_70_home_win_probability"] == (0.483 if experiment_available else None)
     assert pick["weighted_form_home_win_probability"] == 0.56
     assert pick["schedule_density_home_win_probability"] == 0.58
     assert pick["home_injury_report_utc"] == pd.Timestamp("2026-11-09T00:00:00Z")
