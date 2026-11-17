@@ -16730,6 +16730,9 @@ game_date,team,player_name,status,report_datetime
 2026-11-16,PHI,"James, LeBron",OUT,2026-11-16 19:15:00
 2026-11-16,PHX,"Dunn, Ryan",QUESTIONABLE,2026-11-16 18:30:00
 2026-11-16,PHX,"Williams, Mark",OUT,2026-11-16 18:30:00
+2026-11-16,PHX,"Dunn, Ryan",AVAILABLE,2026-11-16 20:45:00
+2026-11-16,PHX,"Timme, Drew",OUT,2026-11-16 20:45:00
+2026-11-16,PHX,"Williams, Mark",OUT,2026-11-16 20:45:00
 2026-11-16,POR,"Krejci, Vit",OUT,2026-11-15 19:00:00
 2026-11-16,POR,"Morant, Ja",OUT,2026-11-15 19:00:00
 2026-11-16,POR,"Sharpe, Shaedon",OUT,2026-11-15 19:00:00
@@ -16740,6 +16743,11 @@ game_date,team,player_name,status,report_datetime
 2026-11-16,WAS,"Okpara, Felix",OUT,2026-11-16 18:30:00
 2026-11-16,WAS,"Vukcevic, Tristan",OUT,2026-11-16 18:30:00
 2026-11-16,WAS,"Watkins, Jamir",OUT,2026-11-16 18:30:00
+2026-11-17,CHA,"Ajayi, Michael",OUT,2026-11-17 04:00:00
+2026-11-17,CHA,"Boswell, Kylan",OUT,2026-11-17 04:00:00
+2026-11-17,CHA,"Knueppel, Kon",OUT,2026-11-17 04:00:00
+2026-11-17,CHA,"Schroder, Dennis",OUT,2026-11-17 04:00:00
+2026-11-17,CHA,"Steinbach, Hannes",OUT,2026-11-17 04:00:00
 2026-11-17,DET,"Duren, Jalen",OUT,2026-11-16 18:30:00
 2026-11-17,DET,"Holland II, Ronald",OUT,2026-11-16 18:30:00
 2026-11-17,DET,"Joe, Isaiah",DOUBTFUL,2026-11-16 18:30:00
@@ -16747,6 +16755,13 @@ game_date,team,player_name,status,report_datetime
 2026-11-17,DET,"Onyenso, Ugonna",OUT,2026-11-16 18:30:00
 2026-11-17,DET,"Prince, Taurean",OUT,2026-11-16 18:30:00
 2026-11-17,DET,"Robinson, Duncan",OUT,2026-11-16 18:30:00
+2026-11-17,LAC,"Beal, Bradley",OUT,2026-11-17 04:00:00
+2026-11-17,LAC,"Ingram, Brandon",OUT,2026-11-17 04:00:00
+2026-11-17,LAC,"Miller, Jordan",OUT,2026-11-17 04:00:00
+2026-11-17,LAC,"Niederhauser, Yanic Konan",OUT,2026-11-17 04:00:00
+2026-11-17,LAL,"Grimes, Quentin",AVAILABLE,2026-11-17 04:00:00
+2026-11-17,LAL,"Kessler, Walker",OUT,2026-11-17 04:00:00
+2026-11-17,LAL,"Reaves, Austin",OUT,2026-11-17 04:00:00
 2026-11-17,SAS,"Brown, Maliq",OUT,2026-11-16 18:30:00
 2026-11-17,SAS,"Gillespie, Ja'Kobi",OUT,2026-11-16 18:30:00
 2026-11-17,SAS,"Harris, Tobias",OUT,2026-11-16 18:30:00
@@ -16755,3 +16770,9 @@ game_date,team,player_name,status,report_datetime
 2026-11-17,TOR,"Leonard, Kawhi",OUT,2026-11-16 18:30:00
 2026-11-17,TOR,"McCullar Jr., Kevin",OUT,2026-11-16 18:30:00
 2026-11-17,TOR,"Smith, Malachi",OUT,2026-11-16 18:30:00
+2026-11-17,UTA,"Bufkin, Kobe",OUT,2026-11-17 04:00:00
+2026-11-17,UTA,"Hayes, Jaxson",OUT,2026-11-17 04:00:00
+2026-11-17,UTA,"Ingram, Harrison",OUT,2026-11-17 04:00:00
+2026-11-17,UTA,"Jackson Jr., Jaren",OUT,2026-11-17 04:00:00
+2026-11-17,UTA,"Markkanen, Lauri",OUT,2026-11-17 04:00:00
+2026-11-17,UTA,"Nurkic, Jusuf",OUT,2026-11-17 04:00:00
