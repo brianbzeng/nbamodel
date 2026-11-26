@@ -17886,6 +17886,12 @@ game_date,team,player_name,status,report_datetime
 2026-11-25,GSW,"Moody, Moses",OUT,2026-11-24 18:45:00
 2026-11-25,GSW,"Porzingis, Kristaps",OUT,2026-11-24 18:45:00
 2026-11-25,GSW,"Williams, Brandon",QUESTIONABLE,2026-11-24 18:45:00
+2026-11-25,GSW,"Butler III, Jimmy",OUT,2026-11-25 21:45:00
+2026-11-25,GSW,"Curry, Stephen",OUT,2026-11-25 21:45:00
+2026-11-25,GSW,"Lendeborg, Yaxel",AVAILABLE,2026-11-25 21:45:00
+2026-11-25,GSW,"Moody, Moses",OUT,2026-11-25 21:45:00
+2026-11-25,GSW,"Porzingis, Kristaps",OUT,2026-11-25 21:45:00
+2026-11-25,GSW,"Williams, Brandon",AVAILABLE,2026-11-25 21:45:00
 2026-11-25,HOU,"Copeland, Quadir",OUT,2026-11-24 18:45:00
 2026-11-25,HOU,"Phillips, Julian",OUT,2026-11-24 18:45:00
 2026-11-25,LAC,"Beal, Bradley",OUT,2026-11-24 18:45:00
@@ -17971,3 +17977,8 @@ game_date,team,player_name,status,report_datetime
 2026-11-25,SAS,"Harris, Tobias",OUT,2026-11-24 20:15:00
 2026-11-25,SAS,"Quaintance, Jayden",OUT,2026-11-24 20:15:00
 2026-11-25,SAS,"Wembanyama, Victor",QUESTIONABLE,2026-11-24 20:15:00
+2026-11-25,SAS,"Fox, De'Aaron",OUT,2026-11-25 21:45:00
+2026-11-25,SAS,"Harper, Dylan",OUT,2026-11-25 21:45:00
+2026-11-25,SAS,"Harris, Tobias",OUT,2026-11-25 21:45:00
+2026-11-25,SAS,"Quaintance, Jayden",OUT,2026-11-25 21:45:00
+2026-11-25,SAS,"Wembanyama, Victor",AVAILABLE,2026-11-25 21:45:00
